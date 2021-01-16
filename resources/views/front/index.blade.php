@@ -169,10 +169,12 @@
   
   $(document).ready(function(){
 
-    $("#barcode").on('keypress', function(e){
+    $("#barcode").on('keydown', function(e){
       // enter
       if(e.which == 13)
       {
+        searchAndAddItem();
+      }else if(e.which != 17){
         searchAndAddItem();
       }
     })
@@ -181,6 +183,7 @@
   function searchAndAddItem()
   {
     $(".toast").toast('hide');
+    $("#barcode").focus();
 
     let barcode = $("#barcode").val();
 
@@ -204,6 +207,7 @@
 
         generateItemList(transaction_summary);
       }
+      $("#barcode").val('');
     });
   }
 
