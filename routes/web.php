@@ -15,3 +15,9 @@ Auth::routes();
 
 Route::get('/', 'HomeController@index')->name('home');
 Route::post('/searchAndAddItem', 'HomeController@searchAndAddItem')->name('searchAndAddItem');
+Route::post('/submitDeleteItem', 'HomeController@submitDeleteItem')->name('submitDeleteItem');
+Route::post('/submitTransaction', 'HomeController@submitTransaction')->name('submitTransaction');
+Route::post('/submitVoidTransaction', 'HomeController@submitVoidTransaction')->name('submitVoidTransaction');
+Route::post('/submitUnvoidTransaction', 'HomeController@submitUnvoidTransaction')->name('submitUnvoidTransaction');
+Route::post('/clearTransaction', 'HomeController@clearTransaction')->name('clearTransaction');
+

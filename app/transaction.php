@@ -16,7 +16,12 @@ class transaction extends Model
       'payment',
       'payment_type',
       'balance',
+      'total',
       'void',
+      'void_by',
+      'void_date',
       'completed',
+      'completed_by',
+      'transaction_date'
     ];
 }
