@@ -271,7 +271,7 @@
             <i class="fas fa-check-circle"></i>
           </div>
           <h4 style="text-align: center;">Transaction completed.</h4>
-          <h5 style="text-align: center;">Balance : <span id="transaction_balance"></span></h5>
+          <h5 style="text-align: center;">Balance : RM <span id="transaction_balance"></span></h5>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Okay</button>
