@@ -138,8 +138,8 @@ class HomeController extends Controller
           {
             transaction_detail::where('id', $transaction_detail->id)->update([
               'quantity' => $transaction_detail->quantity + 1,
-              'subtotal' => $transaction_detail->subtotal + $product->price,
-              'total' => $transaction_detail->total + $product->price
+              'subtotal' => number_format($transaction_detail->subtotal + $product->price, 2),
+              'total' => number_format($transaction_detail->total + $product->price, 2)
             ]);
           }
           else
@@ -148,11 +148,11 @@ class HomeController extends Controller
               'transaction_id' => $transaction->id,
               'product_id' => $product->id,
               'product_name' => $product->product_name,
-              'price' => $product->price,
+              'price' => number_format($product->price, 2),
               'quantity' => 1,
               'discount' => 0,
-              'subtotal' => $product->price,
-              'total' => $product->price
+              'subtotal' => number_format($product->price, 2),
+              'total' => number_format($product->price, 2)
             ]);
           }
         }
