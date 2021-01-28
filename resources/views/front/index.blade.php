@@ -314,7 +314,7 @@
     <div class="content">
       <div class="row">
         <div class="col-12">
-          <table id="previous_receipt_table" class="table table-bordered table-striped" cellspacing="0" width="100%">
+          <table id="previous_receipt_table" class="table table-bordered table-striped" cellspacing="0" width="100%" style="max-height: calc(100% - 200px)">
             <thead>
               <tr>
                 <th>ID</th>
