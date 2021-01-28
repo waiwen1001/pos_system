@@ -314,8 +314,8 @@
     <div class="content">
       <div class="row">
         <div class="col-12">
-          <table id="previous_receipt_table" class="table table-bordered table-striped" cellspacing="0" width="100%">
-            <thead>
+          <table id="previous_receipt_table" class="table table-bordered table-striped" cellspacing="0" width="100%" style="width: 100% !important;">
+            <thead style="width: 100% !important;">
               <tr>
                 <th>ID</th>
                 <th>Payment type</th>
@@ -527,8 +527,7 @@
     pageLength: 25,
     scrollY: '60vh',
     scrollCollapse: true,
-    paging: false,
-    // responsive: true,
+    responsive: true,
     order: [[ 7, "desc" ]]
   });
 
@@ -651,6 +650,10 @@
 
     $("#show_previous_receipt").click(function(){
       $("#previous_receipt").show();
+
+      setTimeout(function(){
+        previous_receipt_table.draw();
+      }, 50);
     });
 
     $(".close_full_page").click(function(){
