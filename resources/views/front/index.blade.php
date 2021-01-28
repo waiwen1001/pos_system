@@ -783,7 +783,7 @@
       return;
     }
 
-    if(parseFloat(received_cash) < parseFloat(transaction_total))
+    if(parseFloat(received_cash).toFixed(2) < parseFloat(transaction_total).toFixed(2))
     {
       $("input[name='received_payment']").addClass("is-invalid");
       $("input[name='received_payment']").siblings(".invalid-feedback").html("<strong>Received cash is lesser than transaction price</strong>");
