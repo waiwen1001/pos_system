@@ -123,11 +123,11 @@ class HomeController extends Controller
             'transaction_id' => $transaction->id,
             'product_id' => $product->id,
             'product_name' => $product->product_name,
-            'price' => number_format($product->price, 2),
+            'price' => round($product->price, 2),
             'quantity' => 1,
             'discount' => 0,
-            'subtotal' => number_format($product->price, 2),
-            'total' => number_format($product->price, 2)
+            'subtotal' => round($product->price, 2),
+            'total' => round($product->price, 2)
           ]);
         }
         else
@@ -138,8 +138,8 @@ class HomeController extends Controller
           {
             transaction_detail::where('id', $transaction_detail->id)->update([
               'quantity' => $transaction_detail->quantity + 1,
-              'subtotal' => number_format($transaction_detail->subtotal + $product->price, 2),
-              'total' => number_format($transaction_detail->total + $product->price, 2)
+              'subtotal' => round($transaction_detail->subtotal + $product->price, 2),
+              'total' => round($transaction_detail->total + $product->price, 2)
             ]);
           }
           else
@@ -148,11 +148,11 @@ class HomeController extends Controller
               'transaction_id' => $transaction->id,
               'product_id' => $product->id,
               'product_name' => $product->product_name,
-              'price' => number_format($product->price, 2),
+              'price' => round($product->price, 2),
               'quantity' => 1,
               'discount' => 0,
-              'subtotal' => number_format($product->price, 2),
-              'total' => number_format($product->price, 2)
+              'subtotal' => round($product->price, 2),
+              'total' => round($product->price, 2)
             ]);
           }
         }
@@ -260,12 +260,12 @@ class HomeController extends Controller
       {
         transaction::where('id', $request->transaction_id)->update([
           'invoice_no' => $invoice_no,
-          'subtotal' => number_format($subtotal, 2),
-          'total_discount' => number_format($total_discount, 2),
-          'payment' => $received_cash,
-          'payment_type' => $payment_type,
-          'balance' => number_format($balance, 2),
-          'total' => number_format($total, 2),
+          'subtotal' => round($subtotal, 2),
+          'total_discount' => round($total_discount, 2),
+          'payment' => round($received_cash, 2),
+          'payment_type' => round($payment_type, 2),
+          'balance' => round($balance, 2),
+          'total' => round($total, 2),
           'completed' => 1,
           'completed_by' => $user->id,
           'transaction_date' => date('Y-m-d H:i:s', strtotime(now()))
