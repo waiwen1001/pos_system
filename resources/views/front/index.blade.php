@@ -527,7 +527,7 @@
     pageLength: 25,
     scrollY: '60vh',
     scrollCollapse: true,
-    responsive: true,
+    // responsive: true,
     order: [[ 7, "desc" ]]
   });
 
@@ -887,7 +887,7 @@
     previous_receipt_table.row.add($(data)).node();
 
     previous_receipt_table.draw();
-    previous_receipt_table.responsive.recalc();
+    // previous_receipt_table.responsive.recalc();
 
     $(".print_receipt").click(function(){
       var transaction_no = $(this).attr("transaction_no");
