@@ -62,17 +62,17 @@
             <input type="hidden" name="transaction_id" id="transaction_id" value="{{ $transaction_id }}" />
             <div class="summary-detail">
               <label>Price</label>
-              <div id="price">RM {{ number_format($subtotal, 2) }}</div>
+              <div id="price">RM {{ $subtotal }}</div>
             </div>
 
             <div class="summary-detail">
               <label>Discount</label>
-              <div id="discount">RM {{ number_format($discount, 2) }}</div>
+              <div id="discount">RM {{ $discount }}</div>
             </div>
 
             <div class="summary-detail bold">
               <label>Total</label>
-              <div id="total">RM {{ number_format($total, 2) }}</div>
+              <div id="total">RM {{ $total }}</div>
             </div>
 
             <!-- <div class="summary-detail">
@@ -789,7 +789,7 @@
       return;
     }
 
-    if(parseFloat(received_cash).toFixed(2) < parseFloat(transaction_total).toFixed(2))
+    if(parseFloat(received_cash) < parseFloat(transaction_total))
     {
       $("input[name='received_payment']").addClass("is-invalid");
       $("input[name='received_payment']").siblings(".invalid-feedback").html("<strong>Received cash is lesser than transaction price</strong>");
