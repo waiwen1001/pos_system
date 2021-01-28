@@ -20,4 +20,7 @@ Route::post('/submitTransaction', 'HomeController@submitTransaction')->name('sub
 Route::post('/submitVoidTransaction', 'HomeController@submitVoidTransaction')->name('submitVoidTransaction');
 Route::post('/submitUnvoidTransaction', 'HomeController@submitUnvoidTransaction')->name('submitUnvoidTransaction');
 Route::post('/clearTransaction', 'HomeController@clearTransaction')->name('clearTransaction');
+Route::post('/editInvoiceNo', 'HomeController@editInvoiceNo')->name('editInvoiceNo');
+
+Route::get('/myIP', 'HomeController@myIP')->name('myIP');
 

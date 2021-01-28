@@ -1,7 +1,7 @@
 body { font-family: arial; }
 
 .left-box { display: flex; flex-direction: column; background: #689BCA; padding: 20px; height: 100%; }
-.items-list { flex: 1; background: #fff; padding: 5px; min-height: 400px; }
+.items-list { flex: 1; background: #fff; padding: 5px; min-height: 400px; max-height: 500px; overflow-y: auto; }
 
 .items-list table { width: 100%; }
 .items-list table thead th { font-size: 16px; font-weight: normal; padding-bottom: 20px; }
@@ -56,5 +56,9 @@ body { font-family: arial; }
 .void { color: red; }
 
 .user_dropdown { border: none; background: none; outline: none !important; }
+
+.bar_code_box { display: flex; align-items: center; }
+.bar_code_box input { flex: 1; }
+
 
 

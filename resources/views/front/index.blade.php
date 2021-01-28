@@ -10,6 +10,9 @@
 <link rel="stylesheet" type="text/css" href="{{ asset('css/front.css') }}">
 <!-- datatables -->
 <link rel="stylesheet" type="text/css" href="{{ asset('assets/datatables/datatables.min.css') }}">
+<!-- iCheck for checkboxes and radio inputs -->
+<link rel="stylesheet" href="{{ asset('assets/iCheck/all.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/iCheck/square/blue.css') }}">
 
 <!-- Fontawesome -->
 <script src="https://kit.fontawesome.com/e5dc55166e.js" crossorigin="anonymous"></script>
@@ -21,6 +24,8 @@
 <script src="{{ asset('assets/bootstrap-4.3.1-dist/js/bootstrap.bundle.min.js') }}"></script>
 <!-- datatables -->
 <script src="{{ asset('assets/datatables/datatables.min.js') }}"></script>
+<!-- iCheck 1.0.1 -->
+<script src="{{ asset('assets/iCheck/icheck.min.js') }}"></script>
 
 <body>
   
@@ -84,7 +89,16 @@
         </div>
       </div>
       <div class="col-lg-7 col-sm-12" style="position: relative; padding-bottom: 150px;">
-        <input type="text" class="form-control" placeholder="Bar Code Scanner & Product Code" id="barcode" />
+        <div class="bar_code_box">
+          <input type="text" class="form-control" placeholder="Bar Code Scanner & Product Code" id="barcode" />
+
+          <div class="checkbox icheck" style="display: inline-block; margin-left: 10px;">
+            <label>
+              <input class="form-check-input" type="checkbox" name="barcode_manual" value="1" id="barcode_manual" /> Manual keyin
+            </label>
+          </div>
+
+        </div>
         <div class="login-info">
           <span style="margin-right: 20px;">24 - December 2020</span>
           <span>12:15:18 PM</span>
@@ -124,7 +138,16 @@
               </div>
 
               <div class="col-4">
-                <div class="btn btn-dark">Other</div>
+                <div class="dropup">
+                  <button class="btn btn-dark dropdown-toggle" type="button" id="otherDropDown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Other
+                  </button>
+                  <div class="dropdown-menu" aria-labelledby="otherDropDown">
+                    <a class="dropdown-item" id="opening" href="#">Opening</a>
+                    <a class="dropdown-item" id="closing" href="#">Closing</a>
+                  </div>
+                </div>
+
               </div>
 
               <div class="col-4">
@@ -132,7 +155,7 @@
               </div>
 
               <div class="col-4">
-                <div class="btn btn-dark">Card Payment</div>
+                <div class="btn btn-dark" id="cardCheckout">Card Payment</div>
               </div>
 
               <div class="col-4">
@@ -213,6 +236,7 @@
           <div class="numpad">
             <div class="numpad_input">
               <input type="text" class="form-control" name="received_payment" value="0" /> 
+              <span class="invalid-feedback" role="alert"></span>
             </div>
             <div class="numpad_func_btn">
               <div class="numpad_btn clear">Clear</div>
@@ -271,7 +295,7 @@
             <i class="fas fa-check-circle"></i>
           </div>
           <h4 style="text-align: center;">Transaction completed.</h4>
-          <h5 style="text-align: center;">Balance : RM <span id="transaction_balance"></span></h5>
+          <h5 style="text-align: center;" id="completed_balance">Balance : RM <span id="transaction_balance"></span></h5>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Okay</button>
@@ -293,18 +317,28 @@
           <table id="previous_receipt_table" class="table table-bordered table-striped" cellspacing="0" width="100%">
             <thead>
               <tr>
+                <th>ID</th>
                 <th>Payment type</th>
+                <th>Invoice No</th>
                 <th>Total</th>
                 <th>Received payment</th>
                 <th>Balance</th>
                 <th>Void</th>
                 <th>Transaction date</th>
+                <th>Print</th>
               </tr>
             </thead>
             <tbody>
               @foreach($completed_transaction as $completed)
-                <tr>
+                <tr transaction_id="{{ $completed->id }}">
+                  <td>{{ $completed->transaction_no }}</td>
                   <td>{{ $completed->payment_type }}</td>
+                  <td>
+                    <p class="invoice_no">{{ $completed->invoice_no }}</p>
+                    @if($completed->payment_type == "card")
+                      <a href="#" onclick="editInvoiceNo('{{ $completed->id }}', '{{ $completed->invoice_no }}')">Edit</a>
+                    @endif
+                  </td>
                   <td>{{ number_format($completed->total, 2) }}</td>
                   <td>{{ number_format($completed->payment, 2) }}</td>
                   <td>{{ number_format($completed->balance, 2) }}</td>
@@ -320,6 +354,9 @@
                     </div>
                   </td>
                   <td data-order="{{ $completed->transaction_date }}">{{ date('d M Y g:i:s A', strtotime($completed->transaction_date)) }}</td>
+                  <td>
+                    <button class="btn btn-success" onclick="printReceipt('{{ $completed->transaction_no }}', '{{ number_format($completed->total, 2) }}')">Print</button>
+                  </td>
                 </tr>
               @endforeach
             </tbody>
@@ -339,7 +376,7 @@
           </button>
         </div>
         <div class="modal-body">
-          Are you sure to void this transaction ?
+          You sure you want to void this transaction ?
         </div>
         <div class="modal-footer">
           <input type="hidden" id="void_transaction_id" />
@@ -360,7 +397,7 @@
           </button>
         </div>
         <div class="modal-body">
-          Are you sure to un-void this transaction ?
+          You sure you want to un-void this transaction ?
         </div>
         <div class="modal-footer">
           <input type="hidden" id="unvoid_transaction_id" />
@@ -381,7 +418,7 @@
           </button>
         </div>
         <div class="modal-body">
-          Are you sure to clear this transaction ?
+          You sure you want to clear this transaction ?
         </div>
         <div class="modal-footer">
           <input type="hidden" id="clear_transaction_id" />
@@ -396,27 +433,125 @@
     @csrf
   </form>
 
+  <div id="receipt">
+    <div>Transaction No : <span id="receipt_transaction_no"></span></div>
+    <div>Total : <span id="receipt_total"></span></div>
+  </div>
+
+  <div class="modal fade" id="cardCheckoutModal" tabindex="-1" role="dialog" aria-labelledby="cardCheckoutModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="cardCheckoutModalLabel">Invoice No</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <input type="text" class="form-control" name="invoice_no" />
+          <span class="invalid-feedback" role="alert"></span>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success" id="submitCardPayment">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="editInvoiceNoModal" tabindex="-1" role="dialog" aria-labelledby="editInvoiceNoModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editInvoiceNoModalLabel">Edit Invoice No</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <input type="text" class="form-control" name="edit_invoice_no" />
+          <span class="invalid-feedback" role="alert"></span>
+        </div>
+        <div class="modal-footer">
+          <input type='hidden' name='edit_transaction_no' />
+          <button type="button" class="btn btn-success" id="submitEditInvoiceNo">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- <div class="modal fade" id="cashierLoginModal" tabindex="-1" role="dialog" aria-labelledby="cashierLoginModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="cashierLoginModalLabel">Login</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-xs-12">
+              <div class="form-group">
+                <label>Email</label>
+                <input type="text" class="form-control" name="cashier_email" />
+              </div>
+            </div>
+            <div class="col-xs-12">
+              <div class="form-group">
+                <label>Password</label>
+                <input type="password" class="form-control" name="cashier_password" />
+              </div>
+            </div>
+          </div>
+
+          <span class="invalid-feedback" role="alert"></span>
+        </div>
+        <div class="modal-footer">
+          <input type='hidden' name='edit_transaction_no' />
+          <button type="button" class="btn btn-success" id="submitCashierLogin">Login</button>
+        </div>
+      </div>
+    </div>
+  </div> -->
 
 </body>
 
 <script>
   
+  var numpad_using_type = "numpad";
+  var numpad_prefill = 0;
+
   var transaction_total = "{{ $real_total }}";
 
   var previous_receipt_table = $("#previous_receipt_table").DataTable( {
+    pageLength: 25,
     responsive: true,
-    order: [[ 5, "desc" ]]
+    order: [[ 7, "desc" ]]
   });
 
   $(document).ready(function(){
+
+    $('.form-check-input').iCheck({
+      checkboxClass: 'icheckbox_square-blue',
+      radioClass: 'iradio_square-blue',
+      increaseArea: '20%' /* optional */
+    });
+
     $("#barcode").on('keydown', function(e){
       // enter
-      // delay 100ms because keydown will not capture on change
-      if(e.which == 13)
+      // delay 50ms because keydown will not capture on change
+      if($("#barcode_manual").is(":checked") == false)
       {
-        setTimeout(searchAndAddItem, 50);
-      }else if(e.which != 17){
-        setTimeout(searchAndAddItem, 50);
+        if(e.which != 17){
+          setTimeout(searchAndAddItem, 50);
+        }
+      }
+      else
+      {
+        if(e.which == 13)
+        {
+          setTimeout(searchAndAddItem, 50);
+        }
       }
     });
 
@@ -426,7 +561,16 @@
     });
 
     $("#cashCheckout").click(function(){
+      $("input[name='received_payment']").val(0);
+      numpad_using_type = "numpad";
+      numpad_prefill = 0;
+
       showNumPad();
+    });
+
+    $("#cardCheckout").click(function(){
+      $("input[name='invoice_no']").removeClass("is-invalid");
+      showInvoiceInput();
     });
 
     $(".numpad_number_btn").click(function(){
@@ -435,9 +579,20 @@
       // type 1 = 0 to 9
       // type 2 = 100, 50, 10, 5
 
-      var received_number = $("input[name='received_payment']").val();
+      $("input[name='received_payment']").removeClass("is-invalid");
+
       if(type == 1)
       {
+        console.log(numpad_using_type);
+        if(numpad_using_type == "prefill")
+        {
+          $("input[name='received_payment']").val(0);
+        }
+
+        numpad_using_type = "numpad";
+        numpad_prefill = 0;
+
+        var received_number = $("input[name='received_payment']").val();
         if(received_number > 0)
         {
           var added_number = received_number + number;
@@ -450,8 +605,16 @@
       }
       else if(type == 2)
       {
-        number += ".00";
-        $("input[name='received_payment']").val(number);
+        if(numpad_using_type == "numpad")
+        {
+          $("input[name='received_payment']").val("");
+        }
+
+        numpad_using_type = "prefill";
+        numpad_prefill = parseFloat(numpad_prefill) + parseFloat(number);
+
+        numpad_prefill += ".00";
+        $("input[name='received_payment']").val(numpad_prefill);
       }
     });
 
@@ -465,10 +628,17 @@
           edited_number = 0;
         }
         $("input[name='received_payment']").val(edited_number);
+
+        if(numpad_using_type == "prefill")
+        {
+          numpad_prefill = edited_number;
+        }
       }
     });
 
     $(".numpad_btn.clear, .numpad_btn.exit").click(function(){
+      numpad_using_type = "numpad";
+      numpad_prefill = 0;
       $("input[name='received_payment']").val(0);
     });
 
@@ -482,6 +652,31 @@
 
     $(".close_full_page").click(function(){
       $(".full_page").hide();
+    });
+
+    $("#submitCardPayment").click(function(){
+      var invoice_no = $("input[name='invoice_no']").val();
+      if(invoice_no)
+      {
+        submitCardPayment();
+      }
+      else
+      {
+        $("input[name='invoice_no']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Invoice No cannot be empty.</strong>");
+      }
+    });
+
+    $("#submitEditInvoiceNo").click(function(){
+
+      var edit_invoice_no = $("input[name='edit_invoice_no']").val();
+      if(edit_invoice_no)
+      {
+        submitEditInvoiceNo();
+      }
+      else
+      {
+        $("input[name='edit_invoice_no']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Invoice No cannot be empty.</strong>");
+      }
     });
 
   });
@@ -574,33 +769,39 @@
   {
     var received_cash = $("input[name='received_payment']").val();
 
-    if(received_cash <= 0)
+    if(parseFloat(received_cash) <= 0)
     {
-      alert("Cannot submit as RM 0.00");
+      $("input[name='received_payment']").addClass("is-invalid");
+      $("input[name='received_payment']").siblings(".invalid-feedback").html("<strong>Cannot submit as RM 0.00</strong>");
       return;
     }
 
-    if(transaction_total <= 0)
+    if(parseFloat(transaction_total) <= 0)
     {
-      alert("Transaction total is RM 0.00");
+      $("input[name='received_payment']").addClass("is-invalid");
+      $("input[name='received_payment']").siblings(".invalid-feedback").html("<strong>Transaction total is RM 0.00</strong>");
       return;
     }
 
-    if(received_cash < transaction_total)
+    if(parseFloat(received_cash) < parseFloat(transaction_total))
     {
-      alert("Received cash is lesser than transaction price");
+      $("input[name='received_payment']").addClass("is-invalid");
+      $("input[name='received_payment']").siblings(".invalid-feedback").html("<strong>Received cash is lesser than transaction price</strong>");
       return;
     }
 
     var transaction_id = $("#transaction_id").val();
 
-    $.post("{{ route('submitTransaction') }}", {"_token" : "{{ csrf_token() }}", "received_cash" : received_cash, "transaction_id" : transaction_id}, function(result){
+    $.post("{{ route('submitTransaction') }}", {"_token" : "{{ csrf_token() }}", "received_cash" : received_cash, "transaction_id" : transaction_id, "payment_type" : "cash" }, function(result){
 
       $("#numpadModal").modal('hide');
       if(result.error == 0)
       {
         $("#completedTransactionModal").modal('show');
+        
         $("#transaction_balance").html(result.balance);
+
+        transactionCompleted(result.completed_transaction.transaction_no, result.completed_transaction.total, 1);
 
         submitClearTransaction(0);
         prependCompletedTransaction(result.completed_transaction);
@@ -651,23 +852,43 @@
 
   function prependCompletedTransaction(completed_transaction)
   {
+    console.log(completed_transaction);
+
     var void_html = "<div class='void_column' transaction_id="+completed_transaction.id+">";
     void_html += "<button type='button' class='btn btn-danger' onclick='voidTransaction(\""+completed_transaction.id+"\")'>Void</button>";
     void_html += "</div>";
 
-    var data = "<tr>";
+    var data = "<tr transaction_id="+completed_transaction.id+">";
+    data += "<td>"+completed_transaction.transaction_no+"</td>";
     data += "<td>"+completed_transaction.payment_type+"</td>";
+    data += "<td>";
+    if(completed_transaction.payment_type == "card")
+    {
+      data += "<p class='invoice_no'>"+completed_transaction.invoice_no+"</p>";
+      data += "<a href='#' onclick='editInvoiceNo(\""+completed_transaction.id+"\", \""+completed_transaction.invoice_no+"\")'>Edit</a>";
+    }
+    data += "</td>";
     data += "<td>"+completed_transaction.total_text+"</td>";
     data += "<td>"+completed_transaction.payment_text+"</td>";
     data += "<td>"+completed_transaction.balance_text+"</td>";
     data += "<td>"+void_html+"</td>";
     data += "<td data-order='"+completed_transaction.transaction_date+"'>"+completed_transaction.transaction_date_text+"</td>";
+
+    data += '<td><div class="btn btn-success print_receipt" transaction_no=\''+completed_transaction.transaction_no+'\' total=\''+completed_transaction.total_text+'\'>Print</div></td>';
+
     data += "</tr>";
 
     previous_receipt_table.row.add($(data)).node();
 
     previous_receipt_table.draw();
     previous_receipt_table.responsive.recalc();
+
+    $(".print_receipt").click(function(){
+      var transaction_no = $(this).attr("transaction_no");
+      var total_text = $(this).attr("total");
+
+      printReceipt(transaction_no, total_text);
+    });
   }
 
   function voidTransaction(transaction_id)
@@ -720,6 +941,89 @@
   function logout()
   {
     $("#logout_form").submit();
+  }
+
+  function transactionCompleted(transaction_no, total, show_balance)
+  {
+    printReceipt(transaction_no, total);
+    if(show_balance === 1)
+    {
+      $("#completed_balance").show();
+    }
+    else
+    {
+      $("#completed_balance").hide();
+    }
+  }
+
+  function printReceipt(transaction_no, total)
+  {
+    $("#receipt_transaction_no").html(transaction_no);
+    $("#receipt_total").html(total);
+
+    var receiptPrint = document.getElementById('receipt');
+    var newWin = window.open('','Print-Window');
+
+    newWin.document.open();
+    newWin.document.write('<html><body onload="window.print()">'+receiptPrint.innerHTML+'</body></html>');
+    newWin.document.close();
+
+    setTimeout(function(){newWin.close();},10);
+  }
+
+  function showInvoiceInput()
+  {
+    $("#cardCheckoutModal").modal('show');
+  }
+
+  function submitCardPayment()
+  {
+    var transaction_id = $("#transaction_id").val();
+    var invoice_no = $("input[name='invoice_no']").val();
+
+    $.post("{{ route('submitTransaction') }}", {"_token" : "{{ csrf_token() }}", "transaction_id" : transaction_id, "payment_type" : "card", "invoice_no" : invoice_no }, function(result){
+
+      $("#cardCheckoutModal").modal('hide');
+      if(result.error == 0)
+      {
+        $("#completedTransactionModal").modal('show');
+
+        transactionCompleted(result.completed_transaction.transaction_no, result.completed_transaction.total, 0);
+        $("input[name='invoice_no']").val("");
+
+        submitClearTransaction(0);
+        prependCompletedTransaction(result.completed_transaction);
+      }
+      else
+      {
+        alert("Error");
+      }
+
+    });
+  }
+
+  function editInvoiceNo(transaction_id, invoice_no)
+  {
+    $("input[name='edit_transaction_no']").val(transaction_id);
+    $("input[name='edit_invoice_no']").val(invoice_no);
+
+    $("#editInvoiceNoModal").modal('show');
+  }
+
+  function submitEditInvoiceNo()
+  {
+    var transaction_id = $("input[name='edit_transaction_no']").val();
+    var edit_invoice_no = $("input[name='edit_invoice_no']").val();
+
+    $.post("{{ route('editInvoiceNo') }}", { "_token" : "{{ csrf_token() }}", "transaction_id" : transaction_id, "invoice_no" : edit_invoice_no }, function(result){
+
+      if(result.error == 0)
+      {
+        $("#editInvoiceNoModal").modal('hide');
+        $("#previous_receipt_table tbody tr[transaction_id="+transaction_id+"]").find(".invoice_no").html(edit_invoice_no);
+      }
+
+    });
   }
 
 </script>

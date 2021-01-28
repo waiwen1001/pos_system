@@ -7,6 +7,7 @@ use App\User;
 use App\product;
 use App\transaction;
 use App\transaction_detail;
+use App\cashier;
 
 use Illuminate\Support\Facades\Auth;
 
@@ -29,6 +30,9 @@ class HomeController extends Controller
      */
     public function index()
     {
+      $ip = $_SERVER['REMOTE_ADDR'];
+      $cashier_opening = cashier::where('IP', $ip)->where('opening', 1)->where('closing', null)->first();
+
       $user_list = User::get();
       $user = Auth::user();
 
@@ -75,7 +79,7 @@ class HomeController extends Controller
         }
       }
 
-      return view('front.index', compact('user', 'pending_transaction', 'subtotal', 'discount', 'total', 'real_total', 'payment', 'balance', 'transaction_id', 'completed_transaction'));
+      return view('front.index', compact('cashier_opening', 'user', 'pending_transaction', 'subtotal', 'discount', 'total', 'real_total', 'payment', 'balance', 'transaction_id', 'completed_transaction'));
     }
 
     public function searchAndAddItem(Request $request)
@@ -213,12 +217,17 @@ class HomeController extends Controller
       $user = Auth::user();
 
       $transaction_detail = transaction_detail::where('transaction_id', $request->transaction_id)->get();
-      $received_cash = $request->received_cash;
 
+      $payment_type = $request->payment_type;
+
+      $received_cash = 0;
+      $invoice_no = null;
       $total = 0;
       $subtotal = 0;
       $total_discount = 0;
-      $balance = 0;
+      $balance = null;
+
+      $valid_payment = false;
 
       foreach($transaction_detail as $detail)
       {
@@ -227,15 +236,34 @@ class HomeController extends Controller
         $total_discount = $total_discount + $detail->total_discount;
       }
 
-      if($received_cash > $total)
+      if($payment_type == "cash")
       {
-        $balance = $received_cash - $total;
+        $received_cash = $request->received_cash;
 
+        if($received_cash >= $total)
+        {
+          $valid_payment = true;
+        }
+
+        $balance = $received_cash - $total;
+      } 
+      elseif($payment_type == "card")
+      {
+        $invoice_no = $request->invoice_no;
+        if($invoice_no)
+        {
+          $valid_payment = true;
+        }
+      }
+      
+      if($valid_payment)
+      {
         transaction::where('id', $request->transaction_id)->update([
+          'invoice_no' => $invoice_no,
           'subtotal' => $subtotal,
           'total_discount' => $total_discount,
           'payment' => $received_cash,
-          'payment_type' => "cash",
+          'payment_type' => $payment_type,
           'balance' => $balance,
           'total' => $total,
           'completed' => 1,
@@ -312,6 +340,24 @@ class HomeController extends Controller
       $response->message = "Success";
 
       return response()->json($response);
+    }
+
+    public function editInvoiceNo(Request $request)
+    {
+      transaction::where('id', $request->transaction_id)->update([
+        'invoice_no' => $request->invoice_no
+      ]);
+
+      $response = new \stdClass();
+      $response->error = 0;
+      $response->message = "Success";
+
+      return response()->json($response);
+    }
+
+    public function myIP()
+    {
+      dd($_SERVER['REMOTE_ADDR']);
     }
 }
 
