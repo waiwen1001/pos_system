@@ -100,8 +100,8 @@
 
         </div>
         <div class="login-info">
-          <span style="margin-right: 20px;">24 - December 2020</span>
-          <span>12:15:18 PM</span>
+          <span style="margin-right: 20px;">{{date("d-M-Y")}}</span>
+          <span id="time">12:15:18 PM</span>
           <!-- <div style="float: right;">
             <i class="fas fa-user" style="font-size: 20px; color: #999;"></i>
             <span>{{ $user->name }}</span>
@@ -1031,6 +1031,14 @@
 
     });
   }
+
+  let date = new Date();
+  $("#time").text(`${date.toLocaleTimeString()}`);
+
+  setInterval(()=>{
+    let date = new Date();
+    $("#time").text(`${date.toLocaleTimeString()}`);
+  },1000);
 
 </script>
 
