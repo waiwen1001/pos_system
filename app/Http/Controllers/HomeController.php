@@ -123,11 +123,11 @@ class HomeController extends Controller
             'transaction_id' => $transaction->id,
             'product_id' => $product->id,
             'product_name' => $product->product_name,
-            'price' => $product->price,
+            'price' => number_format($product->price, 2),
             'quantity' => 1,
             'discount' => 0,
-            'subtotal' => $product->price,
-            'total' => $product->price
+            'subtotal' => number_format($product->price, 2),
+            'total' => number_format($product->price, 2)
           ]);
         }
         else
@@ -260,12 +260,12 @@ class HomeController extends Controller
       {
         transaction::where('id', $request->transaction_id)->update([
           'invoice_no' => $invoice_no,
-          'subtotal' => $subtotal,
-          'total_discount' => $total_discount,
+          'subtotal' => number_format($subtotal, 2),
+          'total_discount' => number_format($total_discount, 2),
           'payment' => $received_cash,
           'payment_type' => $payment_type,
-          'balance' => $balance,
-          'total' => $total,
+          'balance' => number_format($balance, 2),
+          'total' => number_format($total, 2),
           'completed' => 1,
           'completed_by' => $user->id,
           'transaction_date' => date('Y-m-d H:i:s', strtotime(now()))
