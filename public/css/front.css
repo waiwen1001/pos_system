@@ -60,5 +60,8 @@ body { font-family: arial; }
 .bar_code_box { display: flex; align-items: center; }
 .bar_code_box input { flex: 1; }
 
+.dataTables_scrollHeadInner { width: 100% !important; }
+.dataTables_scrollHeadInner table { width: 100% !important; }
+
 
 

@@ -314,7 +314,7 @@
     <div class="content">
       <div class="row">
         <div class="col-12">
-          <table id="previous_receipt_table" class="table table-bordered table-striped" cellspacing="0" width="100%" style="max-height: calc(100% - 200px)">
+          <table id="previous_receipt_table" class="table table-bordered table-striped" cellspacing="0" width="100%">
             <thead>
               <tr>
                 <th>ID</th>
@@ -525,7 +525,10 @@
 
   var previous_receipt_table = $("#previous_receipt_table").DataTable( {
     pageLength: 25,
-    responsive: true,
+    scrollY: '60vh',
+    scrollCollapse: true,
+    paging: false,
+    // responsive: true,
     order: [[ 7, "desc" ]]
   });
 
