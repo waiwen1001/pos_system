@@ -231,16 +231,16 @@ class HomeController extends Controller
 
       foreach($transaction_detail as $detail)
       {
-        $total = number_format($total, 2) + number_format($detail->total, 2);
-        $subtotal = number_format($subtotal, 2) + number_format($detail->subtotal, 2);
-        $total_discount = number_format($total_discount, 2) + number_format($detail->total_discount, 2);
+        $total = round($total, 2) + round($detail->total, 2);
+        $subtotal = round($subtotal, 2) + round($detail->subtotal, 2);
+        $total_discount = round($total_discount, 2) + round($detail->total_discount, 2);
       }
 
       if($payment_type == "cash")
       {
         $received_cash = $request->received_cash;
 
-        if(number_format($received_cash, 2) >= number_format($total, 2))
+        if(round($received_cash, 2) >= round($total, 2))
         {
           $valid_payment = true;
         }
