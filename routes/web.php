@@ -21,6 +21,12 @@ Route::post('/submitVoidTransaction', 'HomeController@submitVoidTransaction')->n
 Route::post('/submitUnvoidTransaction', 'HomeController@submitUnvoidTransaction')->name('submitUnvoidTransaction');
 Route::post('/clearTransaction', 'HomeController@clearTransaction')->name('clearTransaction');
 Route::post('/editInvoiceNo', 'HomeController@editInvoiceNo')->name('editInvoiceNo');
+Route::post('/editQuantity', 'HomeController@editQuantity')->name('editQuantity');
+Route::post('/submitVoucher', 'HomeController@submitVoucher')->name('submitVoucher');
+Route::post('/removeVoucher', 'HomeController@removeVoucher')->name('removeVoucher');
+Route::post('/submitOpening', 'HomeController@submitOpening')->name('submitOpening');
+Route::post('/submitClosing', 'HomeController@submitClosing')->name('submitClosing');
+Route::post('/submitDailyClosing', 'HomeController@submitDailyClosing')->name('submitDailyClosing');
 
 Route::get('/myIP', 'HomeController@myIP')->name('myIP');
 

@@ -9,6 +9,8 @@ body { font-family: arial; }
 
 .items-summary { padding: 5px; margin-top: 30px; }
 .summary-detail { display: flex; justify-content: space-between; font-size: 20px; }
+.summary-detail label { flex: 1; }
+.summary-detail .summary_price { flex : 1; text-align: right; }
 .bold { font-weight: bold; }
 
 .login-info { padding: 20px 0; }
@@ -59,6 +61,12 @@ body { font-family: arial; }
 
 .bar_code_box { display: flex; align-items: center; }
 .bar_code_box input { flex: 1; }
+
+.quantity i { padding: 3px 6px; border-radius: 3px; background: #ccc; cursor: pointer; }
+.quantity label { margin: 0 5px; }
+
+.remove_voucher { padding: 3px; color: #a91927; cursor: pointer; }
+.dropdown-menu { width: 100% !important; }
 
 /*.dataTables_scrollHeadInner { width: 100% !important; }
 .dataTables_scrollHeadInner table { width: 100% !important; }*/

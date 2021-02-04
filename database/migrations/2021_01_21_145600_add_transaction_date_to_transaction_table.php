@@ -14,7 +14,7 @@ class AddTransactionDateToTransactionTable extends Migration
     public function up()
     {
         Schema::table('transaction', function (Blueprint $table) {
-            $table->double('total', 2)->after('balance')->nullable();
+            $table->double('total', 15, 2)->after('balance')->nullable();
             $table->integer('completed_by')->after('completed')->nullable();
             $table->dateTime('transaction_date')->after('completed_by')->nullable();
             $table->integer('void_by')->after('void')->nullable();

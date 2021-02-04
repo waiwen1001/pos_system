@@ -18,11 +18,11 @@ class CreateTransactionTable extends Migration
             $table->string('transaction_no')->nullable();
             $table->string('invoice_no')->nullable();
             $table->integer('user_id')->nullable();
-            $table->double('subtotal', 2)->nullable();
-            $table->double('total_discount', 2)->nullable();
-            $table->double('payment', 2)->nullable();
+            $table->double('subtotal', 15, 2)->nullable();
+            $table->double('total_discount', 15, 2)->nullable();
+            $table->double('payment', 15, 2)->nullable();
             $table->string('payment_type')->nullable();
-            $table->double('balance', 2)->nullable();
+            $table->double('balance', 15, 2)->nullable();
             $table->integer('void')->nullable();
             $table->integer('completed')->nullable();
             $table->timestamps();

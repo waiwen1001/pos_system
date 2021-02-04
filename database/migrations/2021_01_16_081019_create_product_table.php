@@ -17,7 +17,7 @@ class CreateProductTable extends Migration
             $table->increments('id');
             $table->string('barcode')->nullable();
             $table->string('product_name')->nullable();
-            $table->double('price', 2)->nullable();
+            $table->double('price', 15, 2)->nullable();
             $table->timestamps();
         });
     }

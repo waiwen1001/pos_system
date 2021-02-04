@@ -19,10 +19,10 @@ class CreateTransactionDetailTable extends Migration
             $table->integer('product_id')->nullable();
             $table->string('product_name')->nullable();
             $table->integer('quantity')->nullable();
-            $table->double('price', 2)->nullable();
-            $table->double('discount', 2)->nullable();
-            $table->double('subtotal', 2)->nullable();
-            $table->double('total', 2)->nullable();
+            $table->double('price', 15, 2)->nullable();
+            $table->double('discount', 15, 2)->nullable();
+            $table->double('subtotal', 15, 2)->nullable();
+            $table->double('total', 15, 2)->nullable();
             $table->integer('void')->nullable();
             $table->timestamps();
         });

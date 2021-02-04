@@ -8,15 +8,18 @@ class transaction extends Model
 {
     protected $table = 'transaction';
     protected $fillable = [
+      'session_id',
       'transaction_no',
       'invoice_no',
       'user_id',
       'subtotal',
       'total_discount',
+      'voucher_id',
       'payment',
       'payment_type',
       'balance',
       'total',
+      'round_off',
       'void',
       'void_by',
       'void_date',

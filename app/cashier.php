@@ -9,7 +9,8 @@ class cashier extends Model
     protected $table = 'cashier';
     protected $fillable = [
       'branch',
-      'IP',
+      'ip',
+      'session_id',
       'opening',
       'opening_by',
       'opening_amount',

@@ -46,8 +46,14 @@
                   @foreach($pending_transaction->items_list as $item)
                     <tr item_id="{{ $item->id }}">
                       <td>{{ $item->product_name }}</td>
-                      <td>X {{ $item->quantity }}</td>
-                      <td>RM {{ number_format($item->subtotal, 2) }}</td>
+                      <td>
+                        <div class="quantity">
+                          <i class="fa fa-minus" onclick="editQuantity(this, 'plus', '{{ $item->id }}')"></i>
+                          <label>{{ $item->quantity }}</label>
+                          <i class="fa fa-plus" onclick="editQuantity(this, 'minus', '{{ $item->id }}')"></i>
+                        </div>
+                      </td>
+                      <td class="subtotal">RM {{ number_format($item->subtotal, 2) }}</td>
                       <td>
                         <button class="btn btn-dark items-cancel" onclick="cancelItem('{{ $item->id }}')">Cancel</button>
                       </td>
@@ -62,17 +68,26 @@
             <input type="hidden" name="transaction_id" id="transaction_id" value="{{ $transaction_id }}" />
             <div class="summary-detail">
               <label>Price</label>
-              <div id="price">RM {{ $subtotal }}</div>
+              <div>RM</div>
+              <div class="summary_price" id="price">{{ $subtotal }}</div>
             </div>
 
             <div class="summary-detail">
-              <label>Discount</label>
-              <div id="discount">RM {{ $discount }}</div>
+              <label>Discount <i style="display: {{ $have_discount == 0 ? 'none' : '' }};" class="fa fa-trash remove_voucher" id="remove_voucher"></i></label>
+              <div>RM</div>
+              <div class="summary_price" id="discount">{{ $discount }}</div>
+            </div>
+
+            <div class="summary-detail" id="round_off_box" style="display: {{ $round_off == 0 ? 'none' : '' }};">
+              <label>Round off</label>
+              <div>RM</div>
+              <div class="summary_price" id="round_off">{{ $round_off }}</div>
             </div>
 
             <div class="summary-detail bold">
               <label>Total</label>
-              <div id="total">RM {{ $total }}</div>
+              <div>RM</div>
+              <div class="summary_price" id="total">{{ $total }}</div>
             </div>
 
             <!-- <div class="summary-detail">
@@ -113,7 +128,7 @@
               <span>{{ $user->name }}</span>
             </button>
             <div class="dropdown-menu dropdown-menu-right">
-              <a class="dropdown-item" href="#" onclick="logout()">Logout</a>
+              <a class="dropdown-item" href="#" onclick="showClosing()">Logout</a>
             </div>
           </div>
 
@@ -130,36 +145,46 @@
           <div class="col-12">
             <div class="row">
               <div class="col-4">
-                <div class="btn btn-dark">Voucher</div>
+                <button class="btn btn-dark" id="voucherBtn" onclick="showVoucher()">Voucher</button>
               </div>
 
               <div class="col-4">
-                <div class="btn btn-dark" id="show_previous_receipt">Previous Receipt</div>
+                <button class="btn btn-dark" id="previousReceiptBtn">Previous Receipt</button>
               </div>
 
               <div class="col-4">
                 <div class="dropup">
-                  <button class="btn btn-dark dropdown-toggle" type="button" id="otherDropDown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <button class="btn btn-dark dropdown-toggle" type="button" id="otherDropDownBtn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     Other
                   </button>
-                  <div class="dropdown-menu" aria-labelledby="otherDropDown">
-                    <a class="dropdown-item" id="opening" href="#">Opening</a>
-                    <a class="dropdown-item" id="closing" href="#">Closing</a>
+                  <div class="dropdown-menu" aria-labelledby="otherDropDownBtn">
+                    <button class="dropdown-item" id="openingBtn" href="#" {{ $opening == 0 ? '' : 'disabled' }}>Opening</button>
+                    <button class="dropdown-item" id="closingBtn" href="#" {{ $opening == 1 ? '' : 'disabled' }}>Closing</button>
                   </div>
                 </div>
 
               </div>
 
               <div class="col-4">
-                <div class="btn btn-dark" id="cashCheckout">Cash Checkout</div>
+                <button class="btn btn-dark" id="cashCheckoutBtn">Cash Checkout</button>
               </div>
 
               <div class="col-4">
-                <div class="btn btn-dark" id="cardCheckout">Card Payment</div>
+                <div class="dropup">
+                  <button class="btn btn-dark dropdown-toggle" type="button" id="paymentTypeBtn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Payment type
+                  </button>
+                  <div class="dropdown-menu" aria-labelledby="paymentTypeBtn">
+                    <button class="dropdown-item cardPayment" payment_type="debit_card" href="#">Debit card</button>
+                    <button class="dropdown-item cardPayment" payment_type="credit_card" href="#">Credit card</button>
+                    <button class="dropdown-item cardPayment" payment_type="e-wallet" href="#">E-wallet</button>
+                  </div>
+                </div>
+
               </div>
 
               <div class="col-4">
-                <div class="btn btn-dark" onclick="clearTransaction()">Clear</div>
+                <button class="btn btn-dark" id="clearBtn" onclick="clearTransaction()">Clear</button>
               </div>
             </div>
           </div>
@@ -194,6 +219,42 @@
             <div class="toast-body" id="added_item_content">
             </div>
           </div>
+
+          <div id="removed_voucher_toast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true" data-delay="2000"> 
+            <div class="toast-header">
+              <div class="toast-icon error"></div>
+              <strong class="mr-auto">Voucher removed</strong>
+              <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="toast-body" id="removed_voucher_content">
+            </div>
+          </div>
+
+          <div id="added_voucher_toast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true" data-delay="2000"> 
+            <div class="toast-header">
+              <div class="toast-icon success"></div>
+              <strong class="mr-auto">Voucher added</strong>
+              <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="toast-body" id="added_voucher_content">
+            </div>
+          </div>
+
+          <div id="daily_closing_toast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true" data-delay="2000"> 
+            <div class="toast-header">
+              <div class="toast-icon success"></div>
+              <strong class="mr-auto">Cashier are closed</strong>
+              <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="toast-body" id="daily_closing_content">
+            </div>
+          </div>
           
         </div>
       </div>
@@ -212,12 +273,32 @@
           </button>
         </div>
         <div class="modal-body">
-          Are you sure to delete this item ?
+          Are you sure you want to delete this item ?
         </div>
         <div class="modal-footer">
           <input type="hidden" name="item_id" id="delete_item_id" />
           <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
           <button type="button" class="btn btn-primary" id="deleteSubmit">Yes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="removeVoucherModal" tabindex="-1" role="dialog" aria-labelledby="removeVoucherModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteModalLabel">Remove voucher ?</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to remove this voucher ?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+          <button type="button" class="btn btn-primary" id="submitRemoveVoucher">Yes</button>
         </div>
       </div>
     </div>
@@ -317,9 +398,9 @@
           <table id="previous_receipt_table" class="table table-bordered table-striped" cellspacing="0" width="100%" style="width: 100% !important;">
             <thead style="width: 100% !important;">
               <tr>
-                <th>ID</th>
-                <th>Payment type</th>
                 <th>Invoice No</th>
+                <th>Payment type</th>
+                <th>Reference No</th>
                 <th>Total</th>
                 <th>Received payment</th>
                 <th>Balance</th>
@@ -335,7 +416,7 @@
                   <td>{{ $completed->payment_type }}</td>
                   <td>
                     <p class="invoice_no">{{ $completed->invoice_no }}</p>
-                    @if($completed->payment_type == "card")
+                    @if($completed->payment_type != "cash")
                       <a href="#" onclick="editInvoiceNo('{{ $completed->id }}', '{{ $completed->invoice_no }}')">Edit</a>
                     @endif
                   </td>
@@ -442,7 +523,7 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="cardCheckoutModalLabel">Invoice No</h5>
+          <h5 class="modal-title" id="cardCheckoutModalLabel">Reference No</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -452,7 +533,28 @@
           <span class="invalid-feedback" role="alert"></span>
         </div>
         <div class="modal-footer">
+          <input type="hidden" name="payment_type" id="payment_type" />
           <button type="button" class="btn btn-success" id="submitCardPayment">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="voucherModal" tabindex="-1" role="dialog" aria-labelledby="voucherModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="voucherModalLabel">Voucher code</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <input type="text" class="form-control" name="voucher_code" autocomplete="off" />
+          <span class="invalid-feedback" role="alert"></span>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success" id="submitVoucher">Submit</button>
         </div>
       </div>
     </div>
@@ -462,7 +564,7 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="editInvoiceNoModalLabel">Edit Invoice No</h5>
+          <h5 class="modal-title" id="editInvoiceNoModalLabel">Edit Reference No</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -474,6 +576,87 @@
         <div class="modal-footer">
           <input type='hidden' name='edit_transaction_no' />
           <button type="button" class="btn btn-success" id="submitEditInvoiceNo">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="openingModal" tabindex="-1" role="dialog" aria-labelledby="openingModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="openingModalLabel">Cashier opening</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <label>Cashier cash</label>
+          <input type="text" class="form-control" name="cashier_opening_amount" />
+          <span class="invalid-feedback" role="alert"></span>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success" id="submitOpening" onclick="submitOpening()">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="closingModal" tabindex="-1" role="dialog" aria-labelledby="closingModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="closingModalLabel">Cashier logout</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <label>Cashier cash</label>
+          <input type="text" class="form-control" name="cashier_closing_amount" />
+          <span class="invalid-feedback" role="alert"></span>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success" id="submitClosing" onclick="submitClosing()">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="dailyClosingModal" tabindex="-1" role="dialog" aria-labelledby="dailyClosingModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="dailyClosingModalLabel">Cashier daily closing</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <h4 style="text-align: center;">Manager login</h4>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="text" class="form-control" name="manager_email" />
+            <span class="invalid-feedback" role="alert"></span>
+          </div>
+
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" class="form-control" name="manager_password" />
+            <span class="invalid-feedback" role="alert"></span>
+          </div>
+
+          <div class="form-group">
+            <label>Cashier cash</label>
+            <input type="text" class="form-control" name="daily_closing_amount" />
+            <span class="invalid-feedback" role="alert"></span>
+          </div>
+
+          <span id="dailyClosingFeedback" class="invalid-feedback" role="alert"></span>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success" id="submitDailyClosing" onclick="submitDailyClosing()">Submit</button>
         </div>
       </div>
     </div>
@@ -520,8 +703,11 @@
   
   var numpad_using_type = "numpad";
   var numpad_prefill = 0;
+  var searchFunc;
+  var voucherFunc;
 
   var transaction_total = "{{ $real_total }}";
+  var opening = "{{ $opening }}";
 
   var previous_receipt_table = $("#previous_receipt_table").DataTable( {
     pageLength: 25,
@@ -540,20 +726,28 @@
     });
 
     $("#barcode").on('keydown', function(e){
+      clearInterval(searchFunc);
       // enter
       // delay 50ms because keydown will not capture on change
       if($("#barcode_manual").is(":checked") == false)
       {
         if(e.which != 17){
-          setTimeout(searchAndAddItem, 50);
+          searchFunc = setTimeout(searchAndAddItem, 200);
         }
       }
       else
       {
         if(e.which == 13)
         {
-          setTimeout(searchAndAddItem, 50);
+          searchFunc = setTimeout(searchAndAddItem, 200);
         }
+      }
+    });
+
+    $("input[name='voucher_code']").on('keydown', function(e){
+      clearInterval(voucherFunc);
+      if(e.which != 17){
+        voucherFunc = setTimeout(submitVoucher, 200);
       }
     });
 
@@ -562,7 +756,7 @@
       submitDeleteItem(item_id);
     });
 
-    $("#cashCheckout").click(function(){
+    $("#cashCheckoutBtn").click(function(){
       $("input[name='received_payment']").val(0);
       numpad_using_type = "numpad";
       numpad_prefill = 0;
@@ -570,8 +764,11 @@
       showNumPad();
     });
 
-    $("#cardCheckout").click(function(){
+    $(".cardPayment").click(function(){
       $("input[name='invoice_no']").removeClass("is-invalid");
+
+      var payment_type = $(this).attr("payment_type");
+      $("#payment_type").val(payment_type);
       showInvoiceInput();
     });
 
@@ -648,7 +845,7 @@
       submitCashPayment();
     });
 
-    $("#show_previous_receipt").click(function(){
+    $("#previousReceiptBtn").click(function(){
       $("#previous_receipt").show();
 
       setTimeout(function(){
@@ -668,7 +865,7 @@
       }
       else
       {
-        $("input[name='invoice_no']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Invoice No cannot be empty.</strong>");
+        $("input[name='invoice_no']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Reference No cannot be empty.</strong>");
       }
     });
 
@@ -681,8 +878,42 @@
       }
       else
       {
-        $("input[name='edit_invoice_no']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Invoice No cannot be empty.</strong>");
+        $("input[name='edit_invoice_no']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Reference No cannot be empty.</strong>");
       }
+    });
+
+    $("#submitVoucher").click(function(){
+      submitVoucher();
+    });
+
+    $("input[name='voucher_code']").on('keydown', function(e){
+      if(e.which == 13)
+      {
+        submitVoucher();
+      }
+    });
+
+    $("#remove_voucher").click(function(){
+      $("#removeVoucherModal").modal('show');
+    });
+
+    $("#submitRemoveVoucher").click(function(){
+      submitRemoveVoucher();
+    });
+
+    if(opening == 0)
+    {
+      $("#openingModal").modal('show');
+      disablePosSystem();
+    }
+
+    $("#openingBtn").click(function(){
+      $("#openingModal").modal('show');
+    });
+
+    $("#closingBtn").click(function(){
+      $("#dailyClosingFeedback").hide();
+      $("#dailyClosingModal").modal('show');
     });
 
   });
@@ -735,7 +966,13 @@
       let item_detail = transaction_summary.items_list[a];
       html += "<tr item_id="+item_detail.id+">";
       html += "<td>"+item_detail.product_name+"</td>";
-      html += "<td>X "+item_detail.quantity+"</td>";
+      html += "<td>";
+      html += "<div class='quantity'>";
+      html += "<i class='fa fa-minus' onclick='editQuantity(this, \"plus\", \""+item_detail.id+"\")'></i>";
+      html += "<label>"+item_detail.quantity+"</label>";
+      html += "<i class='fa fa-plus' onclick='editQuantity(this, \"minus\", \""+item_detail.id+"\")'></i>";
+      html += "</div>";
+      html += "</td>";
       html += "<td>RM "+item_detail.subtotal_text+"</td>";
       html += "<td>";
       html += "<button class='btn btn-dark items-cancel' onclick='cancelItem(\""+item_detail.id+"\")'>Cancel</button>";
@@ -744,20 +981,48 @@
     }
 
     $("#items-table tbody").html(html);
-    $("#price").html("RM "+transaction_summary.subtotal);
-    $("#discount").html("RM "+transaction_summary.discount);
-    $("#total").html("RM "+transaction_summary.total);
+    $("#price").html(transaction_summary.subtotal);
+    $("#total").html(transaction_summary.total);
+
+    if(transaction_summary.round_off == "0.00")
+    {
+      $("#round_off_box").hide();
+    }
+    else
+    {
+      $("#round_off_box").show();
+    }
+
+    $("#round_off").html(transaction_summary.round_off);
     // $("#payment").html("RM "+transaction_summary.payment);
     // $("#balance").html("RM "+transaction_summary.balance);
   }
 
   function submitDeleteItem(item_id)
   {
-    $.post("{{ route('submitDeleteItem') }}", { "_token" : "{{ csrf_token() }}", "item_id" : item_id }, function(result){
+    var transaction_id = $("#transaction_id").val();
+    $.post("{{ route('submitDeleteItem') }}", { "_token" : "{{ csrf_token() }}", "item_id" : item_id, "transaction_id" : transaction_id }, function(result){
       if(result.error == 0)
       {
         $("#deleteModal").modal('hide');
         $("#items-table tbody tr[item_id="+item_id+"]").remove();
+
+        let transaction_summary = result.transaction_summary;
+        transaction_total = transaction_summary.real_total;
+
+        $("#price").html(transaction_summary.subtotal);
+        $("#total").html(transaction_summary.total);
+
+        if(transaction_summary.round_off == "0.00")
+        {
+          $("#round_off_box").hide();
+        }
+        else
+        {
+          $("#round_off_box").show();
+        }
+
+        $("#round_off").html(transaction_summary.round_off);
       }
       else
       {
@@ -800,9 +1065,10 @@
 
     $.post("{{ route('submitTransaction') }}", {"_token" : "{{ csrf_token() }}", "received_cash" : received_cash, "transaction_id" : transaction_id, "payment_type" : "cash" }, function(result){
 
-      $("#numpadModal").modal('hide');
       if(result.error == 0)
       {
+        $("#numpadModal").modal('hide');
+
         $("#completedTransactionModal").modal('show');
         
         $("#transaction_balance").html(result.balance);
@@ -830,15 +1096,17 @@
     {
       var transaction_id = $("#transaction_id").val();
 
-      console.log(transaction_id);
-
       if(transaction_id)
       {
         $.post("{{ route('clearTransaction') }}", { "_token" : "{{ csrf_token() }}", "transaction_id" : transaction_id}, function(result){
           if(result.error == 0)
           {
+            transaction_total = 0;
+
             $("#items-table tbody").html("");
-            $("#price, #discount, #total").html("RM 0.00");
+            $("#price, #discount, #total, #round_off").html("0.00");
+            $("#round_off_box").hide();
+            $("#remove_voucher").hide();
 
             $("#clearItemsModal").modal('hide');
           }
@@ -852,7 +1120,9 @@
     else if(type == 0)
     {
       $("#items-table tbody").html("");
-      $("#price, #discount, #total").html("RM 0.00");
+      $("#price, #discount, #total, #round_off").html("0.00");
+      $("#remove_voucher").hide();
+      $("#round_off_box").hide();
     }
   }
 
@@ -868,7 +1138,7 @@
     data += "<td>"+completed_transaction.transaction_no+"</td>";
     data += "<td>"+completed_transaction.payment_type+"</td>";
     data += "<td>";
-    if(completed_transaction.payment_type == "card")
+    if(completed_transaction.payment_type != "cash")
     {
       data += "<p class='invoice_no'>"+completed_transaction.invoice_no+"</p>";
       data += "<a href='#' onclick='editInvoiceNo(\""+completed_transaction.id+"\", \""+completed_transaction.invoice_no+"\")'>Edit</a>";
@@ -986,8 +1256,9 @@
   {
     var transaction_id = $("#transaction_id").val();
     var invoice_no = $("input[name='invoice_no']").val();
+    var payment_type = $("#payment_type").val();
 
-    $.post("{{ route('submitTransaction') }}", {"_token" : "{{ csrf_token() }}", "transaction_id" : transaction_id, "payment_type" : "card", "invoice_no" : invoice_no }, function(result){
+    $.post("{{ route('submitTransaction') }}", {"_token" : "{{ csrf_token() }}", "transaction_id" : transaction_id, "payment_type" : payment_type, "invoice_no" : invoice_no }, function(result){
 
       $("#cardCheckoutModal").modal('hide');
       if(result.error == 0)
@@ -1029,6 +1300,257 @@
         $("#previous_receipt_table tbody tr[transaction_id="+transaction_id+"]").find(".invoice_no").html(edit_invoice_no);
       }
 
+    });
+  }
+
+  function editQuantity(_this, type, item_id)
+  {
+    $.post("{{ route('editQuantity') }}", { "_token" : "{{ csrf_token() }}", "type" : type, "item_id" : item_id}, function(result){
+      if(result.error == 0)
+      {
+        if(result.quantity > 0)
+        {
+          $(_this).siblings("label").html(result.quantity);
+          $("#items-table tbody tr[item_id="+item_id+"] td.subtotal").html(result.subtotal);
+
+          let transaction_summary = result.transaction_summary;
+          transaction_total = transaction_summary.real_total;
+
+          $("#price").html(transaction_summary.subtotal);
+          $("#total").html(transaction_summary.total);
+
+          if(transaction_summary.round_off == "0.00")
+          {
+            $("#round_off_box").hide();
+          }
+          else
+          {
+            $("#round_off_box").show();
+          }
+
+          $("#round_off").html(transaction_summary.round_off);
+        }
+        else
+        {
+          $("#items-table tbody tr[item_id="+item_id+"]").remove();
+        }
+        
+      }
+    });
+  }
+
+  function showVoucher()
+  {
+    $("#voucherModal").modal('show');
+
+    setTimeout(function(){
+      $("input[name='voucher_code']").focus();
+    }, 500);
+  }
+
+  function submitVoucher()
+  {
+    var voucher_code = $("input[name='voucher_code']").val();
+    if(voucher_code)
+    {
+      $("input[name='voucher_code']").removeClass("is-invalid");
+    }
+    else
+    {
+      $("input[name='voucher_code']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Voucher code cannot be empty.</strong>");
+      return false;
+    }
+
+    let code = $("input[name='voucher_code']").val();
+    let transaction_id = $("#transaction_id").val();
+
+    $.post("{{ route('submitVoucher') }}", { "_token" : "{{ csrf_token() }}", "code" : code, "transaction_id" : transaction_id}, function(result){
+      if(result.error == 0)
+      {
+        transaction_total = result.real_total;
+
+        $("#total").html(result.total);
+        $("#discount").html(result.total_discount);
+
+        if(result.round_off == "0.00")
+        {
+          $("#round_off_box").hide();
+        }
+        else
+        {
+          $("#round_off_box").show();
+        }
+
+        $("#round_off").html(result.round_off);
+
+        $("#remove_voucher").css('display', '');
+
+        $("input[name='voucher_code']").val("");
+
+        $("#voucherModal").modal('hide');
+
+        $("#added_voucher_content").html("Voucher is successfully added");
+        $("#added_voucher_toast").toast('show');
+      }
+      else if(result.error == 1)
+      {
+        $("input[name='voucher_code']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>"+result.message+".</strong>");
+      }
+    })
+  }
+
+  function submitRemoveVoucher()
+  {
+    let transaction_id = $("#transaction_id").val();
+    $.post("{{ route('removeVoucher') }}", { "_token" : "{{ csrf_token() }}", "transaction_id" : transaction_id}, function(result){
+      if(result.error == 0)
+      {
+        transaction_total = result.real_total;
+
+        $("#removeVoucherModal").modal('hide');
+
+        $("#removed_voucher_content").html("Voucher is removed.");
+        $("#removed_voucher_toast").toast('show');
+
+        $("#remove_voucher").hide();
+        $("#discount").html("0.00");
+        $("#total").html(result.total);
+
+        if(result.round_off == "0.00")
+        {
+          $("#round_off_box").hide();
+        }
+        else
+        {
+          $("#round_off_box").show();
+        }
+
+        $("#round_off").html(result.round_off);
+      }
+    });
+  }
+
+  function disablePosSystem()
+  {
+    $("#barcode, #voucherBtn, #cashCheckoutBtn, #paymentTypeBtn, #clearBtn, #previousReceiptBtn").attr("disabled", true);
+  }
+
+  function enablePosSystem()
+  {
+    $("#barcode, #voucherBtn, #cashCheckoutBtn, #paymentTypeBtn, #clearBtn, #previousReceiptBtn").attr("disabled", false);
+  }
+
+  function submitOpening()
+  {
+    var opening_amount = $("input[name='cashier_opening_amount']").val();
+
+    if(opening_amount)
+    {
+      $.post("{{ route('submitOpening') }}", {"_token" : "{{ csrf_token() }}", "opening_amount" : opening_amount}, function(result){
+        if(result.error == 0)
+        {
+          $("#openingModal").modal('hide');
+          enablePosSystem();
+
+          opening = 1;
+
+          $("#openingBtn").attr("disabled", true);
+          $("#closingBtn").attr("disabled", false);
+        }
+      });
+    }
+    else
+    {
+      $("input[name='cashier_opening_amount']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Opening amount cannot be empty.</strong>");
+    }
+  }
+
+  function showClosing()
+  {
+    if(opening == 0)
+    {
+      logout();
+    }
+    else
+    {
+      $("input[name='daily_closing_amount']").removeClass("is-invalid");
+      $("#closingModal").modal('show');
+    }
+  }
+
+  function submitClosing()
+  {
+    var closing_amount = $("input[name='cashier_closing_amount']").val();
+
+    if(closing_amount)
+    {
+      $.post("{{ route('submitClosing') }}", {"_token" : "{{ csrf_token() }}", "closing_amount" : closing_amount}, function(result){
+        if(result.error == 0)
+        {
+          $("#closingModal").modal('hide');
+          logout();
+        }
+      });
+    }
+    else
+    {
+      $("input[name='cashier_closing_amount']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Closing amount cannot be empty.</strong>");
+    }
+  }
+
+  function submitDailyClosing()
+  {
+    $("#dailyClosingFeedback").hide();
+
+    $("input[name='manager_email'], input[name='manager_password'], input[name='daily_closing_amount']").removeClass("is-invalid");
+
+    var manager_email = $("input[name='manager_email']").val();
+    var manager_password = $("input[name='manager_password']").val();
+    var daily_closing_amount = $("input[name='daily_closing_amount']").val();
+
+    var proceed = 1;
+
+    if(!manager_email)
+    {
+      $("input[name='manager_email']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Email cannot be empty.</strong>");
+      proceed = 0;
+    }
+
+    if(!manager_password)
+    {
+      $("input[name='manager_password']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Password cannot be empty.</strong>");
+      proceed = 0;
+    }
+
+    if(!daily_closing_amount)
+    {
+      $("input[name='daily_closing_amount']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Closing amount cannot be empty.</strong>");
+      proceed = 0;
+    }
+
+    if(proceed == 0)
+    {
+      return;
+    }
+
+    $.post("{{ route('submitDailyClosing') }}", {"_token" : "{{ csrf_token() }}", "email" : manager_email, "password" : manager_password, "closing_amount" : daily_closing_amount}, function(result){
+      if(result.error == 0)
+      {
+        $("#dailyClosingModal").modal('hide');
+        disablePosSystem();
+
+        $("#openingBtn").attr("disabled", false);
+        $("#closingBtn").attr("disabled", true);
+
+        $("#daily_closing_content").html("This cashier are now closed.");
+        $("#daily_closing_toast").toast('show');
+
+        opening = 0;
+      }
+      else
+      {
+        $("#dailyClosingFeedback").html("<strong>"+result.message+".</strong>").show();
+      }
     });
   }
 

@@ -19,11 +19,11 @@ class CreateCashierTable extends Migration
             $table->string('IP')->nullable();
             $table->integer('opening')->nullable();
             $table->integer('opening_by')->nullable();
-            $table->double('opening_amount', 2)->nullable();
+            $table->double('opening_amount', 15, 2)->nullable();
             $table->dateTime('opening_date_time')->nullable();
             $table->integer('closing')->nullable();
             $table->integer('closing_by')->nullable();
-            $table->double('closing_amount', 2)->nullable();
+            $table->double('closing_amount', 15, 2)->nullable();
             $table->dateTime('closing_date_time')->nullable();
             $table->timestamps();
         });
