@@ -827,14 +827,14 @@
       if($("#barcode_manual").is(":checked") == false)
       {
         if(e.which != 17){
-          searchFunc = setTimeout(searchAndAddItem, 200);
+          searchFunc = setTimeout(searchAndAddItem, 10);
         }
       }
       else
       {
         if(e.which == 13)
         {
-          searchFunc = setTimeout(searchAndAddItem, 200);
+          searchFunc = setTimeout(searchAndAddItem, 10);
         }
       }
     });
