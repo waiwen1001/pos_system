@@ -27,6 +27,11 @@ Route::post('/removeVoucher', 'HomeController@removeVoucher')->name('removeVouch
 Route::post('/submitOpening', 'HomeController@submitOpening')->name('submitOpening');
 Route::post('/submitClosing', 'HomeController@submitClosing')->name('submitClosing');
 Route::post('/submitDailyClosing', 'HomeController@submitDailyClosing')->name('submitDailyClosing');
+Route::post('/submitCashFloat', 'HomeController@submitCashFloat')->name('submitCashFloat');
+Route::get('/getClosingAmount', 'HomeController@calculateClosingAmount')->name('calculateClosingAmount');
+Route::post('/transaction_detail', 'HomeController@getTransactionDetail')->name('getTransactionDetail');
 
+Route::get('/testing', 'HomeController@testing')->name('testing');
 Route::get('/myIP', 'HomeController@myIP')->name('myIP');
+
 

@@ -10,6 +10,7 @@ use App\transaction_detail;
 use App\cashier;
 use App\voucher;
 use App\session;
+use App\cash_float;
 
 use Illuminate\Support\Facades\Auth;
 
@@ -46,6 +47,7 @@ class HomeController extends Controller
       $balance = 0;
       $round_off = 0;
       $transaction_id = null;
+      $voucher_name = null;
 
       $pending_transaction = transaction::where('completed', null)->first();
       if($pending_transaction)
@@ -68,6 +70,15 @@ class HomeController extends Controller
         $balance = $pending_transaction->balance;
 
         $transaction_id = $pending_transaction->id;
+
+        if($pending_transaction->voucher_id)
+        {
+          $voucher_detail = voucher::where('id', $pending_transaction->voucher_id)->first();
+          if($voucher_detail)
+          {
+            $voucher_name = $voucher_detail->name;
+          }
+        }
       }
 
       $completed_transaction = transaction::where('completed', 1)->get();
@@ -108,7 +119,7 @@ class HomeController extends Controller
         }
       }
 
-      return view('front.index', compact('user', 'pending_transaction', 'subtotal', 'discount', 'have_discount', 'total', 'real_total', 'round_off', 'payment', 'balance', 'transaction_id', 'completed_transaction', 'opening'));
+      return view('front.index', compact('user', 'pending_transaction', 'subtotal', 'discount', 'have_discount', 'total', 'real_total', 'round_off', 'payment', 'balance', 'transaction_id', 'completed_transaction', 'opening', 'voucher_name'));
     }
 
     public function searchAndAddItem(Request $request)
@@ -151,8 +162,11 @@ class HomeController extends Controller
             $session_id = $session->id;
           }
 
+          $cashier_ip = $_SERVER['REMOTE_ADDR'];
+
           $transaction = transaction::create([
             'session_id' => $session_id,
+            'ip' => $cashier_ip,
             'transaction_no' => uniqid(),
             'user_id' => $user->id
           ]);
@@ -306,6 +320,7 @@ class HomeController extends Controller
 
       $total = $total - $total_discount;
 
+      $payment_type_text = "";
       if($payment_type == "cash")
       {
         $received_cash = $request->received_cash;
@@ -320,6 +335,7 @@ class HomeController extends Controller
         
         $round_off = $total_summary->round_off;
         $balance = $received_cash - $total;
+        $payment_type_text = "Cash";
       } 
       else
       {
@@ -327,6 +343,19 @@ class HomeController extends Controller
         if($invoice_no)
         {
           $valid_payment = true;
+        }
+
+        if($payment_type == "e-wallet")
+        {
+          $payment_type_text = "E-Wallet";
+        }
+        elseif($payment_type == "debit_card")
+        {
+          $payment_type_text = "Debit Card";
+        }
+        elseif($payment_type == "credit_card")
+        {
+          $payment_type_text = "Credit Card";
         }
       }
       
@@ -338,6 +367,7 @@ class HomeController extends Controller
           'total_discount' => round($total_discount, 2),
           'payment' => round($received_cash, 2),
           'payment_type' => $payment_type,
+          'payment_type_text' => $payment_type_text,
           'balance' => round($balance, 2),
           'total' => round($total, 2),
           'round_off' => round($round_off, 2),
@@ -804,12 +834,137 @@ class HomeController extends Controller
 
         return response()->json($response);
       }
+    }
 
+    public function submitCashFloat(Request $request)
+    {
+      $user = Auth::user();
+      $cashier_ip = $_SERVER['REMOTE_ADDR'];
+      $cashier = cashier::where('ip', $cashier_ip)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
+
+      if(!$cashier)
+      {
+        $response = new \stdClass();
+        $response->error = 1;
+        $response->message = "Cashier not found";
+
+        return response()->json($response);
+      }
+
+      $session = session::where('closed', null)->first();
+
+      if(!$session)
+      {
+        $response = new \stdClass();
+        $response->error = 1;
+        $response->message = "Session not found";
+
+        return response()->json($response);
+      }
+
+      cash_float::create([
+        'user_id' => $user->id,
+        'ip' => $cashier_ip,
+        'session_id' => $session->id,
+        'type' => $request->type,
+        'amount' => $request->amount,
+        'remarks' => $request->remarks
+      ]);
+
+      $response = new \stdClass();
+      $response->error = 0;
+      $response->message = "Cash float submitted";
+
+      return response()->json($response);
+    }
+
+    public function calculateClosingAmount()
+    {
+      $cashier_ip = $_SERVER['REMOTE_ADDR'];
+
+      $session = session::where('closed', null)->first();
+
+      if(!$session)
+      {
+        $response = new \stdClass();
+        $response->error = 1;
+        $response->message = "Session not found";
+
+        return response()->json($response);
+      }
+
+      $closing_amount = 0;
+
+      $transaction_list = transaction::where('session_id', $session->id)->where('ip', $cashier_ip)->where('payment_type', 'cash')->where('completed', 1)->get();
+      $cashier = cashier::where('ip', $cashier_ip)->where('session_id', $session->id)->first();
+      $cash_float_list = cash_float::where('ip', $cashier_ip)->where('session_id', $session->id)->get();
+
+      foreach($transaction_list as $transaction)
+      {
+        $closing_amount += $transaction->total;
+      }
+
+      if($cashier)
+      {
+        $closing_amount += $cashier->opening_amount;
+      }
+      
+      foreach($cash_float_list as $cash_float)
+      {
+        if($cash_float->type == "in")
+        {
+          $closing_amount += $cash_float->amount;
+        }
+        elseif($cash_float->type == "out")
+        {
+          $closing_amount -= $cash_float->amount;
+        }
+      }
+
+      return $closing_amount;
+    }
+
+    public function getTransactionDetail(Request $request)
+    {
+      $transaction = transaction::where('transaction.id', $request->transaction_id)->leftJoin('users', 'users.id', '=', 'transaction.completed_by')->select('transaction.*', 'users.name as completed_by_name')->first();
+
+      $transaction_detail_list = transaction_detail::where('transaction_detail.transaction_id', $request->transaction_id)->leftJoin('product', 'product.id', '=', 'transaction_detail.product_id')->select('transaction_detail.*', 'product.product_name', 'product.barcode')->get();
+
+      $total_quantity = 0;
+      $total_items = count($transaction_detail_list);
+
+      foreach($transaction_detail_list as $transaction_detail)
+      {
+        $transaction_detail->price_text = number_format($transaction_detail->price, 2);
+        $transaction_detail->total_text = number_format($transaction_detail->total, 2);
+
+        $total_quantity += $transaction_detail->quantity;
+      }
+
+      $transaction->total_quantity = $total_quantity;
+      $transaction->total_items = $total_items;
+      $transaction->total_text = number_format($transaction->total, 2);
+
+      $transaction->receipt_date = date('l, d-m-Y', strtotime($transaction->created_at));
+      $transaction->receipt_time = date('H:i', strtotime($transaction->created_at));
+
+      $response = new \stdClass();
+      $response->error = 0;
+      $response->message = "Success";
+      $response->transaction = $transaction;
+      $response->transaction_detail = $transaction_detail_list;
+
+      return response()->json($response);
     }
 
     public function myIP()
     {
       dd($_SERVER['REMOTE_ADDR']);
+    }
+
+    public function testing()
+    {
+      dd($this->calculateClosingAmount());
     }
 }
 

@@ -67,6 +67,7 @@ body { font-family: arial; }
 
 .remove_voucher { padding: 3px; color: #a91927; cursor: pointer; }
 .dropdown-menu { width: 100% !important; }
+.discount_name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: calc(100% - 40px); }
 
 /*.dataTables_scrollHeadInner { width: 100% !important; }
 .dataTables_scrollHeadInner table { width: 100% !important; }*/

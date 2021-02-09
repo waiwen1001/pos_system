@@ -73,7 +73,7 @@
             </div>
 
             <div class="summary-detail">
-              <label>Discount <i style="display: {{ $have_discount == 0 ? 'none' : '' }};" class="fa fa-trash remove_voucher" id="remove_voucher"></i></label>
+              <label style="max-width: calc(50% - 16px); height: 30px;"><label class="discount_name" id="discount_name">{{ $voucher_name ? $voucher_name : 'Discount'}}</label> <i style="display: {{ $have_discount == 0 ? 'none' : '' }}; float: right; margin-right: 10px;" class="fa fa-trash remove_voucher" id="remove_voucher"></i></label>
               <div>RM</div>
               <div class="summary_price" id="discount">{{ $discount }}</div>
             </div>
@@ -159,7 +159,10 @@
                   </button>
                   <div class="dropdown-menu" aria-labelledby="otherDropDownBtn">
                     <button class="dropdown-item" id="openingBtn" href="#" {{ $opening == 0 ? '' : 'disabled' }}>Opening</button>
-                    <button class="dropdown-item" id="closingBtn" href="#" {{ $opening == 1 ? '' : 'disabled' }}>Closing</button>
+                    <button class="dropdown-item" id="closingBtn" href="#" {{ $opening == 1 ? '' : 'disabled' }}>Daily Closing</button>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item" id="floatInBtn" href="#" {{ $opening == 1 ? '' : 'disabled' }}>Cash Float ( In )</button>
+                    <button class="dropdown-item" id="floatOutBtn" href="#" {{ $opening == 1 ? '' : 'disabled' }}>Cash Float ( Out )</button>
                   </div>
                 </div>
 
@@ -253,6 +256,30 @@
               </button>
             </div>
             <div class="toast-body" id="daily_closing_content">
+            </div>
+          </div>
+
+          <div id="success_toast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true" data-delay="2000"> 
+            <div class="toast-header">
+              <div class="toast-icon success"></div>
+              <strong class="mr-auto">Success</strong>
+              <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="toast-body" id="success_content">
+            </div>
+          </div>
+
+          <div id="error_toast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true" data-delay="2000"> 
+            <div class="toast-header">
+              <div class="toast-icon error"></div>
+              <strong class="mr-auto">Error</strong>
+              <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="toast-body" id="error_content">
             </div>
           </div>
           
@@ -404,7 +431,7 @@
                 <th>Total</th>
                 <th>Received payment</th>
                 <th>Balance</th>
-                <th>Void</th>
+                <!-- <th>Void</th> -->
                 <th>Transaction date</th>
                 <th>Print</th>
               </tr>
@@ -413,7 +440,7 @@
               @foreach($completed_transaction as $completed)
                 <tr transaction_id="{{ $completed->id }}">
                   <td>{{ $completed->transaction_no }}</td>
-                  <td>{{ $completed->payment_type }}</td>
+                  <td>{{ $completed->payment_type_text }}</td>
                   <td>
                     <p class="invoice_no">{{ $completed->invoice_no }}</p>
                     @if($completed->payment_type != "cash")
@@ -423,7 +450,7 @@
                   <td>{{ number_format($completed->total, 2) }}</td>
                   <td>{{ number_format($completed->payment, 2) }}</td>
                   <td>{{ number_format($completed->balance, 2) }}</td>
-                  <td>
+                  <!-- <td>
                     <div class="void_column" transaction_id="{{ $completed->id }}">
                       @if($completed->void == 1)
                         <span class="void">Voided by {{ $completed->void_by_name }}</span>
@@ -433,10 +460,10 @@
                         <button type="button" class="btn btn-danger" onclick="voidTransaction('{{ $completed->id }}')">Void</button>
                       @endif
                     </div>
-                  </td>
+                  </td> -->
                   <td data-order="{{ $completed->transaction_date }}">{{ date('d M Y g:i:s A', strtotime($completed->transaction_date)) }}</td>
                   <td>
-                    <button class="btn btn-success" onclick="printReceipt('{{ $completed->transaction_no }}', '{{ number_format($completed->total, 2) }}')">Print</button>
+                    <button class="btn btn-success" onclick="printReceipt('{{ $completed->id }}', 1)">Print</button>
                   </td>
                 </tr>
               @endforeach
@@ -515,8 +542,55 @@
   </form>
 
   <div id="receipt">
-    <div>Transaction No : <span id="receipt_transaction_no"></span></div>
-    <div>Total : <span id="receipt_total"></span></div>
+    <div style="padding: 30px;">
+      <div style="display: flex; flex-direction: column; text-align: center;">
+        <label>HOME U(M) SDN BHD (125272-P)</label>
+        <label>S/36,LOT1745, CABANG TIGA PENGKALAN CHEPA</label>
+        <label>TEL:09-7744243</label>
+        <label>FAX:09-7744243</label>
+        <label>homeumsdnbhd@gmail.com</label>
+        <label>INVOICE</label>
+      </div>
+      <div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>
+      <div id="receipt_items">
+        
+      </div>
+      <div style="display: flex; margin-top: 20px;">
+        <div style="flex: 1;">No. Qtys: <label id="receipt_total_quantity"></label></div>
+        <div style="flex: 1;">No. Items: <label id="receipt_total_items"></label></div>
+      </div>
+      <div style="border: 2px dashed #999; margin: 10px 0;"></div>
+      <div style="margin-bottom: 20px;">
+        <div style="width: 100%; font-size: 20px; font-weight: bold; display: flex; justify-content: space-between;">
+          <div>Total</div>
+          <div id="receipt_total"></div>
+        </div>
+        <div id="receipt_other_payment" style="width: 100%; display: flex; justify-content: space-between; font-size: 18px;"></div>
+      </div>
+      <div style="border: 2px dashed #999; margin: 10px 0;"></div>
+      <div>
+        <div style="text-align: center;">THANK YOU FOR SHOPING</div>
+        <div style="text-align: center;">GOODS SOLD ARE NOT REFUNDABLE</div>
+
+        <div style="margin: 20px 0 40px 0;">
+          <div style="display: inline-block;" id="receipt_date"></div>
+          <div style="display: inline-block; margin-left: 20px;" id="receipt_time"></div>
+        </div>
+
+        <div>
+          <label>Cashier : <label id="receipt_completed_by"></label> </label>
+          <div style="display: flex; justify-content: space-between;">
+            <div id="receipt_completed_by_2"></div>
+            <div>Inv : <label id="receipt_invoice_no"></label></div>
+          </div>
+        </div>
+
+        <div style="text-align: center;" id="receipt_reprint">
+          <div style="font-weight: bold;">... REPRINT COPY ...</div>
+          <div id="reprint_date_time"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="modal fade" id="cardCheckoutModal" tabindex="-1" role="dialog" aria-labelledby="cardCheckoutModalLabel" aria-hidden="true">
@@ -553,9 +627,9 @@
           <input type="text" class="form-control" name="voucher_code" autocomplete="off" />
           <span class="invalid-feedback" role="alert"></span>
         </div>
-        <div class="modal-footer">
+        <!-- <div class="modal-footer">
           <button type="button" class="btn btn-success" id="submitVoucher">Submit</button>
-        </div>
+        </div> -->
       </div>
     </div>
   </div>
@@ -662,6 +736,27 @@
     </div>
   </div>
 
+  <div class="modal fade" id="cashFloatModal" tabindex="-1" role="dialog" aria-labelledby="cashFloatModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="voucherModalLabel"><label id="cash_float_title">Cash Float</label></h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <input type="text" class="form-control" name="cash_float" autocomplete="off" />
+          <span class="invalid-feedback" role="alert"></span>
+        </div>
+        <div class="modal-footer">
+          <input type="hidden" name="cash_float_type" />
+          <button type="button" class="btn btn-success" id="submitCashFloat">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- <div class="modal fade" id="cashierLoginModal" tabindex="-1" role="dialog" aria-labelledby="cashierLoginModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -714,7 +809,7 @@
     scrollY: '60vh',
     scrollCollapse: true,
     // responsive: true,
-    order: [[ 7, "desc" ]]
+    order: [[ 6, "desc" ]]
   });
 
   $(document).ready(function(){
@@ -912,9 +1007,33 @@
     });
 
     $("#closingBtn").click(function(){
-      $("#dailyClosingFeedback").hide();
-      $("#dailyClosingModal").modal('show');
+
+      $.get("{{ route('calculateClosingAmount') }}", function(result){
+        $("#dailyClosingFeedback").hide();
+        $("#dailyClosingModal").modal('show');
+        $("input[name='daily_closing_amount']").removeClass("is-invalid").val(result);
+      });
     });
+
+    $("#floatInBtn, #floatOutBtn").click(function(){
+      $("input[name='cash_float']").val("");
+      if($(this).attr("id") == "floatInBtn")
+      {
+        $("input[name='cash_float_type']").val('in');
+        $("#cash_float_title").html("Cash Float ( In )");
+      }
+      else if($(this).attr("id") == "floatOutBtn")
+      {
+        $("input[name='cash_float_type']").val('out');
+        $("#cash_float_title").html("Cash Float ( Out )");
+      }
+
+      $("#cashFloatModal").modal('show');
+    });
+
+    $("#submitCashFloat").click(function(){
+      submitCashFloat();
+    });  
 
     let date = new Date();
     $("#time").text(`${date.toLocaleTimeString()}`);
@@ -1081,7 +1200,7 @@
         
         $("#transaction_balance").html(result.balance);
 
-        transactionCompleted(result.completed_transaction.transaction_no, result.completed_transaction.total, 1);
+        transactionCompleted(result.completed_transaction.id, 1);
 
         submitClearTransaction(0);
         prependCompletedTransaction(result.completed_transaction);
@@ -1113,6 +1232,7 @@
 
             $("#items-table tbody").html("");
             $("#price, #discount, #total, #round_off").html("0.00");
+            $("#discount_name").html("Discount");
             $("#round_off_box").hide();
             $("#remove_voucher").hide();
 
@@ -1129,6 +1249,7 @@
     {
       $("#items-table tbody").html("");
       $("#price, #discount, #total, #round_off").html("0.00");
+      $("#discount_name").html("Discount");
       $("#remove_voucher").hide();
       $("#round_off_box").hide();
     }
@@ -1136,15 +1257,13 @@
 
   function prependCompletedTransaction(completed_transaction)
   {
-    console.log(completed_transaction);
-
     var void_html = "<div class='void_column' transaction_id="+completed_transaction.id+">";
     void_html += "<button type='button' class='btn btn-danger' onclick='voidTransaction(\""+completed_transaction.id+"\")'>Void</button>";
     void_html += "</div>";
 
     var data = "<tr transaction_id="+completed_transaction.id+">";
     data += "<td>"+completed_transaction.transaction_no+"</td>";
-    data += "<td>"+completed_transaction.payment_type+"</td>";
+    data += "<td>"+completed_transaction.payment_type_text+"</td>";
     data += "<td>";
     if(completed_transaction.payment_type != "cash")
     {
@@ -1155,10 +1274,10 @@
     data += "<td>"+completed_transaction.total_text+"</td>";
     data += "<td>"+completed_transaction.payment_text+"</td>";
     data += "<td>"+completed_transaction.balance_text+"</td>";
-    data += "<td>"+void_html+"</td>";
+    // data += "<td>"+void_html+"</td>";
     data += "<td data-order='"+completed_transaction.transaction_date+"'>"+completed_transaction.transaction_date_text+"</td>";
 
-    data += '<td><div class="btn btn-success print_receipt" transaction_no=\''+completed_transaction.transaction_no+'\' total=\''+completed_transaction.total_text+'\'>Print</div></td>';
+    data += '<td><div class="btn btn-success print_receipt" transaction_id=\''+completed_transaction.id+'\'>Print</div></td>';
 
     data += "</tr>";
 
@@ -1168,10 +1287,8 @@
     // previous_receipt_table.responsive.recalc();
 
     $(".print_receipt").click(function(){
-      var transaction_no = $(this).attr("transaction_no");
-      var total_text = $(this).attr("total");
-
-      printReceipt(transaction_no, total_text);
+      let print_transaction_id = $(this).attr("transaction_id");
+      printReceipt(print_transaction_id, 1);
     });
   }
 
@@ -1227,9 +1344,9 @@
     $("#logout_form").submit();
   }
 
-  function transactionCompleted(transaction_no, total, show_balance)
+  function transactionCompleted(transaction_id, show_balance)
   {
-    printReceipt(transaction_no, total);
+    printReceipt(transaction_id, 0);
     if(show_balance === 1)
     {
       $("#completed_balance").show();
@@ -1240,19 +1357,89 @@
     }
   }
 
-  function printReceipt(transaction_no, total)
+  function printReceipt(transaction_id, reprint)
   {
-    $("#receipt_transaction_no").html(transaction_no);
-    $("#receipt_total").html(total);
+    $.post("{{ route('getTransactionDetail') }}", {"_token" : "{{ csrf_token() }}", "transaction_id" : transaction_id }, function(result){
+      if(result.error == 0)
+      {
+        let transaction = result.transaction;
+        let transaction_detail = result.transaction_detail;
+        let items_html = "";
+        for(var a = 0; a < transaction_detail.length; a++)
+        {
+          items_html += "<div>"+transaction_detail[a].product_name+"</div>";
+          items_html += "<div style='display: flex;'>";
+          items_html += "<div style='flex: 1;'>"+transaction_detail[a].barcode+"</div>";
+          items_html += "<div style='flex: 1;'>"+transaction_detail[a].quantity+".00 X "+transaction_detail[a].price_text+"</div>";
+          items_html += "<div>"+transaction_detail[a].total_text+"</div>";
+          items_html += "</div>";
+        }
+        
+        $("#receipt_items").html(items_html);
 
-    var receiptPrint = document.getElementById('receipt');
-    var newWin = window.open('','Print-Window');
+        $("#receipt_total_quantity").html(transaction.total_quantity);
+        $("#receipt_total_items").html(transaction.total_items);
+        $("#receipt_total").html(transaction.total_text);
 
-    newWin.document.open();
-    newWin.document.write('<html><body onload="window.print()">'+receiptPrint.innerHTML+'</body></html>');
-    newWin.document.close();
+        if(transaction.payment_type != "cash")
+        {
+          $("#receipt_other_payment").show();
+          $("#receipt_other_payment").html("<div>"+transaction.payment_type_text+"</div><div>"+transaction.total_text+"</div>");
+        }
+        else
+        {
+          $("#receipt_other_payment").hide();
+        }
 
-    setTimeout(function(){newWin.close();},10);
+        $("#receipt_date").html(transaction.receipt_date);
+        $("#receipt_time").html("Time : "+transaction.receipt_time);
+
+        $("#receipt_completed_by, #receipt_completed_by_2").html(transaction.completed_by_name);
+        $("#receipt_invoice_no").html(transaction.transaction_no);
+
+        if(reprint == 1)
+        {
+          var d = new Date();
+          var day = d.getDate();
+          var month = d.getMonth();
+          var year = d.getFullYear();
+
+          var hour = d.getHours();
+          var minute = d.getMinutes();
+
+          if(day < 10)
+          {
+            day = "0"+day;
+          }
+
+          if(month < 10)
+          {
+            month = "0"+month;
+          }
+
+          $("#reprint_date_time").html(day+"-"+month+"-"+year+" "+hour+":"+minute);
+          $("#receipt_reprint").show();
+        }
+        else
+        {
+          $("#receipt_reprint").hide();
+        }
+
+        var receiptPrint = document.getElementById('receipt');
+        var newWin = window.open('','Print-Window');
+
+        newWin.document.open();
+        newWin.document.write('<html><body onload="window.print()">'+receiptPrint.innerHTML+'</body></html>');
+        newWin.document.close();
+
+        // setTimeout(function(){newWin.close();},10);
+      }
+      
+    });
+
+    
+
+    
   }
 
   function showInvoiceInput()
@@ -1273,7 +1460,7 @@
       {
         $("#completedTransactionModal").modal('show');
 
-        transactionCompleted(result.completed_transaction.transaction_no, result.completed_transaction.total, 0);
+        transactionCompleted(result.completed_transaction.id, 0);
         $("input[name='invoice_no']").val("");
 
         submitClearTransaction(0);
@@ -1349,6 +1536,7 @@
 
   function showVoucher()
   {
+    $("input[name='voucher_code']").val("").removeClass("is-invalid");
     $("#voucherModal").modal('show');
 
     setTimeout(function(){
@@ -1379,6 +1567,7 @@
 
         $("#total").html(result.total);
         $("#discount").html(result.total_discount);
+        $("#discount_name").html(result.voucher_name);
 
         if(result.round_off == "0.00")
         {
@@ -1422,6 +1611,7 @@
 
         $("#remove_voucher").hide();
         $("#discount").html("0.00");
+        $("#discount_name").html("Discount");
         $("#total").html(result.total);
 
         if(result.round_off == "0.00")
@@ -1463,7 +1653,8 @@
           opening = 1;
 
           $("#openingBtn").attr("disabled", true);
-          $("#closingBtn").attr("disabled", false);
+          $("#closingBtn, #floatInBtn, #floatOutBtn").attr("disabled", false);
+
         }
       });
     }
@@ -1481,8 +1672,10 @@
     }
     else
     {
-      $("input[name='daily_closing_amount']").removeClass("is-invalid");
-      $("#closingModal").modal('show');
+      $.get("{{ route('calculateClosingAmount') }}", function(result){
+        $("input[name='cashier_closing_amount']").removeClass("is-invalid").val(result);
+        $("#closingModal").modal('show');
+      });
     }
   }
 
@@ -1509,7 +1702,6 @@
   function submitDailyClosing()
   {
     $("#dailyClosingFeedback").hide();
-
     $("input[name='manager_email'], input[name='manager_password'], input[name='daily_closing_amount']").removeClass("is-invalid");
 
     var manager_email = $("input[name='manager_email']").val();
@@ -1548,7 +1740,7 @@
         disablePosSystem();
 
         $("#openingBtn").attr("disabled", false);
-        $("#closingBtn").attr("disabled", true);
+        $("#closingBtn, #floatInBtn, #floatOutBtn").attr("disabled", true);
 
         $("#daily_closing_content").html("This cashier are now closed.");
         $("#daily_closing_toast").toast('show');
@@ -1559,6 +1751,36 @@
       {
         $("#dailyClosingFeedback").html("<strong>"+result.message+".</strong>").show();
       }
+    });
+  }
+
+  function submitCashFloat()
+  {
+    let amount = $("input[name='cash_float']").val();
+    let cash_float_type = $("input[name='cash_float_type']").val();
+
+    if(!amount)
+    {
+      $("input[name='cash_float']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Cash float amount cannot be empty.</strong>");
+      return;
+    }
+
+    $.post("{{ route('submitCashFloat') }}", {"_token" : "{{ csrf_token() }}", "amount" : amount, "type" : cash_float_type}, function(result){
+      if(result.error == 1)
+      {
+        $("#error_content").html(result.message);
+        $("#error_toast").toast('show');
+
+        return;
+      }
+      else
+      {
+        $("#cashFloatModal").modal('hide');
+
+        $("#success_content").html("Cash float submitted");
+        $("#success_toast").toast('show');
+      }
+
     });
   }
 

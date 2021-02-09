@@ -9,6 +9,7 @@ class transaction extends Model
     protected $table = 'transaction';
     protected $fillable = [
       'session_id',
+      'ip',
       'transaction_no',
       'invoice_no',
       'user_id',
@@ -17,6 +18,7 @@ class transaction extends Model
       'voucher_id',
       'payment',
       'payment_type',
+      'payment_type_text',
       'balance',
       'total',
       'round_off',
