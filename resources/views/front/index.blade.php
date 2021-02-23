@@ -1808,7 +1808,7 @@
 
     $("#syncHQModal").modal('show');
 
-    $.get("http://localhost/pos_system_hq/public/branchSync", {"session_id" : session_id, "branch_id" : branch_id, "transaction" : transaction, "transaction_detail" : transaction_detail}, function(result){
+    $.get("http://localhost/hq_homeu/public/branchSync", {"session_id" : session_id, "branch_id" : branch_id, "transaction" : transaction, "transaction_detail" : transaction_detail}, function(result){
       if(result.error == 0)
       {
         syncProductList(result.product_list);
@@ -1869,7 +1869,7 @@
 
   function syncBackToHQ(branch_id, barcode_array)
   {
-    $.get("http://localhost/pos_system_hq/public/branchSyncCompleted", {"branch_id" : branch_id, "barcode_array" : barcode_array }, function(result){
+    $.get("http://localhost/hq_homeu/public/branchSyncCompleted", {"branch_id" : branch_id, "barcode_array" : barcode_array }, function(result){
       if(result.error == 0)
       {
         $("#syncHQContent").html("Sync completed.");
