@@ -10,6 +10,7 @@ class transaction_detail extends Model
     protected $fillable = [
       'transaction_id',
       'product_id',
+      'barcode',
       'product_name',
       'price',
       'quantity',

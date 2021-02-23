@@ -757,6 +757,23 @@
     </div>
   </div>
 
+  <div class="modal fade" id="syncHQModal" tabindex="-1" role="dialog" aria-labelledby="syncHQModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="syncHQModalLabel">Syncing HQ</h5>
+          <!-- <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button> -->
+        </div>
+        <div class="modal-body" id="syncHQContent">Syncing data to HQ, please do not refresh the page.</div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success" disabled id="syncHQBtn">Completed</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- <div class="modal fade" id="cashierLoginModal" tabindex="-1" role="dialog" aria-labelledby="cashierLoginModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -998,11 +1015,13 @@
 
     if(opening == 0)
     {
+      $("input[name='cashier_opening_amount']").val("");
       $("#openingModal").modal('show');
       disablePosSystem();
     }
 
     $("#openingBtn").click(function(){
+      $("input[name='cashier_opening_amount']").val("");
       $("#openingModal").modal('show');
     });
 
@@ -1011,7 +1030,7 @@
       $.get("{{ route('calculateClosingAmount') }}", function(result){
         $("#dailyClosingFeedback").hide();
         $("#dailyClosingModal").modal('show');
-        $("input[name='daily_closing_amount']").removeClass("is-invalid").val(result);
+        $("input[name='daily_closing_amount']").removeClass("is-invalid").val(result.closing_amount);
       });
     });
 
@@ -1432,14 +1451,10 @@
         newWin.document.write('<html><body onload="window.print()">'+receiptPrint.innerHTML+'</body></html>');
         newWin.document.close();
 
-        // setTimeout(function(){newWin.close();},10);
+        setTimeout(function(){newWin.close();},10);
       }
       
     });
-
-    
-
-    
   }
 
   function showInvoiceInput()
@@ -1673,7 +1688,7 @@
     else
     {
       $.get("{{ route('calculateClosingAmount') }}", function(result){
-        $("input[name='cashier_closing_amount']").removeClass("is-invalid").val(result);
+        $("input[name='cashier_closing_amount']").removeClass("is-invalid").val(result.closing_amount);
         $("#closingModal").modal('show');
       });
     }
@@ -1746,6 +1761,8 @@
         $("#daily_closing_toast").toast('show');
 
         opening = 0;
+
+        syncHQ(result.session_id, result.branch_id, result.transaction, result.transaction_detail);
       }
       else
       {
@@ -1780,7 +1797,111 @@
         $("#success_content").html("Cash float submitted");
         $("#success_toast").toast('show');
       }
+    });
+  }
 
+  function syncHQ(session_id, branch_id, transaction, transaction_detail)
+  {
+    window.onbeforeunload = function() {
+      return "Please do not refresh the page.";
+    }
+
+    $("#syncHQModal").modal('show');
+
+    $.get("http://localhost/pos_system_hq/public/branchSync", {"session_id" : session_id, "branch_id" : branch_id, "transaction" : transaction, "transaction_detail" : transaction_detail}, function(result){
+      if(result.error == 0)
+      {
+        syncProductList(result.product_list);
+        return;
+      }
+      else
+      {
+        $("#syncHQBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
+          syncHQ(session_id, branch_id, transaction, transaction_detail);
+          $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
+        });
+
+        $("#syncHQContent").html("Sync failed, please sync again.");
+
+        alert("something wrong, click Re-sync to sync again.");
+      }
+    }).fail(function(){
+      $("#syncHQBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
+        syncHQ(session_id, branch_id, transaction, transaction_detail);
+        $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
+      });
+
+      $("#syncHQContent").html("Sync failed, please sync again.");
+
+      alert("something wrong, click Re-sync to sync again.");
+    });
+  }
+
+  function syncProductList(product_list)
+  {
+    $.get("{{ route('syncHQProductList') }}", { "product_list" : product_list }, function(result){
+      if(result.error == 0)
+      {
+        syncBackToHQ(result.branch_id, result.barcode_array);
+      }
+      else
+      {
+        $("#syncHQBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
+          syncProductList(product_list);
+          $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
+        });
+
+        $("#syncHQContent").html("Sync failed, please sync again.");
+
+        alert("something wrong, click Re-sync to sync again.");
+      }
+    }).fail(function(){
+      $("#syncHQBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
+        syncProductList(product_list);
+        $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
+      });
+
+      $("#syncHQContent").html("Sync failed, please sync again.");
+
+      alert("something wrong, click Re-sync to sync again.");
+    });
+  }
+
+  function syncBackToHQ(branch_id, barcode_array)
+  {
+    $.get("http://localhost/pos_system_hq/public/branchSyncCompleted", {"branch_id" : branch_id, "barcode_array" : barcode_array }, function(result){
+      if(result.error == 0)
+      {
+        $("#syncHQContent").html("Sync completed.");
+
+        $("#syncHQBtn").html("Sync completed").attr("disabled", false).off('click').click(function(){
+          logout();
+        });
+
+        window.onbeforeunload = function () {
+          // blank function do nothing
+        }
+      }
+      else
+      {
+        $("#syncHQBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
+          syncBackToHQ(branch_id, barcode_array);
+          $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
+        });
+
+        $("#syncHQContent").html("Sync failed, please sync again.");
+
+        alert("something wrong, click Re-sync to sync again.");
+      }
+    }).fail(function(){
+      $("#syncHQBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
+        syncBackToHQ(branch_id, barcode_array);
+        $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
+      });
+
+      $("#syncHQContent").html("Sync failed, please sync again.");
+
+      alert("something wrong, click Re-sync to sync again.");
     });
   }
 

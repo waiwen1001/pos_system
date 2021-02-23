@@ -13,6 +13,7 @@ use App\session;
 use App\cash_float;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class HomeController extends Controller
 {
@@ -23,7 +24,7 @@ class HomeController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware('auth', ['except' => ['syncHQProductList']]);
     }
 
     /**
@@ -81,8 +82,13 @@ class HomeController extends Controller
         }
       }
 
-      $completed_transaction = transaction::where('completed', 1)->get();
-
+      $session = session::where('closed', null)->first();
+      $completed_transaction = [];
+      if($session)
+      {
+        $completed_transaction = transaction::where('completed', 1)->where('session_id', $session->id)->get();
+      }
+      
       foreach($completed_transaction as $completed)
       {
         $completed->void_by_name = "";
@@ -101,7 +107,11 @@ class HomeController extends Controller
 
       $cashier_ip = $_SERVER['REMOTE_ADDR'];
       // get latest cashier, incase session out, some opening do not have closing
-      $cashier = cashier::where('ip', $cashier_ip)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
+      $cashier = null;
+      if($session)
+      {
+        $cashier = cashier::where('session_id', $session->id)->where('ip', $cashier_ip)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
+      }
 
       $opening = 0;
       if($cashier)
@@ -174,6 +184,7 @@ class HomeController extends Controller
           transaction_detail::create([
             'transaction_id' => $transaction->id,
             'product_id' => $product->id,
+            'barcode' => $product->barcode,
             'product_name' => $product->product_name,
             'price' => round($product->price, 2),
             'quantity' => 1,
@@ -199,6 +210,7 @@ class HomeController extends Controller
             transaction_detail::create([
               'transaction_id' => $transaction->id,
               'product_id' => $product->id,
+              'barcode' => $product->barcode,
               'product_name' => $product->product_name,
               'price' => round($product->price, 2),
               'quantity' => 1,
@@ -675,18 +687,17 @@ class HomeController extends Controller
 
       $now = date('Y-m-d H:i:s', strtotime(now()));
 
+      $session = session::where('closed', null)->first();
+      if(!$session)
+      {
+        $session = session::create([
+          'ip' => $cashier_ip,
+          'opening_date_time' => $now
+        ]);
+      }
+
       if(!$cashier)
       {
-        $session = session::where('closed', null)->first();
-
-        if(!$session)
-        {
-          $session = session::create([
-            'ip' => $cashier_ip,
-            'opening_date_time' => $now
-          ]);
-        }
-
         cashier::create([
           'ip' => $cashier_ip,
           'session_id' => $session->id,
@@ -820,9 +831,23 @@ class HomeController extends Controller
           ]);
         }
 
+        $to_sync_transaction = transaction::where('session_id', $session->id)->get();
+        $transaction_id_array = array();
+
+        foreach($to_sync_transaction as $value)
+        {
+          array_push($transaction_id_array, $value->id);
+        } 
+
+        $transaction_detail_list = transaction_detail::whereIn('transaction_id', $transaction_id_array)->orderBy('transaction_id')->get();
+
         $response = new \stdClass();
         $response->error = 0;
         $response->message = "Success";
+        $response->session_id = $session->id;
+        $response->branch_id = env('branch_id');
+        $response->transaction = $to_sync_transaction->toJson();
+        $response->transaction_detail = $transaction_detail_list->toJson();
 
         return response()->json($response);
       }
@@ -889,6 +914,7 @@ class HomeController extends Controller
         $response = new \stdClass();
         $response->error = 1;
         $response->message = "Session not found";
+        $response->closing_amount = 0;
 
         return response()->json($response);
       }
@@ -921,7 +947,12 @@ class HomeController extends Controller
         }
       }
 
-      return $closing_amount;
+      $response = new \stdClass();
+      $response->error = 0;
+      $response->message = "Success";
+      $response->closing_amount = $closing_amount;
+
+      return response()->json($response);
     }
 
     public function getTransactionDetail(Request $request)
@@ -957,6 +988,38 @@ class HomeController extends Controller
       return response()->json($response);
     }
 
+    public function syncHQProductList(Request $request)
+    {
+      $product_list = json_decode($request->product_list, true);
+
+      $barcode_array = array();
+      foreach($product_list as $product)
+      {
+        product::updateOrCreate([
+          'barcode' => $product['barcode']
+        ],[
+          'department_id' => $product['department_id'],
+          'category_id' => $product['category_id'],
+          'barcode' => $product['barcode'],
+          'product_name' => $product['product_name'],
+          'price' => $product['price']
+        ]);
+
+        if(!in_array($product['barcode'], $barcode_array))
+        {
+          array_push($barcode_array, $product['barcode']);
+        }
+      }
+
+      $response = new \stdClass();
+      $response->error = 0;
+      $response->message = "Success";
+      $response->branch_id = env('branch_id');
+      $response->barcode_array = implode("|", $barcode_array);
+
+      return response()->json($response);
+    }
+
     public function myIP()
     {
       dd($_SERVER['REMOTE_ADDR']);
@@ -964,7 +1027,62 @@ class HomeController extends Controller
 
     public function testing()
     {
-      dd($this->calculateClosingAmount());
+      $now = date('Y-m-d H:i:s', strtotime(now()));
+      $started_id = 34;
+
+      for($c = 0; $c <= 50; $c++)
+      {
+        $transaction_query = [];
+        $transaction_detail_query = [];
+
+        for($a = 0; $a <= 100; $a++)
+        {
+          $query = [
+            "session_id" => 23,
+            "ip" => "::1",
+            "transaction_no" => "test001",
+            "user_id" => 1,
+            "subtotal" => 100,
+            "payment" => 100,
+            "payment_type" => "cash",
+            "payment_type_text" => "Cash",
+            "balance" => 0,
+            "total" => 100,
+            "completed" => 1,
+            'transaction_date' => $now,
+            'created_at' => $now,
+            'updated_at' => $now
+          ];
+
+          array_push($transaction_query, $query);
+
+          for($b = 0; $b <= 10; $b++)
+          {
+            $query = [
+              "transaction_id" => $started_id,
+              "product_id" => 1,
+              "barcode" => "test001",
+              "product_name" => "Test item",
+              "quantity" => 100,
+              "price" => 100,
+              "discount" => 0,
+              "subtotal" => 10000,
+              "total" => 10000,
+              'created_at' => $now,
+              'updated_at' => $now
+            ];
+
+            array_push($transaction_detail_query, $query);
+          }
+
+          $started_id++;
+        }
+
+        transaction::insert($transaction_query);
+        transaction_detail::insert($transaction_detail_query);
+      }
+
+      dd("Done");
     }
 }
 
