@@ -847,7 +847,8 @@ class HomeController extends Controller
           ]);
         }
 
-        $this->branchSync();
+        $response = $this->branchSync();
+        return $response;
       }
       else
       {
@@ -1024,7 +1025,9 @@ class HomeController extends Controller
           'transaction_detail' => $transaction_detail
         ]);
 
-        $this->syncHQProductList($response['product_list']);
+        $response = $this->syncHQProductList($response['product_list']);
+
+        return response()->json($response);
       }
       else
       {
@@ -1034,7 +1037,6 @@ class HomeController extends Controller
 
         return response()->json($response);
       }
-      
     }
 
     public function syncHQProductList($product_list = [])
@@ -1078,7 +1080,7 @@ class HomeController extends Controller
           $response->error = 0;
           $response->message = "Success";
 
-          return response()->json($response);
+          return $response;
         }
         else
         {
@@ -1086,7 +1088,7 @@ class HomeController extends Controller
           $response->error = 1;
           $response->message = "Something wrong";
 
-          return response()->json($response);
+          return $response;
         }
       }
       else
@@ -1095,7 +1097,7 @@ class HomeController extends Controller
         $response->error = 1;
         $response->message = "Branch sync product URL not found";
 
-        return response()->json($response);
+        return $response;
       }
     }
 

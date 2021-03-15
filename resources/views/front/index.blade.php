@@ -2008,19 +2008,9 @@
 
     $("#syncHQModal").modal('show');
 
-    $.get("{{ route('branchSync') }}", function(result){
+    $.get("{{ route('branchSync') }}", { "resync" : 1 }, function(result){
+      console.log(result);
       if(result.error == 0)
-      {
-        $("#syncHQBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
-          syncHQ();
-          $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
-        });
-
-        $("#syncHQContent").html("Sync failed, please sync again.");
-
-        alert("something wrong, click Re-sync to sync again.");
-      }
-      else
       {
         $("#syncHQContent").html("Sync completed.");
 
@@ -2031,6 +2021,17 @@
         window.onbeforeunload = function () {
           // blank function do nothing
         }
+      }
+      else
+      {
+        $("#syncHQBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
+          syncHQ();
+          $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
+        });
+
+        $("#syncHQContent").html("Sync failed, please sync again.");
+
+        alert("something wrong, click Re-sync to sync again.");
       }
       
     }).fail(function(){
