@@ -9,6 +9,8 @@ class transaction_detail extends Model
     protected $table = 'transaction_detail';
     protected $fillable = [
       'transaction_id',
+      'department_id',
+      'category_id',
       'product_id',
       'barcode',
       'product_name',

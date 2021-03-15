@@ -118,7 +118,7 @@
         cursor: pointer;
       }
 
-      .form input[type='email'],
+      .form input[type='text'],
       .form input[type='password'] {
         width: 100%;
       }
@@ -166,13 +166,13 @@
         width: 0.5em;
       }
 
-      .login input[type='email'],
+      .login input[type='text'],
       .login input[type='password'] {
         border: 0.0625em solid #e5e5e5;
         padding: 1em 1.25em;
       }
 
-      .login input[type='email'] {
+      .login input[type='text'] {
         border-top-left-radius: var(--loginInputBorderRadius);
         border-top-right-radius: var(--loginInputBorderRadius);
       }
@@ -246,10 +246,10 @@
 
         <div class="login__body">
           <div class="form__field">
-            <input type="email" placeholder="Email" class="{{ $errors->has('email') ? 'is-invalid' : '' }}" name="email" required>
-            @if ($errors->has('email'))
+            <input type="text" placeholder="Username" class="{{ $errors->has('username') ? 'is-invalid' : '' }}" name="username" required>
+            @if ($errors->has('username'))
               <span class="invalid-feedback" role="alert">
-                <strong>{{ $errors->first('email') }}</strong>
+                <strong>{{ $errors->first('username') }}</strong>
               </span>
             @endif
           </div>

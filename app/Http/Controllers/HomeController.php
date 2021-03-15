@@ -14,6 +14,8 @@ use App\cash_float;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Hash;
 
 class HomeController extends Controller
 {
@@ -24,7 +26,7 @@ class HomeController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth', ['except' => ['syncHQProductList']]);
+        $this->middleware('auth', ['except' => ['syncHQProductList', 'testing', 'branchSync']]);
     }
 
     /**
@@ -129,7 +131,16 @@ class HomeController extends Controller
         }
       }
 
-      return view('front.index', compact('user', 'pending_transaction', 'subtotal', 'discount', 'have_discount', 'total', 'real_total', 'round_off', 'payment', 'balance', 'transaction_id', 'completed_transaction', 'opening', 'voucher_name'));
+      if($user->user_type == 1)
+      {
+        $user_management_list = $user_list;
+      }
+      else
+      {
+        $user_management_list = [$user];
+      }
+
+      return view('front.index', compact('user', 'user_management_list', 'pending_transaction', 'subtotal', 'discount', 'have_discount', 'total', 'real_total', 'round_off', 'payment', 'balance', 'transaction_id', 'completed_transaction', 'opening', 'voucher_name'));
     }
 
     public function searchAndAddItem(Request $request)
@@ -183,6 +194,8 @@ class HomeController extends Controller
 
           transaction_detail::create([
             'transaction_id' => $transaction->id,
+            'department_id' => $product->department_id,
+            'category_id' => $product->category_id,
             'product_id' => $product->id,
             'barcode' => $product->barcode,
             'product_name' => $product->product_name,
@@ -209,6 +222,8 @@ class HomeController extends Controller
           {
             transaction_detail::create([
               'transaction_id' => $transaction->id,
+              'department_id' => $product->department_id,
+              'category_id' => $product->category_id,
               'product_id' => $product->id,
               'barcode' => $product->barcode,
               'product_name' => $product->product_name,
@@ -683,7 +698,6 @@ class HomeController extends Controller
     {
       $user = Auth::user();
       $cashier_ip = $_SERVER['REMOTE_ADDR'];
-      $cashier = cashier::where('ip', $cashier_ip)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
 
       $now = date('Y-m-d H:i:s', strtotime(now()));
 
@@ -695,6 +709,8 @@ class HomeController extends Controller
           'opening_date_time' => $now
         ]);
       }
+
+      $cashier = cashier::where('ip', $cashier_ip)->where('session_id', $session->id)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
 
       if(!$cashier)
       {
@@ -801,13 +817,13 @@ class HomeController extends Controller
 
       $credentials = [
         'user_type' => 1,
-        'email' => $request->email,
+        'username' => $request->username,
         'password' => $request->password
       ];
 
       if (Auth::validate($credentials))
       {
-        $manager = User::where('email', $request->email)->first();
+        $manager = User::where('username', $request->username)->first();
         $cashier_ip = $_SERVER['REMOTE_ADDR'];
         $now = date('Y-m-d H:i:s', strtotime(now()));
 
@@ -831,25 +847,8 @@ class HomeController extends Controller
           ]);
         }
 
-        $to_sync_transaction = transaction::where('session_id', $session->id)->get();
-        $transaction_id_array = array();
-
-        foreach($to_sync_transaction as $value)
-        {
-          array_push($transaction_id_array, $value->id);
-        } 
-
-        $transaction_detail_list = transaction_detail::whereIn('transaction_id', $transaction_id_array)->orderBy('transaction_id')->get();
-
-        $response = new \stdClass();
-        $response->error = 0;
-        $response->message = "Success";
-        $response->session_id = $session->id;
-        $response->branch_id = env('branch_id');
-        $response->transaction = $to_sync_transaction->toJson();
-        $response->transaction_detail = $transaction_detail_list->toJson();
-
-        return response()->json($response);
+        $response = $this->branchSync();
+        return $response;
       }
       else
       {
@@ -988,9 +987,64 @@ class HomeController extends Controller
       return response()->json($response);
     }
 
-    public function syncHQProductList(Request $request)
+    public function branchSync()
     {
-      $product_list = json_decode($request->product_list, true);
+      // last session
+      $session = session::where('closed', 1)->orderBy('id', 'desc')->first();
+      $branch_id = env('branch_id');
+
+      if(!$branch_id)
+      {
+        $response = new \stdClass();
+        $response->error = 1;
+        $response->message = "Branch ID is empty, please add in ENV file or clear cache.";
+
+        return response()->json($response);
+      }
+
+      if(!$session)
+      {
+        $response = new \stdClass();
+        $response->error = 1;
+        $response->message = "Session not found.";
+
+        return response()->json($response);
+      }
+
+      $transaction = transaction::where('session_id', $session->id)->get();
+      $transaction_detail = transaction_detail::leftJoin('transaction', 'transaction.id', '=', 'transaction_detail.transaction_id')->where('transaction.session_id', $session->id)->select('transaction_detail.*')->get();
+
+      $branchSyncURL = env('branchSyncURL');
+
+      if($branchSyncURL)
+      {
+        $response = Http::post($branchSyncURL, [
+          'session_id' => $session->id,
+          'branch_id' => $branch_id,
+          'transaction' => $transaction,
+          'transaction_detail' => $transaction_detail
+        ]);
+
+        $response = $this->syncHQProductList($response['product_list']);
+
+        return response()->json($response);
+      }
+      else
+      {
+        $response = new \stdClass();
+        $response->error = 1;
+        $response->message = "Branch sync URL not found.";
+
+        return response()->json($response);
+      }
+    }
+
+    public function syncHQProductList($product_list = [])
+    {
+      if(!$product_list)
+      {
+        $product_list = [];
+      }
 
       $barcode_array = array();
       foreach($product_list as $product)
@@ -1011,11 +1065,143 @@ class HomeController extends Controller
         }
       }
 
+      $branchProductSyncURL = env('branchProductSyncURL');
+
+      if($branchProductSyncURL)
+      {
+        $response = Http::post($branchProductSyncURL, [
+          'branch_id' => env('branch_id'),
+          'barcode_array' => $barcode_array,
+        ]);
+
+        if($response['error'] == 0)
+        {
+          $response = new \stdClass();
+          $response->error = 0;
+          $response->message = "Success";
+
+          return $response;
+        }
+        else
+        {
+          $response = new \stdClass();
+          $response->error = 1;
+          $response->message = "Something wrong";
+
+          return $response;
+        }
+      }
+      else
+      {
+        $response = new \stdClass();
+        $response->error = 1;
+        $response->message = "Branch sync product URL not found";
+
+        return $response;
+      }
+    }
+
+    public function getDailyReport()
+    {
+      $session = session::orderBy('id', 'desc')->first();
+      if(!$session)
+      {
+        $response = new \stdClass();
+        $response->error = 1;
+        $response->message = "Session not found";
+        return response()->json($response);
+      }
+
+      $report_query = transaction_detail::leftJoin('transaction', 'transaction.id', '=', 'transaction_detail.transaction_id')->where('transaction.session_id', $session->id)->leftJoin('product', 'product.id', '=', 'transaction_detail.product_id')->leftJoin('category', 'category.id', '=', 'product.category_id')->leftJoin('department', 'department.id', '=', 'product.department_id')->select('transaction.id', 'transaction.payment_type', 'transaction.total', 'transaction.payment_type_text', 'transaction_detail.product_id', 'transaction_detail.quantity', 'product.product_name', 'product.department_id', 'product.category_id', 'category.name as category_name', 'department.name as department_name');
+
+      $category_report = $report_query->selectRaw('SUM(transaction.total) as category_total')->groupBy('product.category_id')->get();
+      $department_report = $report_query->selectRaw('SUM(transaction.total) as department_total')->groupBy('product.department_id')->get();
+      $payment_type_report = $report_query->selectRaw('SUM(transaction.total) as payment_type_total')->groupBy('transaction.payment_type')->get();
+
       $response = new \stdClass();
       $response->error = 0;
       $response->message = "Success";
-      $response->branch_id = env('branch_id');
-      $response->barcode_array = implode("|", $barcode_array);
+      $response->category_report = $category_report;
+      $response->department_report = $department_report;
+      $response->payment_type_report = $payment_type_report;
+
+      return response()->json($response);
+    }
+
+    public function deleteUser(Request $request)
+    {
+      User::where('id', $request->user_id)->update([
+        'removed' => 1,
+        'removed_by' => Auth::id()
+      ]);
+
+      $response = new \stdClass();
+      $response->error = 0;
+      $response->message = "Success";
+
+      return response()->json($response);
+    }
+
+    public function addNewUser(Request $request)
+    {
+      $username_check = User::where('username', $request->username)->first();
+
+      if($username_check)
+      {
+        $response = new \stdClass();
+        $response->error = 2;
+        $response->message = "Username has been used";
+
+        return response()->json($response);
+      }
+
+      $user_detail = User::create([
+        'user_type' => null,
+        'name' => $request->name,
+        'username' => $request->username,
+        'email' => uniqid()."@test.com",
+        'password' => Hash::make($request->password),
+      ]);
+
+      $response = new \stdClass();
+      $response->error = 0;
+      $response->message = "Success";
+      $response->user_detail = $user_detail;
+
+      return response()->json($response);
+    }
+
+    public function editUser(Request $request)
+    {
+      $username_check = User::where('username', $request->username)->where('id', '<>', $request->user_id)->first();
+
+      if($username_check)
+      {
+        $response = new \stdClass();
+        $response->error = 2;
+        $response->message = "Username has been used";
+
+        return response()->json($response);
+      }
+
+      $update_query = [
+        'username' => $request->username,
+        'name' => $request->name
+      ];
+
+      if($request->password)
+      {
+        $update_query['password'] = Hash::make($request->password);
+      }
+
+      User::where('id', $request->user_id)->update($update_query);
+
+      $user_detail = User::where('id', $request->user_id)->first();
+
+      $response = new \stdClass();
+      $response->error = 0;
+      $response->message = "Success";
+      $response->user_detail = $user_detail;
 
       return response()->json($response);
     }
@@ -1027,6 +1213,12 @@ class HomeController extends Controller
 
     public function testing()
     {
+      $response = Http::post('http://localhost/pos_system_hq/public/api/apiTesting', [
+        'data' => 'Steve',
+      ]);
+
+      dd($response['data']);
+
       $now = date('Y-m-d H:i:s', strtotime(now()));
       $started_id = 34;
 
