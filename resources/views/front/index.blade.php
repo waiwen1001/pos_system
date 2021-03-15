@@ -158,11 +158,17 @@
                     Other
                   </button>
                   <div class="dropdown-menu" aria-labelledby="otherDropDownBtn">
-                    <button class="dropdown-item" id="openingBtn" href="#" {{ $opening == 0 ? '' : 'disabled' }}>Opening</button>
-                    <button class="dropdown-item" id="closingBtn" href="#" {{ $opening == 1 ? '' : 'disabled' }}>Daily Closing</button>
+                    <button class="dropdown-item" id="openingBtn" {{ $opening == 0 ? '' : 'disabled' }}>Opening</button>
+                    <button class="dropdown-item" id="closingBtn" {{ $opening == 1 ? '' : 'disabled' }}>Daily Closing</button>
                     <div class="dropdown-divider"></div>
-                    <button class="dropdown-item" id="floatInBtn" href="#" {{ $opening == 1 ? '' : 'disabled' }}>Cash Float ( In )</button>
-                    <button class="dropdown-item" id="floatOutBtn" href="#" {{ $opening == 1 ? '' : 'disabled' }}>Cash Float ( Out )</button>
+                    <button class="dropdown-item" id="floatInBtn" {{ $opening == 1 ? '' : 'disabled' }}>Cash Float ( In )</button>
+                    <button class="dropdown-item" id="floatOutBtn" {{ $opening == 1 ? '' : 'disabled' }}>Cash Float ( Out )</button>
+                    @if($user->user_type == 1)
+                      <div class="dropdown-divider"></div>
+                      <button class="dropdown-item" onclick="dailyReport()">Daily Report</button>
+                    @endif
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item" onclick="userManagement()">User Management</button>
                   </div>
                 </div>
 
@@ -474,6 +480,68 @@
     </div>
   </div>
 
+  <div id="user_management" class="full_page">
+    <div class="close_full_page">
+      <i class="fas fa-times"></i>
+    </div>
+    <h4 class="title">
+      User Management
+    </h4>
+    <div class="content">
+      <div class="row">
+        <div class="col-12">
+          <table id="user_management_table" class="table table-bordered table-striped" cellspacing="0" width="100%" style="width: 100% !important;">
+            <thead style="width: 100% !important;">
+              <tr>
+                <th>Role</th>
+                <th>Name</th>
+                <th>Login username</th>
+                <th>Edit</th>
+                @if($user->user_type == 1)
+                  <th>Delete</th>
+                @endif
+              </tr>
+            </thead>
+            <tbody>
+              @foreach($user_management_list as $user_detail)
+                <tr user_id="{{ $user_detail->id }}">
+                  <td>
+                    @if($user_detail->user_type == 1)
+                      Management
+                    @else
+                      Cashier
+                    @endif
+                  </td>
+                  <td>{{ $user_detail->name }}</td>
+                  <td>{{ $user_detail->username }}</td>
+                  <td>
+                    <button class="btn btn-primary" type="button" onclick="editUser('{{ $user_detail->id }}', '{{ $user_detail->username }}', '{{ $user_detail->name }}')" {{ $user_detail->user_type == 1 && $user_detail->id != $user->id ? 'disabled' : '' }}>
+                      <i class="fas fa-edit"></i>
+                    </button>
+                  </td>
+                  @if($user->user_type == 1)
+                    <td>
+                      <button class="btn btn-danger" type="button" onclick="deleteUser('{{ $user_detail->id }}')" {{ $user_detail->user_type == 1 ? 'disabled' : '' }}>
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </td>
+                  @endif
+                </tr>
+              @endforeach
+            </tbody>
+          </table>
+
+          @if($user->user_type == 1)
+            <button class="btn btn-success" type="button" onclick="addNewUser()">
+              <i class="fas fa-plus"></i>
+              Add New Cashier
+            </button>
+          @endif
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="modal fade" id="voidModal" tabindex="-1" role="dialog" aria-labelledby="voidModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -589,6 +657,22 @@
           <div style="font-weight: bold;">... REPRINT COPY ...</div>
           <div id="reprint_date_time"></div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="dailyReport">
+    <div style="padding: 30px;">
+      <div style="display: flex; flex-direction: column; text-align: center;">
+        <label>HOME U(M) SDN BHD (125272-P)</label>
+        <label>S/36,LOT1745, CABANG TIGA PENGKALAN CHEPA</label>
+        <label>TEL:09-7744243</label>
+        <label>FAX:09-7744243</label>
+        <label>homeumsdnbhd@gmail.com</label>
+        <label>INVOICE</label>
+      </div>
+      <div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>
+      <div id="dailyReportContent">
       </div>
     </div>
   </div>
@@ -709,8 +793,8 @@
         <div class="modal-body">
           <h4 style="text-align: center;">Manager login</h4>
           <div class="form-group">
-            <label>Email</label>
-            <input type="text" class="form-control" name="manager_email" />
+            <label>Username</label>
+            <input type="text" class="form-control" name="manager_username" />
             <span class="invalid-feedback" role="alert"></span>
           </div>
 
@@ -774,6 +858,112 @@
     </div>
   </div>
 
+  <div class="modal fade" id="deleteUserModal" tabindex="-1" role="dialog" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Delete user</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          You sure you want to delete this user ?
+        </div>
+        <div class="modal-footer">
+          <input type="hidden" id="delete_user_id" />
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+          <button type="button" class="btn btn-primary" onclick="submitDeleteUser()">Yes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="addUserModal" tabindex="-1" role="dialog" aria-labelledby="addUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add new cashier</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" name="new_user_name" class="form-control" />
+            <span class="invalid-feedback" role="alert"></span>
+          </div>
+
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" name="new_user_username" class="form-control" />
+            <span class="invalid-feedback" role="alert"></span>
+          </div>
+
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" name="new_user_password" class="form-control" />
+            <span class="invalid-feedback" role="alert"></span>
+          </div>
+
+          <div class="form-group">
+            <label>Confirm Password</label>
+            <input type="password" name="new_user_password_confirmation" class="form-control" />
+            <span class="invalid-feedback" role="alert"></span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="submitAddUser()">Add</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="editUserModal" tabindex="-1" role="dialog" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit user</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" name="edit_user_name" class="form-control" />
+            <span class="invalid-feedback" role="alert"></span>
+          </div>
+
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" name="edit_user_username" class="form-control" />
+            <span class="invalid-feedback" role="alert"></span>
+          </div>
+
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" name="edit_user_password" class="form-control" placeholder="Leave blank if no changes" />
+            <span class="invalid-feedback" role="alert"></span>
+          </div>
+
+          <div class="form-group">
+            <label>Confirm Password</label>
+            <input type="password" name="edit_user_password_confirmation" class="form-control" />
+            <span class="invalid-feedback" role="alert"></span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <input type="hidden" name="edit_user_id" />
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="submitEditUser()">Edit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- <div class="modal fade" id="cashierLoginModal" tabindex="-1" role="dialog" aria-labelledby="cashierLoginModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -827,6 +1017,14 @@
     scrollCollapse: true,
     // responsive: true,
     order: [[ 6, "desc" ]]
+  });
+
+  var user_management_table = $("#user_management_table").DataTable( {
+    pageLength: 25,
+    scrollY: '60vh',
+    scrollCollapse: true,
+    // responsive: true,
+    order: [[ 0, "desc" ]]
   });
 
   $(document).ready(function(){
@@ -1029,6 +1227,8 @@
 
       $.get("{{ route('calculateClosingAmount') }}", function(result){
         $("#dailyClosingFeedback").hide();
+
+        $("input[name='manager_username'], input[name='manager_password']").val("");
         $("#dailyClosingModal").modal('show');
         $("input[name='daily_closing_amount']").removeClass("is-invalid").val(result.closing_amount);
       });
@@ -1717,17 +1917,17 @@
   function submitDailyClosing()
   {
     $("#dailyClosingFeedback").hide();
-    $("input[name='manager_email'], input[name='manager_password'], input[name='daily_closing_amount']").removeClass("is-invalid");
+    $("input[name='manager_username'], input[name='manager_password'], input[name='daily_closing_amount']").removeClass("is-invalid");
 
-    var manager_email = $("input[name='manager_email']").val();
+    var manager_username = $("input[name='manager_username']").val();
     var manager_password = $("input[name='manager_password']").val();
     var daily_closing_amount = $("input[name='daily_closing_amount']").val();
 
     var proceed = 1;
 
-    if(!manager_email)
+    if(!manager_username)
     {
-      $("input[name='manager_email']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Email cannot be empty.</strong>");
+      $("input[name='manager_username']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Email cannot be empty.</strong>");
       proceed = 0;
     }
 
@@ -1748,7 +1948,7 @@
       return;
     }
 
-    $.post("{{ route('submitDailyClosing') }}", {"_token" : "{{ csrf_token() }}", "email" : manager_email, "password" : manager_password, "closing_amount" : daily_closing_amount}, function(result){
+    $.post("{{ route('submitDailyClosing') }}", {"_token" : "{{ csrf_token() }}", "username" : manager_username, "password" : manager_password, "closing_amount" : daily_closing_amount}, function(result){
       if(result.error == 0)
       {
         $("#dailyClosingModal").modal('hide');
@@ -1762,7 +1962,7 @@
 
         opening = 0;
 
-        syncHQ(result.session_id, result.branch_id, result.transaction, result.transaction_detail);
+        syncHQ();
       }
       else
       {
@@ -1800,7 +2000,7 @@
     });
   }
 
-  function syncHQ(session_id, branch_id, transaction, transaction_detail)
+  function syncHQ()
   {
     window.onbeforeunload = function() {
       return "Please do not refresh the page.";
@@ -1808,16 +2008,11 @@
 
     $("#syncHQModal").modal('show');
 
-    $.get("http://localhost/hq_homeu/public/branchSync", {"session_id" : session_id, "branch_id" : branch_id, "transaction" : transaction, "transaction_detail" : transaction_detail}, function(result){
+    $.get("{{ route('branchSync') }}", function(result){
       if(result.error == 0)
       {
-        syncProductList(result.product_list);
-        return;
-      }
-      else
-      {
         $("#syncHQBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
-          syncHQ(session_id, branch_id, transaction, transaction_detail);
+          syncHQ();
           $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
         });
 
@@ -1825,52 +2020,7 @@
 
         alert("something wrong, click Re-sync to sync again.");
       }
-    }).fail(function(){
-      $("#syncHQBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
-        syncHQ(session_id, branch_id, transaction, transaction_detail);
-        $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
-      });
-
-      $("#syncHQContent").html("Sync failed, please sync again.");
-
-      alert("something wrong, click Re-sync to sync again.");
-    });
-  }
-
-  function syncProductList(product_list)
-  {
-    $.get("{{ route('syncHQProductList') }}", { "product_list" : product_list }, function(result){
-      if(result.error == 0)
-      {
-        syncBackToHQ(result.branch_id, result.barcode_array);
-      }
       else
-      {
-        $("#syncHQBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
-          syncProductList(product_list);
-          $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
-        });
-
-        $("#syncHQContent").html("Sync failed, please sync again.");
-
-        alert("something wrong, click Re-sync to sync again.");
-      }
-    }).fail(function(){
-      $("#syncHQBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
-        syncProductList(product_list);
-        $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
-      });
-
-      $("#syncHQContent").html("Sync failed, please sync again.");
-
-      alert("something wrong, click Re-sync to sync again.");
-    });
-  }
-
-  function syncBackToHQ(branch_id, barcode_array)
-  {
-    $.get("http://localhost/hq_homeu/public/branchSyncCompleted", {"branch_id" : branch_id, "barcode_array" : barcode_array }, function(result){
-      if(result.error == 0)
       {
         $("#syncHQContent").html("Sync completed.");
 
@@ -1882,20 +2032,10 @@
           // blank function do nothing
         }
       }
-      else
-      {
-        $("#syncHQBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
-          syncBackToHQ(branch_id, barcode_array);
-          $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
-        });
-
-        $("#syncHQContent").html("Sync failed, please sync again.");
-
-        alert("something wrong, click Re-sync to sync again.");
-      }
+      
     }).fail(function(){
       $("#syncHQBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
-        syncBackToHQ(branch_id, barcode_array);
+        syncHQ();
         $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
       });
 
@@ -1903,6 +2043,266 @@
 
       alert("something wrong, click Re-sync to sync again.");
     });
+  }
+
+  function dailyReport()
+  {
+    $.get("{{ route('getDailyReport') }}", function(result){
+      if(result.error == 0)
+      {
+        var category_report = result.category_report;
+        var department_report = result.department_report;
+        var payment_type_report = result.payment_type_report;
+
+        var html = "";
+        if(category_report.length > 0)
+        {
+          for(var a = 0; a < category_report.length; a++)
+          {
+            html += "<div style='display:flex;'>";
+            html += "<div style='flex:1;'>"+category_report[a].category_name+"</div>";
+            html += "<div style='flex:1;'>"+category_report[a].category_total+"</div>";
+            html += "</div>";
+          }
+          
+          html += '<div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>';
+        }
+
+        if(department_report.length > 0)
+        {
+          for(var a = 0; a < department_report.length; a++)
+          {
+            html += "<div style='display:flex;'>";
+            html += "<div style='flex:1;'>"+department_report[a].department_name+"</div>";
+            html += "<div style='flex:1;'>"+department_report[a].department_total+"</div>";
+            html += "</div>";
+          }
+          
+          html += '<div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>';
+        }
+
+        if(payment_type_report.length > 0)
+        {
+          for(var a = 0; a < payment_type_report.length; a++)
+          {
+            html += "<div style='display:flex;'>";
+            html += "<div style='flex:1;'>"+payment_type_report[a].payment_type_text+"</div>";
+            html += "<div style='flex:1;'>"+payment_type_report[a].payment_type_total+"</div>";
+            html += "</div>";
+          }
+          
+          html += '<div style="border: 2px dashed #999; height: 2px; margin: 10px 0 30px 0;"></div>';
+        }
+
+        $("#dailyReportContent").html(html);
+
+        var dailyReportPrint = document.getElementById('dailyReport');
+        var newWin = window.open('','Print-Window');
+
+        newWin.document.open();
+        newWin.document.write('<html><body onload="window.print()">'+dailyReportPrint.innerHTML+'</body></html>');
+        newWin.document.close();
+
+        // setTimeout(function(){newWin.close();},10);
+      }
+      else
+      {
+        alert(result.message);
+      }
+    }).fail(function(){
+      alert("Something wrong");
+    });
+  }
+
+  function userManagement()
+  {
+    setTimeout(function(){
+      user_management_table.draw();
+    }, 50);
+    
+    $("#user_management").show();
+  }
+
+  function deleteUser(user_id)
+  {
+    $("#delete_user_id").val(user_id);
+    $("#deleteUserModal").modal('show');
+  }
+
+  function addNewUser()
+  {
+    $("#addUserModal").modal('show');
+  }
+
+  function editUser(user_id, username, name)
+  {
+    $("input[name='edit_user_name'], input[name='edit_user_username'], input[name='edit_user_password'], input[name='edit_user_password_confirmation']").removeClass("is-invalid");
+
+    $("input[name='edit_user_id']").val(user_id);
+    $("input[name='edit_user_name']").val(name);
+    $("input[name='edit_user_username']").val(username);
+
+    $("#editUserModal").modal('show');
+  }
+
+  function submitDeleteUser()
+  {
+    var delete_user_id = $("#delete_user_id").val();
+    $.post("{{ route('deleteUser') }}", {"_token" : "{{ csrf_token() }}", "user_id" : delete_user_id }, function(result){
+      if(result.error == 0)
+      {
+        user_management_table.row($("#user_management_table tbody tr[user_id="+delete_user_id+"]")).remove().draw();
+        $("#deleteUserModal").modal('hide');
+
+        $("#success_content").html("User has deleted");
+        $("#success_toast").toast('show');
+      }
+    });
+  }
+
+  function submitAddUser()
+  {
+    $("input[name='new_user_name'], input[name='new_user_username'], input[name='new_user_password'], input[name='new_user_password_confirmation']").removeClass("is-invalid");
+
+    var new_user_name = $("input[name='new_user_name']").val();
+    var new_user_username = $("input[name='new_user_username']").val();
+    var new_user_password = $("input[name='new_user_password']").val();
+    var new_user_password_confirmation = $("input[name='new_user_password_confirmation']").val();
+
+    var failed = false;
+    if(!new_user_name)
+    {
+      $("input[name='new_user_name']").addClass("is-invalid").siblings(".invalid-feedback").html("Name cannot be empty.");
+      failed = true;
+    }
+
+    if(!new_user_username)
+    {
+      $("input[name='new_user_username']").addClass("is-invalid").siblings(".invalid-feedback").html("Username cannot be empty.");
+      failed = true;
+    }
+
+    if(!new_user_password)
+    {
+      $("input[name='new_user_password']").addClass("is-invalid").siblings(".invalid-feedback").html("Password cannot be empty.");
+      failed = true;
+    }
+
+    if(!new_user_password_confirmation)
+    {
+      $("input[name='new_user_password_confirmation']").addClass("is-invalid").siblings(".invalid-feedback").html("Confirm password cannot be empty.");
+      failed = true;
+    }
+
+    if(new_user_password != new_user_password_confirmation)
+    {
+      $("input[name='new_user_password_confirmation']").addClass("is-invalid");
+      $("input[name='new_user_password']").addClass("is-invalid").siblings(".invalid-feedback").html("Password and confirm password must be same.");
+      failed = true;
+    }
+
+    if(failed == false)
+    { 
+      $.post("{{ route('addNewUser') }}", { "_token" : "{{ csrf_token() }}", "name" : new_user_name, "username" : new_user_username, "password" : new_user_password }, function(result){
+        if(result.error == 0)
+        {
+          var created_user_detail = result.user_detail;
+
+          var data = "<tr user_id="+created_user_detail.id+">";
+          data += "<td>";
+          if(created_user_detail.user_type == 1)
+            data += "Management";
+          else
+            data += "Cashier";
+          data += "</td>";
+          data += "<td>"+created_user_detail.name+"</td>";
+          data += "<td>"+created_user_detail.username+"</td>";
+          data += "<td>";
+          data += "<button class='btn btn-primary' type='button' onclick='editUser(\""+created_user_detail.id+"\")'>";
+          data += "<i class='fas fa-edit'></i>";
+          data += "</button>";
+          data += "</td>";
+          data += "<td>";
+          data += "<button class='btn btn-danger' type='button' onclick='deleteUser(\""+created_user_detail.id+"\")'>";
+          data += "<i class='fas fa-trash-alt'></i>";
+          data += "</button>";
+          data += "</td>";
+          data += "</tr>";
+
+          user_management_table.row.add($(data)).node();
+          user_management_table.draw();
+
+          $("#addUserModal").modal('hide');
+        }
+        else if(result.error == 2)
+        {
+          $("input[name='new_user_username']").addClass("is-invalid").siblings(".invalid-feedback").html("Username has been used, please keyin a new username.");
+        }
+      });
+    }
+  }
+
+  function submitEditUser()
+  {
+    $("input[name='edit_user_name'], input[name='edit_user_username'], input[name='edit_user_password'], input[name='edit_user_password_confirmation']").removeClass("is-invalid");
+
+    var edit_user_name = $("input[name='edit_user_name']").val();
+    var edit_user_username = $("input[name='edit_user_username']").val();
+    var edit_user_password = $("input[name='edit_user_password']").val();
+    var edit_user_password_confirmation = $("input[name='edit_user_password_confirmation']").val();
+
+    var failed = false;
+    if(!edit_user_name)
+    {
+      $("input[name='edit_user_name']").addClass("is-invalid").siblings(".invalid-feedback").html("Name cannot be empty.");
+      failed = true;
+    }
+
+    if(!edit_user_username)
+    {
+      $("input[name='edit_user_username']").addClass("is-invalid").siblings(".invalid-feedback").html("Username cannot be empty.");
+      failed = true;
+    }
+
+    // if(!edit_user_password)
+    // {
+    //   $("input[name='edit_user_password']").addClass("is-invalid").siblings(".invalid-feedback").html("Password cannot be empty.");
+    //   failed = true;
+    // }
+
+    // if(!edit_user_password_confirmation)
+    // {
+    //   $("input[name='edit_user_password_confirmation']").addClass("is-invalid").siblings(".invalid-feedback").html("Confirm password cannot be empty.");
+    //   failed = true;
+    // }
+
+    if(edit_user_password != edit_user_password_confirmation)
+    {
+      $("input[name='edit_user_password_confirmation']").addClass("is-invalid");
+      $("input[name='edit_user_password']").addClass("is-invalid").siblings(".invalid-feedback").html("Password and confirm password must be same.");
+      failed = true;
+    }
+
+    var edit_user_id = $("input[name='edit_user_id']").val();
+
+    if(failed == false)
+    {
+      $.post("{{ route('editUser') }}", { "_token" : "{{ csrf_token() }}", "user_id" : edit_user_id, 'username' : edit_user_username, 'name' : edit_user_name, 'password' : edit_user_password }, function(result){
+        if(result.error == 0)
+        {
+          var edit_user_detail = result.user_detail;
+
+          $("#user_management_table tbody tr[user_id='"+edit_user_detail.id+"'] td:eq(1)").html(edit_user_detail.name);
+          $("#user_management_table tbody tr[user_id='"+edit_user_detail.id+"'] td:eq(2)").html(edit_user_detail.username);
+
+          $("#editUserModal").modal('hide');
+        }
+        else if(result.error == 2)
+        {
+          $("input[name='edit_user_username']").addClass("is-invalid").siblings(".invalid-feedback").html("Username has been used, please keyin a new username.");
+        }
+      })
+    }
   }
 
 </script>

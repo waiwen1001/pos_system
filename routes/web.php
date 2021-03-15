@@ -30,7 +30,12 @@ Route::post('/submitDailyClosing', 'HomeController@submitDailyClosing')->name('s
 Route::post('/submitCashFloat', 'HomeController@submitCashFloat')->name('submitCashFloat');
 Route::get('/getClosingAmount', 'HomeController@calculateClosingAmount')->name('calculateClosingAmount');
 Route::post('/transaction_detail', 'HomeController@getTransactionDetail')->name('getTransactionDetail');
-Route::get('/syncHQProductList', 'HomeController@syncHQProductList')->name('syncHQProductList');
+Route::get('/getDailyReport', 'HomeController@getDailyReport')->name('getDailyReport');
+Route::get('/branchSync', 'HomeController@branchSync')->name('branchSync');
+
+Route::post('/deleteUser', 'HomeController@deleteUser')->name('deleteUser');
+Route::post('/addNewUser', 'HomeController@addNewUser')->name('addNewUser');
+Route::post('/editUser', 'HomeController@editUser')->name('editUser');
 
 Route::get('/testing', 'HomeController@testing')->name('testing');
 Route::get('/myIP', 'HomeController@myIP')->name('myIP');
