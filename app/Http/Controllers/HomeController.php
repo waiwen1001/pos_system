@@ -38,7 +38,7 @@ class HomeController extends Controller
     {
       $ip = $_SERVER['REMOTE_ADDR'];
 
-      $user_list = User::get();
+      $user_list = User::where('removed', null)->get();
       $user = Auth::user();
 
       $subtotal = 0;
@@ -1213,6 +1213,7 @@ class HomeController extends Controller
 
     public function testing()
     {
+      dd("hello world");
       $response = Http::post('http://localhost/pos_system_hq/public/api/apiTesting', [
         'data' => 'Steve',
       ]);
