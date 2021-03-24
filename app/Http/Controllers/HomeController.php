@@ -1103,8 +1103,8 @@ class HomeController extends Controller
 
     public function getDailyReport()
     {
-      // $session = session::orderBy('id', 'desc')->first();
-      $session = session::where('id', 25)->first();
+      $session = session::orderBy('id', 'desc')->first();
+      // $session = session::where('id', 25)->first();
       if(!$session)
       {
         $response = new \stdClass();

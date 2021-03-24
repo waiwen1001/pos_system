@@ -614,10 +614,7 @@
       <div style="display: flex; flex-direction: column; text-align: center;">
         <label>HOME U(M) SDN BHD (125272-P)</label>
         <label>S/36,LOT1745, CABANG TIGA PENGKALAN CHEPA</label>
-        <label>TEL:09-7744243</label>
-        <label>FAX:09-7744243</label>
-        <label>homeumsdnbhd@gmail.com</label>
-        <label>INVOICE</label>
+        <label>Receipt</label>
       </div>
       <div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>
       <div id="receipt_items">
@@ -666,10 +663,6 @@
       <div style="display: flex; flex-direction: column; text-align: center;">
         <label>HOME U(M) SDN BHD (125272-P)</label>
         <label>S/36,LOT1745, CABANG TIGA PENGKALAN CHEPA</label>
-        <label>TEL:09-7744243</label>
-        <label>FAX:09-7744243</label>
-        <label>homeumsdnbhd@gmail.com</label>
-        <label>INVOICE</label>
       </div>
       <div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>
       <div id="dailyReportContent">
@@ -1495,9 +1488,9 @@
       data += "<a href='#' onclick='editInvoiceNo(\""+completed_transaction.id+"\", \""+completed_transaction.invoice_no+"\")'>Edit</a>";
     }
     data += "</td>";
-    data += "<td>"+completed_transaction.total_text+"</td>";
-    data += "<td>"+completed_transaction.payment_text+"</td>";
-    data += "<td>"+completed_transaction.balance_text+"</td>";
+    data += "<td>RM "+completed_transaction.total_text+"</td>";
+    data += "<td>RM "+completed_transaction.payment_text+"</td>";
+    data += "<td>RM "+completed_transaction.balance_text+"</td>";
     // data += "<td>"+void_html+"</td>";
     data += "<td data-order='"+completed_transaction.transaction_date+"'>"+completed_transaction.transaction_date_text+"</td>";
 
@@ -1603,7 +1596,7 @@
 
         $("#receipt_total_quantity").html(transaction.total_quantity);
         $("#receipt_total_items").html(transaction.total_items);
-        $("#receipt_total").html(transaction.total_text);
+        $("#receipt_total").html("RM "+transaction.total_text);
 
         if(transaction.payment_type != "cash")
         {
@@ -2071,100 +2064,109 @@
 
         if(category_report.length > 0)
         {
+          html += "<table style='width: 100%;'>";
           for(var a = 0; a < category_report.length; a++)
           {
-            html += "<div style='display:flex;'>";
-            html += "<div style='flex:1;'>"+category_report[a].category_name+"</div>";
-            html += "<div style='flex:1; text-align:right;'>RM "+category_report[a].category_total+"</div>";
-            html += "</div>";
+            html += "<tr>";
+            html += "<td width='85%'>"+category_report[a].category_name+"</td>";
+            html += "<td>RM</td>";
+            html += "<td align='right'>"+category_report[a].category_total+"</td>";
+            html += "</tr>";
 
-            html += "<div style='padding: 0 20px;'>";
+            // html += "<div>";
 
-            for(var b = 0; b < ip_array.length; b++)
-            {
-              html += "<div style='display:flex;'>";
-              html += "<div style='flex:1;'>"+ip_array[b].ip+"</div>";
-              var ip_found = 0;
-              for(var c = 0; c < ip_array[b].category.length; c++)
-              {
-                if(ip_array[b].category[c].category_id == category_report[a].category_id)
-                {
-                  html += "<div style='flex:1; text-align:right;'>RM "+ip_array[b].category[c].total+"</div>";
-                  ip_found = 1;
-                  break;
-                }
-              }
+            // for(var b = 0; b < ip_array.length; b++)
+            // {
+            //   html += "<div style='display:flex;'>";
+            //   html += "<div style='flex:1;'>"+ip_array[b].ip+"</div>";
+            //   var ip_found = 0;
+            //   for(var c = 0; c < ip_array[b].category.length; c++)
+            //   {
+            //     if(ip_array[b].category[c].category_id == category_report[a].category_id)
+            //     {
+            //       html += "<div style='flex:1; text-align:right;'>RM "+ip_array[b].category[c].total+"</div>";
+            //       ip_found = 1;
+            //       break;
+            //     }
+            //   }
 
-              if(ip_found == 0)
-              {
-                html += "<div style='flex:1; text-align:right;'>RM 0.00</div>";
-              }
+            //   if(ip_found == 0)
+            //   {
+            //     html += "<div style='flex:1; text-align:right;'>RM 0.00</div>";
+            //   }
 
-              html += "</div>";
-            }
-            html += "</div>";
+            //   html += "</div>";
+            // }
+            // html += "</div>";
           }
+          html += "</table>";
           
           html += '<div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>';
         }
 
         if(department_report.length > 0)
         {
+          html += "<table style='width: 100%;'>";
           for(var a = 0; a < department_report.length; a++)
           {
-            html += "<div style='display:flex;'>";
-            html += "<div style='flex:1;'>"+department_report[a].department_name+"</div>";
-            html += "<div style='flex:1; text-align:right;'>RM "+department_report[a].department_total+"</div>";
-            html += "</div>";
+            html += "<tr>";
+            html += "<td width='85%'>"+department_report[a].department_name+"</td>";
+            html += "<td>RM</td>";
+            html += "<td align='right'>"+department_report[a].department_total+"</td>";
+            html += "</tr>";
 
-            html += "<div style='padding: 0 20px;'>";
-            for(var b = 0; b < ip_array.length; b++)
-            {
-              html += "<div style='display:flex;'>";
-              html += "<div style='flex:1;'>"+ip_array[b].ip+"</div>";
-              var ip_found = 0;
-              for(var c = 0; c < ip_array[b].department.length; c++)
-              {
-                if(ip_array[b].department[c].department_id == department_report[a].department_id)
-                {
-                  html += "<div style='flex:1; text-align:right;'>RM "+ip_array[b].department[c].total+"</div>";
-                  ip_found = 1;
-                  break;
-                }
-              }
+            // html += "<div>";
+            // for(var b = 0; b < ip_array.length; b++)
+            // {
+            //   html += "<div style='display:flex;'>";
+            //   html += "<div style='flex:1;'>"+ip_array[b].ip+"</div>";
+            //   var ip_found = 0;
+            //   for(var c = 0; c < ip_array[b].department.length; c++)
+            //   {
+            //     if(ip_array[b].department[c].department_id == department_report[a].department_id)
+            //     {
+            //       html += "<div style='flex:1; text-align:right;'>RM "+ip_array[b].department[c].total+"</div>";
+            //       ip_found = 1;
+            //       break;
+            //     }
+            //   }
 
-              if(ip_found == 0)
-              {
-                html += "<div style='flex:1; text-align:right;'>RM 0.00</div>";
-              }
-              html += "</div>";
-            }
-            html += "</div>";
+            //   if(ip_found == 0)
+            //   {
+            //     html += "<div style='flex:1; text-align:right;'>RM 0.00</div>";
+            //   }
+            //   html += "</div>";
+            // }
+            // html += "</div>";
           }
-          
+          html += "</table>";
+
           html += '<div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>';
         }
 
         if(payment_type_report.length > 0)
         {
+          html += "<table style='width: 100%;'>";
           for(var a = 0; a < payment_type_report.length; a++)
           {
-            html += "<div style='display:flex;'>";
-            html += "<div style='flex:1;'>"+payment_type_report[a].payment_type_text+"</div>";
-            html += "<div style='flex:1; text-align:right;'>RM "+payment_type_report[a].payment_type_total+"</div>";
-            html += "</div>";
+            html += "<tr>";
+            html += "<td width='85%'>"+payment_type_report[a].payment_type_text+"</td>";
+            html += "<td>RM</td>";
+            html += "<td align='right'>"+payment_type_report[a].payment_type_total+"</td>";
+            html += "</tr>";
 
-            html += "<div style='padding: 0 20px;'>";
             for(var b = 0; b < ip_array.length; b++)
             {
-              html += "<div style='display:flex;'>";
-              html += "<div style='flex:1;'>"+ip_array[b].ip+"</div>";
+              html += "<tr>";
+              html += "<td width='85%'>"+ip_array[b].ip+"</td>";
+              html += "<td>RM</td>";
+              html += "<td align='right'>";
               var ip_found = 0;
               for(var c = 0; c < ip_array[b].payment_type.length; c++)
               {
                 if(ip_array[b].payment_type[c].payment_type == payment_type_report[a].payment_type)
                 {
-                  html += "<div style='flex:1; text-align:right;'>RM "+ip_array[b].payment_type[c].total+"</div>";
+                  html += ip_array[b].payment_type[c].total;
                   ip_found = 1;
                   break;
                 }
@@ -2172,13 +2174,17 @@
 
               if(ip_found == 0)
               {
-                html += "<div style='flex:1; text-align:right;'>RM 0.00</div>";
+                html += "0.00";
               }
-              html += "</div>";
+              html += "</td>";
+              html += "</tr>";
             }
-            html += "</div>";
+
+            html += "<tr>";
+            html += "<td colspan='3'><div style='margin-top:20px;'></div></td>";
+            html += "</tr>";
           }
-          
+          html += "</table>";
           html += '<div style="border: 2px dashed #999; height: 2px; margin: 10px 0 30px 0;"></div>';
         }
 
