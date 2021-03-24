@@ -165,7 +165,7 @@
                     <button class="dropdown-item" id="floatOutBtn" {{ $opening == 1 ? '' : 'disabled' }}>Cash Float ( Out )</button>
                     @if($user->user_type == 1)
                       <div class="dropdown-divider"></div>
-                      <button class="dropdown-item" onclick="dailyReport()">Daily Report</button>
+                      <button class="dropdown-item" onclick="dailyReport()">Closing Report</button>
                     @endif
                     <div class="dropdown-divider"></div>
                     <button class="dropdown-item" onclick="userManagement()">User Management</button>

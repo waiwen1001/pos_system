@@ -1309,18 +1309,11 @@ class HomeController extends Controller
 
     public function myIP()
     {
-      dd($_SERVER['REMOTE_ADDR']);
+
     }
 
     public function testing()
     {
-      dd("hello world");
-      $response = Http::post('http://localhost/pos_system_hq/public/api/apiTesting', [
-        'data' => 'Steve',
-      ]);
-
-      dd($response['data']);
-
       $now = date('Y-m-d H:i:s', strtotime(now()));
       $started_id = 34;
 
@@ -1375,8 +1368,6 @@ class HomeController extends Controller
         transaction::insert($transaction_query);
         transaction_detail::insert($transaction_detail_query);
       }
-
-      dd("Done");
     }
 }
 
