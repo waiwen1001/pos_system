@@ -453,9 +453,9 @@
                       <a href="#" onclick="editInvoiceNo('{{ $completed->id }}', '{{ $completed->invoice_no }}')">Edit</a>
                     @endif
                   </td>
-                  <td>{{ number_format($completed->total, 2) }}</td>
-                  <td>{{ number_format($completed->payment, 2) }}</td>
-                  <td>{{ number_format($completed->balance, 2) }}</td>
+                  <td>RM {{ number_format($completed->total, 2) }}</td>
+                  <td>RM {{ number_format($completed->payment, 2) }}</td>
+                  <td>RM {{ number_format($completed->balance, 2) }}</td>
                   <!-- <td>
                     <div class="void_column" transaction_id="{{ $completed->id }}">
                       @if($completed->void == 1)
@@ -850,9 +850,14 @@
             <span aria-hidden="true">&times;</span>
           </button> -->
         </div>
-        <div class="modal-body" id="syncHQContent">Syncing data to HQ, please do not refresh the page.</div>
+        <div class="modal-body" id="syncHQContent" style="text-align: center;"> 
+          <div style="display: block; font-size: 50px; color: #007bff;">
+            <i class="fas fa-spinner fa-spin"></i> 
+          </div>
+          Syncing data to HQ, please do not refresh the page.
+        </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-success" disabled id="syncHQBtn">Completed</button>
+          <button type="button" class="btn btn-success" disabled id="syncHQBtn">Syncing...</button>
         </div>
       </div>
     </div>
@@ -1589,8 +1594,8 @@
           items_html += "<div>"+transaction_detail[a].product_name+"</div>";
           items_html += "<div style='display: flex;'>";
           items_html += "<div style='flex: 1;'>"+transaction_detail[a].barcode+"</div>";
-          items_html += "<div style='flex: 1;'>"+transaction_detail[a].quantity+".00 X "+transaction_detail[a].price_text+"</div>";
-          items_html += "<div>"+transaction_detail[a].total_text+"</div>";
+          items_html += "<div style='flex: 1;'>"+transaction_detail[a].quantity+".00 X RM "+transaction_detail[a].price_text+"</div>";
+          items_html += "<div>RM "+transaction_detail[a].total_text+"</div>";
           items_html += "</div>";
         }
         
@@ -1916,6 +1921,8 @@
 
   function submitDailyClosing()
   {
+    $("#submitDailyClosing").html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
+
     $("#dailyClosingFeedback").hide();
     $("input[name='manager_username'], input[name='manager_password'], input[name='daily_closing_amount']").removeClass("is-invalid");
 
@@ -1945,6 +1952,7 @@
 
     if(proceed == 0)
     {
+      $("#submitDailyClosing").html("Submit").attr("disabled", false);
       return;
     }
 
@@ -1952,6 +1960,7 @@
       if(result.error == 0)
       {
         $("#dailyClosingModal").modal('hide');
+        $("#syncHQModal").modal('show');
         disablePosSystem();
 
         $("#openingBtn").attr("disabled", false);
@@ -1966,6 +1975,7 @@
       }
       else
       {
+        $("#submitDailyClosing").html("Submit").attr("disabled", false);
         $("#dailyClosingFeedback").html("<strong>"+result.message+".</strong>").show();
       }
     });
@@ -2006,10 +2016,7 @@
       return "Please do not refresh the page.";
     }
 
-    $("#syncHQModal").modal('show');
-
     $.get("{{ route('branchSync') }}", { "resync" : 1 }, function(result){
-      console.log(result);
       if(result.error == 0)
       {
         $("#syncHQContent").html("Sync completed.");
@@ -2054,15 +2061,47 @@
         var category_report = result.category_report;
         var department_report = result.department_report;
         var payment_type_report = result.payment_type_report;
+        var total_report = result.total_report;
+        var ip_array = result.ip_array;
+        var session = result.session;
 
         var html = "";
+        html += "<h4 style='text-align:center;'>Daily Sales Report on "+session.opening_date_time+"</h4>";
+        html += '<div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>';
+
         if(category_report.length > 0)
         {
           for(var a = 0; a < category_report.length; a++)
           {
             html += "<div style='display:flex;'>";
             html += "<div style='flex:1;'>"+category_report[a].category_name+"</div>";
-            html += "<div style='flex:1;'>"+category_report[a].category_total+"</div>";
+            html += "<div style='flex:1; text-align:right;'>RM "+category_report[a].category_total+"</div>";
+            html += "</div>";
+
+            html += "<div style='padding: 0 20px;'>";
+
+            for(var b = 0; b < ip_array.length; b++)
+            {
+              html += "<div style='display:flex;'>";
+              html += "<div style='flex:1;'>"+ip_array[b].ip+"</div>";
+              var ip_found = 0;
+              for(var c = 0; c < ip_array[b].category.length; c++)
+              {
+                if(ip_array[b].category[c].category_id == category_report[a].category_id)
+                {
+                  html += "<div style='flex:1; text-align:right;'>RM "+ip_array[b].category[c].total+"</div>";
+                  ip_found = 1;
+                  break;
+                }
+              }
+
+              if(ip_found == 0)
+              {
+                html += "<div style='flex:1; text-align:right;'>RM 0.00</div>";
+              }
+
+              html += "</div>";
+            }
             html += "</div>";
           }
           
@@ -2075,7 +2114,31 @@
           {
             html += "<div style='display:flex;'>";
             html += "<div style='flex:1;'>"+department_report[a].department_name+"</div>";
-            html += "<div style='flex:1;'>"+department_report[a].department_total+"</div>";
+            html += "<div style='flex:1; text-align:right;'>RM "+department_report[a].department_total+"</div>";
+            html += "</div>";
+
+            html += "<div style='padding: 0 20px;'>";
+            for(var b = 0; b < ip_array.length; b++)
+            {
+              html += "<div style='display:flex;'>";
+              html += "<div style='flex:1;'>"+ip_array[b].ip+"</div>";
+              var ip_found = 0;
+              for(var c = 0; c < ip_array[b].department.length; c++)
+              {
+                if(ip_array[b].department[c].department_id == department_report[a].department_id)
+                {
+                  html += "<div style='flex:1; text-align:right;'>RM "+ip_array[b].department[c].total+"</div>";
+                  ip_found = 1;
+                  break;
+                }
+              }
+
+              if(ip_found == 0)
+              {
+                html += "<div style='flex:1; text-align:right;'>RM 0.00</div>";
+              }
+              html += "</div>";
+            }
             html += "</div>";
           }
           
@@ -2088,11 +2151,43 @@
           {
             html += "<div style='display:flex;'>";
             html += "<div style='flex:1;'>"+payment_type_report[a].payment_type_text+"</div>";
-            html += "<div style='flex:1;'>"+payment_type_report[a].payment_type_total+"</div>";
+            html += "<div style='flex:1; text-align:right;'>RM "+payment_type_report[a].payment_type_total+"</div>";
+            html += "</div>";
+
+            html += "<div style='padding: 0 20px;'>";
+            for(var b = 0; b < ip_array.length; b++)
+            {
+              html += "<div style='display:flex;'>";
+              html += "<div style='flex:1;'>"+ip_array[b].ip+"</div>";
+              var ip_found = 0;
+              for(var c = 0; c < ip_array[b].payment_type.length; c++)
+              {
+                if(ip_array[b].payment_type[c].payment_type == payment_type_report[a].payment_type)
+                {
+                  html += "<div style='flex:1; text-align:right;'>RM "+ip_array[b].payment_type[c].total+"</div>";
+                  ip_found = 1;
+                  break;
+                }
+              }
+
+              if(ip_found == 0)
+              {
+                html += "<div style='flex:1; text-align:right;'>RM 0.00</div>";
+              }
+              html += "</div>";
+            }
             html += "</div>";
           }
           
           html += '<div style="border: 2px dashed #999; height: 2px; margin: 10px 0 30px 0;"></div>';
+        }
+
+        if(total_report != null)
+        {
+          html += "<div style='display:flex;'>";
+          html += "<div style='flex:1;'>Total Sales Today</div>";
+          html += "<div style='flex:1; text-align:right;'>RM "+total_report.total_report+"</div>";
+          html += "</div>";
         }
 
         $("#dailyReportContent").html(html);
