@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddHprToPortfolioTable extends Migration
+class AddCashierNameToTransactionTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class AddHprToPortfolioTable extends Migration
      */
     public function up()
     {
-        Schema::table('portfolio', function (Blueprint $table) {
-            //
+        Schema::table('transaction', function (Blueprint $table) {
+            $table->string('cashier_name')->after('ip')->nullable();
         });
     }
 
@@ -25,8 +25,8 @@ class AddHprToPortfolioTable extends Migration
      */
     public function down()
     {
-        Schema::table('portfolio', function (Blueprint $table) {
-            //
+        Schema::table('transaction', function (Blueprint $table) {
+            $table->dropColumn(['cashier_name']);
         });
     }
 }

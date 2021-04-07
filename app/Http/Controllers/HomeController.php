@@ -11,6 +11,7 @@ use App\cashier;
 use App\voucher;
 use App\session;
 use App\cash_float;
+use App\pos_cashier;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -143,6 +144,31 @@ class HomeController extends Controller
       return view('front.index', compact('user', 'user_management_list', 'pending_transaction', 'subtotal', 'discount', 'have_discount', 'total', 'real_total', 'round_off', 'payment', 'balance', 'transaction_id', 'completed_transaction', 'opening', 'voucher_name'));
     }
 
+    public function getSetupPage()
+    {
+      $user = Auth::user();
+      $access = false;
+
+      if($user)
+      {
+        if($user->user_type == 1)
+        {
+          $access = true;
+        }
+      }
+
+      if($access)
+      {
+        $pos_cashier = pos_cashier::get();
+
+        return view('front.setup', compact('user', 'pos_cashier'));
+      }
+      else
+      {
+        return redirect(route('home'));  
+      }
+    }
+
     public function searchAndAddItem(Request $request)
     {
       $barcode = $request->barcode;
@@ -183,11 +209,19 @@ class HomeController extends Controller
             $session_id = $session->id;
           }
 
+          $cashier_name = null;
           $cashier_ip = $_SERVER['REMOTE_ADDR'];
+          $cashier_detail = pos_cashier::where('ip', $cashier_ip)->first();
+
+          if($cashier_detail)
+          {
+            $cashier_name = $cashier_detail->cashier_name;
+          }
 
           $transaction = transaction::create([
             'session_id' => $session_id,
             'ip' => $cashier_ip,
+            'cashier_name' => $cashier_name,
             'transaction_no' => uniqid(),
             'user_id' => $user->id
           ]);
@@ -383,6 +417,10 @@ class HomeController extends Controller
         elseif($payment_type == "credit_card")
         {
           $payment_type_text = "Credit Card";
+        }
+        elseif($payment_type == "tng")
+        {
+          $payment_type_text = "Touch & Go";
         }
       }
       
@@ -1303,6 +1341,69 @@ class HomeController extends Controller
       $response->error = 0;
       $response->message = "Success";
       $response->user_detail = $user_detail;
+
+      return response()->json($response);
+    }
+
+    public function createCashier(Request $request)
+    {
+      $pos_cashier = pos_cashier::where('ip', $request->ip)->first();
+      if($pos_cashier)
+      {
+        $response = new \stdClass();
+        $response->error = 1;
+        $response->message = "Cashier IP ".$request->ip." existed, please use another IP.";
+
+        return response()->json($response);
+      }
+
+      $pos_cashier = pos_cashier::create([
+        'ip' => $request->ip,
+        'cashier_name' => $request->name
+      ]);
+
+      $response = new \stdClass();
+      $response->error = 0;
+      $response->message = "Success";
+      $response->pos_cashier = $pos_cashier;
+
+      return response()->json($response);
+    }
+
+    public function deleteCashier(Request $request)
+    {
+      pos_cashier::where('id', $request->id)->delete();
+
+      $response = new \stdClass();
+      $response->error = 0;
+      $response->message = "Success";
+
+      return response()->json($response);
+    }
+
+    public function editCashier(Request $request)
+    {
+      $pos_cashier = pos_cashier::where('ip', $request->ip)->where('id', '<>', $request->id)->first();
+      if($pos_cashier)
+      {
+        $response = new \stdClass();
+        $response->error = 1;
+        $response->message = "Cashier IP ".$request->ip." existed, please use another IP.";
+
+        return response()->json($response);
+      }
+
+      pos_cashier::where('id', $request->id)->update([
+        'ip' => $request->ip,
+        'cashier_name' => $request->name
+      ]);
+
+      $updated_pos_cashier = pos_cashier::where('id', $request->id)->first();
+
+      $response = new \stdClass();
+      $response->error = 0;
+      $response->message = "Success";
+      $response->pos_cashier = $updated_pos_cashier;
 
       return response()->json($response);
     }

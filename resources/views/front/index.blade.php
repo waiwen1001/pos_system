@@ -187,6 +187,7 @@
                     <button class="dropdown-item cardPayment" payment_type="debit_card" href="#">Debit card</button>
                     <button class="dropdown-item cardPayment" payment_type="credit_card" href="#">Credit card</button>
                     <button class="dropdown-item cardPayment" payment_type="e-wallet" href="#">E-wallet</button>
+                    <button class="dropdown-item cardPayment" payment_type="tng" href="#">Touch & Go</button>
                   </div>
                 </div>
 
@@ -614,28 +615,28 @@
       <div style="display: flex; flex-direction: column; text-align: center;">
         <label>HOME U(M) SDN BHD (125272-P)</label>
         <label>S/36,LOT1745, CABANG TIGA PENGKALAN CHEPA</label>
-        <label>Receipt</label>
+        <label>RESIT</label>
       </div>
       <div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>
       <div id="receipt_items">
         
       </div>
       <div style="display: flex; margin-top: 20px;">
-        <div style="flex: 1;">No. Qtys: <label id="receipt_total_quantity"></label></div>
-        <div style="flex: 1;">No. Items: <label id="receipt_total_items"></label></div>
+        <div style="flex: 1;">Kuantiti: <label id="receipt_total_quantity"></label></div>
+        <div style="flex: 1;">Barang: <label id="receipt_total_items"></label></div>
       </div>
       <div style="border: 2px dashed #999; margin: 10px 0;"></div>
       <div style="margin-bottom: 20px;">
         <div style="width: 100%; font-size: 20px; font-weight: bold; display: flex; justify-content: space-between;">
-          <div>Total</div>
+          <div>Jumlah</div>
           <div id="receipt_total"></div>
         </div>
         <div id="receipt_other_payment" style="width: 100%; display: flex; justify-content: space-between; font-size: 18px;"></div>
       </div>
       <div style="border: 2px dashed #999; margin: 10px 0;"></div>
       <div>
-        <div style="text-align: center;">THANK YOU FOR SHOPING</div>
-        <div style="text-align: center;">GOODS SOLD ARE NOT REFUNDABLE</div>
+        <div style="text-align: center;">TERIMA KASIH KERANA MEMBELI-BELAH DENGAN KAMI</div>
+        <div style="text-align: center;">BARANG YANG DIJUAL TIDAK DAPAT DIKEMBALIKAN</div>
 
         <div style="margin: 20px 0 40px 0;">
           <div style="display: inline-block;" id="receipt_date"></div>
@@ -643,15 +644,15 @@
         </div>
 
         <div>
-          <label>Cashier : <label id="receipt_completed_by"></label> </label>
+          <label>Juruwang : <label id="receipt_completed_by"></label> </label>
           <div style="display: flex; justify-content: space-between;">
             <div id="receipt_completed_by_2"></div>
-            <div>Inv : <label id="receipt_invoice_no"></label></div>
+            <div>INVOIS : <label id="receipt_invoice_no"></label></div>
           </div>
         </div>
 
         <div style="text-align: center;" id="receipt_reprint">
-          <div style="font-weight: bold;">... REPRINT COPY ...</div>
+          <div style="font-weight: bold;">... CETAK SEMULA SALINAN ...</div>
           <div id="reprint_date_time"></div>
         </div>
       </div>

@@ -14,6 +14,8 @@
 Auth::routes();
 
 Route::get('/', 'HomeController@index')->name('home');
+Route::get('/setup', 'HomeController@getSetupPage')->name('setup');
+
 Route::post('/searchAndAddItem', 'HomeController@searchAndAddItem')->name('searchAndAddItem');
 Route::post('/submitDeleteItem', 'HomeController@submitDeleteItem')->name('submitDeleteItem');
 Route::post('/submitTransaction', 'HomeController@submitTransaction')->name('submitTransaction');
@@ -36,6 +38,10 @@ Route::get('/branchSync', 'HomeController@branchSync')->name('branchSync');
 Route::post('/deleteUser', 'HomeController@deleteUser')->name('deleteUser');
 Route::post('/addNewUser', 'HomeController@addNewUser')->name('addNewUser');
 Route::post('/editUser', 'HomeController@editUser')->name('editUser');
+
+Route::post('/saveCashier', 'HomeController@createCashier')->name('createCashier');
+Route::post('/deleteCashier', 'HomeController@deleteCashier')->name('deleteCashier');
+Route::post('/editCashier', 'HomeController@editCashier')->name('editCashier');
 
 Route::get('/testing', 'HomeController@testing')->name('testing');
 Route::get('/myIP', 'HomeController@myIP')->name('myIP');
