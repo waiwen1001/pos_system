@@ -13,6 +13,7 @@
 <!-- iCheck for checkboxes and radio inputs -->
 <link rel="stylesheet" href="{{ asset('assets/iCheck/all.css') }}">
 <link rel="stylesheet" href="{{ asset('assets/iCheck/square/blue.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/sweetAlert2/sweetalert2.css') }}">
 
 <!-- Fontawesome -->
 <script src="https://kit.fontawesome.com/e5dc55166e.js" crossorigin="anonymous"></script>
@@ -26,6 +27,8 @@
 <script src="{{ asset('assets/datatables/datatables.min.js') }}"></script>
 <!-- iCheck 1.0.1 -->
 <script src="{{ asset('assets/iCheck/icheck.min.js') }}"></script>
+<!-- sweet alert 2 -->
+<script src="{{ asset('assets/sweetAlert2/sweetalert2.js') }}"></script>
 
 <body>
   
@@ -105,7 +108,7 @@
       </div>
       <div class="col-lg-7 col-sm-12" style="position: relative; padding-bottom: 150px;">
         <div class="bar_code_box">
-          <input type="text" class="form-control" placeholder="Bar Code Scanner & Product Code" id="barcode" />
+          <input type="text" class="form-control" placeholder="Bar Code Scanner & Product Code" id="barcode" disabled />
 
           <div class="checkbox icheck" style="display: inline-block; margin-left: 10px;">
             <label>
@@ -146,10 +149,12 @@
             <div class="row">
               <div class="col-4">
                 <button class="btn btn-dark" id="voucherBtn" onclick="showVoucher()">Voucher</button>
+                <span class="shortcut_func_key" style="display: none;" func_name="showVoucher()"></span>
               </div>
 
               <div class="col-4">
-                <button class="btn btn-dark" id="previousReceiptBtn">Previous Receipt</button>
+                <button class="btn btn-dark" id="previousReceiptBtn" onclick="showPreviousReceipt()">Previous Receipt</button>
+                <span class="shortcut_func_key" style="display: none;" func_name="showPreviousReceipt()"></span>
               </div>
 
               <div class="col-4">
@@ -157,25 +162,60 @@
                   <button class="btn btn-dark dropdown-toggle" type="button" id="otherDropDownBtn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     Other
                   </button>
+                  <span class="shortcut_func_key" style="display: none; left: -15px; top: -10px;" func_name="showOtherMenu()"></span>
+
                   <div class="dropdown-menu" aria-labelledby="otherDropDownBtn">
-                    <button class="dropdown-item" id="openingBtn" {{ $opening == 0 ? '' : 'disabled' }}>Opening</button>
-                    <button class="dropdown-item" id="closingBtn" {{ $opening == 1 ? '' : 'disabled' }}>Daily Closing</button>
+                    <button class="dropdown-item" id="openingBtn" {{ $opening == 0 ? '' : 'disabled' }}>
+                      Opening
+                      <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showOpening()"></span>
+                    </button>
+
+                    <button class="dropdown-item" id="closingBtn" {{ $opening == 1 ? '' : 'disabled' }}>
+                      Daily Closing
+                      <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showDailyClosing()"></span>
+                    </button>
                     <div class="dropdown-divider"></div>
-                    <button class="dropdown-item" id="floatInBtn" {{ $opening == 1 ? '' : 'disabled' }}>Cash Float ( In )</button>
-                    <button class="dropdown-item" id="floatOutBtn" {{ $opening == 1 ? '' : 'disabled' }}>Cash Float ( Out )</button>
+                    <button class="dropdown-item" id="floatInBtn" {{ $opening == 1 ? '' : 'disabled' }}>
+                      Cash Float ( In )
+                      <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showCashFloatIn()"></span>
+                    </button>
+                    <button class="dropdown-item" id="floatOutBtn" {{ $opening == 1 ? '' : 'disabled' }}>
+                      Cash Float ( Out )
+                      <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showCashFloatOut()"></span>
+                    </button>
                     @if($user->user_type == 1)
                       <div class="dropdown-divider"></div>
-                      <button class="dropdown-item" onclick="dailyReport()">Closing Report</button>
+                      <button class="dropdown-item" onclick="dailyReport()">
+                        Closing Report
+                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showClosingReport()"></span>
+                      </button>
+                      <div class="dropdown-divider"></div>
+                      <button class="dropdown-item" onclick="userManagement()">
+                        User Management
+                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showUserManagement()"></span>
+                      </button>
+                      <div class="dropdown-divider"></div>
+                      <button class="dropdown-item" onclick="syncTOHQ()">
+                        Sync transaction to HQ
+                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="SCsyncHQTransaction()"></span>
+                      </button>
+                      <button class="dropdown-item" onclick="syncProductList()">
+                        Sync HQ product list
+                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="SCsyncHQProductList()"></span>
+                      </button>
+                      <button class="dropdown-item" onclick="showKeySetup()">
+                        Shortcut key setup
+                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showKeySetup()"></span>
+                      </button>
                     @endif
-                    <div class="dropdown-divider"></div>
-                    <button class="dropdown-item" onclick="userManagement()">User Management</button>
                   </div>
                 </div>
 
               </div>
 
               <div class="col-4">
-                <button class="btn btn-dark" id="cashCheckoutBtn">Cash Checkout</button>
+                <button class="btn btn-dark" onclick="showCashCheckOut()">Cash Checkout</button>
+                <span class="shortcut_func_key" style="display: none;" func_name="showCashCheckOut()"></span>
               </div>
 
               <div class="col-4">
@@ -183,11 +223,24 @@
                   <button class="btn btn-dark dropdown-toggle" type="button" id="paymentTypeBtn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     Payment type
                   </button>
+                  <span class="shortcut_func_key" style="display: none; left: -15px; top: -10px;" func_name="showPaymentTypeMenu()"></span>
                   <div class="dropdown-menu" aria-labelledby="paymentTypeBtn">
-                    <button class="dropdown-item cardPayment" payment_type="debit_card" href="#">Debit card</button>
-                    <button class="dropdown-item cardPayment" payment_type="credit_card" href="#">Credit card</button>
-                    <button class="dropdown-item cardPayment" payment_type="e-wallet" href="#">E-wallet</button>
-                    <button class="dropdown-item cardPayment" payment_type="tng" href="#">Touch & Go</button>
+                    <button class="dropdown-item cardPayment" payment_type="debit_card" payment_type_text="Debit card" href="#">
+                      Debit card
+                      <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsDebit()"></span>
+                    </button>
+                    <button class="dropdown-item cardPayment" payment_type="credit_card" payment_type_text="Credit card" href="#">
+                      Credit card
+                      <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsCredit()"></span>
+                    </button>
+                    <button class="dropdown-item cardPayment" payment_type="e-wallet" payment_type_text="E-wallet" href="#">
+                      E-wallet
+                      <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsEwallet()"></span>
+                    </button>
+                    <button class="dropdown-item cardPayment" payment_type="tng" payment_type_text="Touch & Go" href="#">
+                      Touch & Go
+                      <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsTNG()"></span>
+                    </button>
                   </div>
                 </div>
 
@@ -195,6 +248,7 @@
 
               <div class="col-4">
                 <button class="btn btn-dark" id="clearBtn" onclick="clearTransaction()">Clear</button>
+                <span class="shortcut_func_key" style="display: none;" func_name="clearTransaction()"></span>
               </div>
             </div>
           </div>
@@ -338,7 +392,7 @@
     </div>
   </div>
 
-  <div class="modal fade" id="numpadModal" tabindex="-1" role="dialog" aria-labelledby="numpadModalLabel" aria-hidden="true">
+  <div class="modal fade" id="numpadModal" tabindex="-1" role="dialog" aria-labelledby="numpadModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
@@ -350,7 +404,7 @@
         <div class="modal-body">
           <div class="numpad">
             <div class="numpad_input">
-              <input type="text" class="form-control" name="received_payment" value="0" /> 
+              <input type="number" class="form-control" name="received_payment" value="0" /> 
               <span class="invalid-feedback" role="alert"></span>
             </div>
             <div class="numpad_func_btn">
@@ -681,6 +735,8 @@
           </button>
         </div>
         <div class="modal-body">
+          <label>Payment type : </label>
+          <label id="payment_type_text"></label>
           <input type="text" class="form-control" name="invoice_no" />
           <span class="invalid-feedback" role="alert"></span>
         </div>
@@ -857,6 +913,28 @@
     </div>
   </div>
 
+  <div class="modal fade" id="syncProductListModal" tabindex="-1" role="dialog" aria-labelledby="syncProductListModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="syncProductListModalLabel">Syncing HQ Product List</h5>
+          <!-- <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button> -->
+        </div>
+        <div class="modal-body" id="syncHQProductListContent" style="text-align: center;"> 
+          <div style="display: block; font-size: 50px; color: #007bff;">
+            <i class="fas fa-spinner fa-spin"></i> 
+          </div>
+          Syncing HQ product list, please do not refresh the page.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success" disabled id="syncProductListBtn">Syncing...</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="modal fade" id="deleteUserModal" tabindex="-1" role="dialog" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -1002,10 +1080,15 @@
 
 <script>
   
+  var combined_barcode = "";
+  var barcode_timeout;
   var numpad_using_type = "numpad";
   var numpad_prefill = 0;
   var searchFunc;
   var voucherFunc;
+  var session = "{{ $session }}";
+  var shortcut_key = @json($shortcut_key);
+  var user = @json($user);
 
   var transaction_total = "{{ $real_total }}";
   var opening = "{{ $opening }}";
@@ -1034,18 +1117,77 @@
       increaseArea: '20%' /* optional */
     });
 
+    if(session == "")
+    {
+      syncProductList();
+    }
+
+    for(var a = 0; a < shortcut_key.length; a++)
+    {
+      var shortcut_func_name = shortcut_key[a].function;
+      $(".shortcut_func_key[func_name='"+shortcut_func_name+"']").html(shortcut_key[a].character).show();
+    }
+
+    $(document).on('keydown', function(e){
+      // ESC
+      if(e.which == "27")
+      {
+        $("#previous_receipt").hide();
+        $("#user_management").hide();
+        swal.close();
+
+        if($("#numpadModal").css("display") != "none" && $(".swal2-container").length == 0)
+        {
+          $("#numpadModal").modal('hide');
+        }
+      }
+      else if(e.which == 13)
+      {
+        if(!$(e.target).closest('input[name="received_payment"]').length)
+        {
+          swal.close();
+        }
+        $(".modal").not("#cardCheckoutModal, #numpadModal").modal('hide');
+      }
+      else if(e.key)
+      {
+        if(e.key.length == 1)
+        {
+          combined_barcode += e.key;
+        }
+      }
+
+      clearTimeout(barcode_timeout);
+      barcode_timeout = setTimeout(run_barcode, 300);
+    });
+
+    $("#barcode_manual").on('ifChanged', function(){
+      $("#barcode").val("");
+      var manual_checked = $(this).is(":checked");
+      if(manual_checked)
+      {
+        $("#barcode").attr("disabled", false).focus();
+      }
+      else
+      {
+        $("#barcode").attr("disabled", true);
+      }
+    });
+
     $("#barcode").on('keydown', function(e){
       clearInterval(searchFunc);
       // enter
       // delay 50ms because keydown will not capture on change
       if($("#barcode_manual").is(":checked") == false)
       {
+        // ctrl
         if(e.which != 17){
           searchFunc = setTimeout(searchAndAddItem, 10);
         }
       }
       else
       {
+        // enter
         if(e.which == 13)
         {
           searchFunc = setTimeout(searchAndAddItem, 10);
@@ -1060,25 +1202,34 @@
       }
     });
 
+    $("input[name='invoice_no']").on('keydown', function(e){
+      if(e.which == 13)
+      {
+        $("#submitCardPayment").click();
+      }
+    });
+
     $("#deleteSubmit").click(function(){
       var item_id = $("#delete_item_id").val();
       submitDeleteItem(item_id);
-    });
-
-    $("#cashCheckoutBtn").click(function(){
-      $("input[name='received_payment']").val(0);
-      numpad_using_type = "numpad";
-      numpad_prefill = 0;
-
-      showNumPad();
     });
 
     $(".cardPayment").click(function(){
       $("input[name='invoice_no']").removeClass("is-invalid");
 
       var payment_type = $(this).attr("payment_type");
+      var payment_type_text = $(this).attr("payment_type_text");
+      
       $("#payment_type").val(payment_type);
+      $("#payment_type_text").html(payment_type_text);
       showInvoiceInput();
+    });
+
+    $("input[name=received_payment]").on('keydown', function(e){
+      if(e.which == 13)
+      {
+        $(".numpad_btn.submit").click();
+      }
     });
 
     $(".numpad_number_btn").click(function(){
@@ -1091,7 +1242,6 @@
 
       if(type == 1)
       {
-        console.log(numpad_using_type);
         if(numpad_using_type == "prefill")
         {
           $("input[name='received_payment']").val(0);
@@ -1124,6 +1274,8 @@
         numpad_prefill += ".00";
         $("input[name='received_payment']").val(numpad_prefill);
       }
+
+      $("input[name='received_payment']").focus();
     });
 
     $(".numpad_btn.decrease").click(function(){
@@ -1142,24 +1294,32 @@
           numpad_prefill = edited_number;
         }
       }
+
+      $("input[name='received_payment']").focus();
     });
 
     $(".numpad_btn.clear, .numpad_btn.exit").click(function(){
       numpad_using_type = "numpad";
       numpad_prefill = 0;
-      $("input[name='received_payment']").val(0);
+      $("input[name='received_payment']").val("");
+
+      $("input[name='received_payment']").focus();
     });
 
     $(".numpad_btn.submit").click(function(){
+      if($("input[name='received_payment']").val() == "0" || $("input[name='received_payment']").val() == "")
+      {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Cash amount cannot be 0 or empty.',
+        });
+
+        return;
+      }
+
+      console.log()
       submitCashPayment();
-    });
-
-    $("#previousReceiptBtn").click(function(){
-      $("#previous_receipt").show();
-
-      setTimeout(function(){
-        previous_receipt_table.draw();
-      }, 50);
     });
 
     $(".close_full_page").click(function(){
@@ -1210,7 +1370,7 @@
       submitRemoveVoucher();
     });
 
-    if(opening == 0)
+    if(opening == 0 && session != "")
     {
       $("input[name='cashier_opening_amount']").val("");
       $("#openingModal").modal('show');
@@ -1229,6 +1389,11 @@
 
         $("input[name='manager_username'], input[name='manager_password']").val("");
         $("#dailyClosingModal").modal('show');
+
+        setTimeout(function(){
+          $("input[name='manager_username']").focus();
+        }, 500);
+
         $("input[name='daily_closing_amount']").removeClass("is-invalid").val(result.closing_amount);
       });
     });
@@ -1247,6 +1412,9 @@
       }
 
       $("#cashFloatModal").modal('show');
+      setTimeout(function(){
+        $("input[name='cash_float']").focus();
+      }, 500);
     });
 
     $("#submitCashFloat").click(function(){
@@ -1292,6 +1460,7 @@
         $("#added_item_toast").toast('show');
 
         generateItemList(transaction_summary);
+        $("input[name=barcode_manual]").iCheck('uncheck');
       }
       $("#barcode").val('');
     });
@@ -1379,6 +1548,10 @@
   function showNumPad()
   {
     $("#numpadModal").modal('show');
+    setTimeout(function(){
+
+      $("input[name='received_payment']").val("").focus();
+    }, 500);
   }
 
   function submitCashPayment()
@@ -1658,7 +1831,11 @@
 
   function showInvoiceInput()
   {
+    $("input[name='invoice_no']").val("");
     $("#cardCheckoutModal").modal('show');
+    setTimeout(function(){
+      $("input[name='invoice_no']").focus();
+    }, 500);
   }
 
   function submitCardPayment()
@@ -1750,14 +1927,160 @@
 
   function showVoucher()
   {
-    $("input[name='voucher_code']").val("").removeClass("is-invalid");
-    $("#voucherModal").modal('show');
+    if($("#voucherBtn").attr("disabled") != "disabled")
+    {
+      $("input[name='voucher_code']").val("").removeClass("is-invalid");
+      $("#voucherModal").modal('show');
 
-    setTimeout(function(){
-      $("input[name='voucher_code']").focus();
-    }, 500);
+      setTimeout(function(){
+        $("input[name='voucher_code']").focus();
+      }, 500);
+    }
+    
   }
 
+  function showPreviousReceipt()
+  {
+    if($("#previousReceiptBtn").attr("disabled") != "disabled")
+    {
+      $("#previous_receipt").show();
+
+      setTimeout(function(){
+        previous_receipt_table.draw();
+      }, 50);
+    }
+  }
+
+  function showOtherMenu()
+  {
+    $("#otherDropDownBtn").click();
+  }
+
+  function showOpening()
+  {
+    if($("#openingBtn").attr("disabled") != "disabled")
+    {
+      $("#openingBtn").click();
+    }
+  }
+
+  function showDailyClosing()
+  {
+    if($("#closingBtn").attr("disabled") != "disabled")
+    {
+      $("#closingBtn").click();
+    }
+  }
+
+  function showCashFloatIn()
+  {
+    if($("#floatInBtn").attr("disabled") != "disabled")
+    {
+      $("#floatInBtn").click();
+    }
+  }
+
+  function showCashFloatOut()
+  {
+    if($("#floatOutBtn").attr("disabled") != "disabled")
+    {
+      $("#floatOutBtn").click();
+    }
+  }
+
+  function showClosingReport()
+  {
+    if(user.user_type == 1)
+    {
+      dailyReport();
+    }
+  }
+
+  function showUserManagement()
+  {
+    if(user.user_type == 1)
+    {
+      userManagement();
+    }
+  }
+
+  function SCsyncHQTransaction()
+  {
+    if(user.user_type == 1)
+    {
+      syncTOHQ();
+    }
+  }
+
+  function SCsyncHQProductList()
+  {
+    if(user.user_type == 1)
+    {
+      syncProductList();
+    }
+  }
+
+  function showCashCheckOut()
+  {
+    $("input[name='received_payment']").val(0);
+    numpad_using_type = "numpad";
+    numpad_prefill = 0;
+
+    showNumPad();
+  }
+
+  function showPaymentTypeMenu()
+  {
+    if($("#paymentTypeBtn").attr("disabled") != "disabled")
+    {
+      $("#paymentTypeBtn").click();
+    }
+  }
+
+  function payAsDebit()
+  {
+    if($("#paymentTypeBtn").attr("disabled") != "disabled")
+    {
+      $(".cardPayment[payment_type='debit_card']").click();
+    }
+  }
+
+  function payAsCredit()
+  {
+    if($("#paymentTypeBtn").attr("disabled") != "disabled")
+    {
+      $(".cardPayment[payment_type='credit_card']").click();
+    }
+  }
+
+  function payAsEwallet()
+  {
+    if($("#paymentTypeBtn").attr("disabled") != "disabled")
+    {
+      $(".cardPayment[payment_type='e-wallet']").click();
+    }
+  }
+
+  function payAsTNG()
+  {
+    if($("#paymentTypeBtn").attr("disabled") != "disabled")
+    {
+      $(".cardPayment[payment_type='tng']").click();
+    }
+  }
+
+  function showKeySetup()
+  {
+    if(user.user_type == 1)
+    {
+      window.open(
+        '{{ route("key_setup") }}',
+        '_blank'
+      );
+    }
+    
+  }
+  
   function submitVoucher()
   {
     var voucher_code = $("input[name='voucher_code']").val();
@@ -1965,13 +2288,16 @@
 
         opening = 0;
 
-        syncHQ();
+        syncHQ(0);
       }
       else
       {
         $("#submitDailyClosing").html("Submit").attr("disabled", false);
         $("#dailyClosingFeedback").html("<strong>"+result.message+".</strong>").show();
       }
+    }).fail(function(){
+      alert("Something wrong");
+      $("#submitDailyClosing").html("Submit").attr("disabled", false);
     });
   }
 
@@ -2004,11 +2330,21 @@
     });
   }
 
-  function syncHQ()
+  function syncHQ(manual)
   {
     window.onbeforeunload = function() {
       return "Please do not refresh the page.";
     }
+
+    var html = "";
+    html += '<div style="display: block; font-size: 50px; color: #007bff;">';
+    html += '<i class="fas fa-spinner fa-spin"></i> ';
+    html += '</div>';
+    html += 'Syncing data to HQ, please do not refresh the page.';
+    html += '</div>';
+
+    $("#syncHQContent").html(html);
+    $("#syncHQBtn").html("Syncing...").attr("disabled", true);
 
     $.get("{{ route('branchSync') }}", { "resync" : 1 }, function(result){
       if(result.error == 0)
@@ -2016,17 +2352,27 @@
         $("#syncHQContent").html("Sync completed.");
 
         $("#syncHQBtn").html("Sync completed").attr("disabled", false).off('click').click(function(){
-          logout();
+          $("#syncHQModal").modal('hide');
+          if(manual == 0)
+          {
+            dailyReport();
+          }       
+          // logout();
         });
 
         window.onbeforeunload = function () {
           // blank function do nothing
         }
+
+        if(manual == 1)
+        {
+          enablePosSystem();
+        }
       }
       else
       {
         $("#syncHQBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
-          syncHQ();
+          syncHQ(manual);
           $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
         });
 
@@ -2037,7 +2383,7 @@
       
     }).fail(function(){
       $("#syncHQBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
-        syncHQ();
+        syncHQ(manual);
         $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
       });
 
@@ -2193,7 +2539,7 @@
         {
           html += "<div style='display:flex;'>";
           html += "<div style='flex:1;'>Total Sales Today</div>";
-          html += "<div style='flex:1; text-align:right;'>RM "+total_report.total_report+"</div>";
+          html += "<div style='flex:1; text-align:right;'>RM "+ (total_report.total_report != "" && total_report.total_report != null ? total_report.total_report : "0" )+"</div>";
           html += "</div>";
         }
 
@@ -2405,6 +2751,119 @@
           $("input[name='edit_user_username']").addClass("is-invalid").siblings(".invalid-feedback").html("Username has been used, please keyin a new username.");
         }
       })
+    }
+  }
+
+  function syncTOHQ()
+  {
+    $("#syncHQModal").modal('show');
+    disablePosSystem();
+    syncHQ(1);
+  }
+
+  function syncProductList()
+  {
+    window.onbeforeunload = function() {
+      return "Please do not refresh the page.";
+    }
+
+    var html = "";
+    html += '<div style="display: block; font-size: 50px; color: #007bff;">';
+    html += '<i class="fas fa-spinner fa-spin"></i> ';
+    html += '</div>';
+    html += 'Syncing data to HQ, please do not refresh the page.';
+    html += '</div>';
+
+    $("#syncHQProductListContent").html(html);
+    $("#syncProductListBtn").html("Syncing...").attr("disabled", true);
+
+    $("#syncProductListModal").modal('show');
+    disablePosSystem();
+    
+    $.get("{{ route('productSync') }}", function(result){
+      if(result.error == 0)
+      {
+        $("#syncHQProductListContent").html("Sync completed.");
+
+        window.onbeforeunload = function () {
+          // blank function do nothing
+        }
+
+        $("#syncProductListBtn").html("Sync completed").attr("disabled", false).off('click').click(function(){
+          location.reload();      
+          // logout();
+        });
+      }
+      else
+      {
+        $("#syncProductListBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
+          syncProductList();
+          $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
+        });
+
+        $("#syncHQProductListContent").html("Sync failed, please sync again.");
+
+        alert("something wrong, click Re-sync to sync again.");
+      }
+      
+    }).fail(function(){
+      $("#syncProductListBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
+        syncProductList();
+        $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
+      });
+
+      $("#syncHQProductListContent").html("Sync failed, please sync again.");
+
+      alert("something wrong, click Re-sync to sync again.");
+    });
+  }
+
+  function run_barcode()
+  {
+    var run = true;
+    if($("#barcode_manual").is(":checked"))
+    {
+      run = false;
+      combined_barcode = "";
+    }
+
+    if($("#voucherModal").css("display") != "none" || $("#user_management").css("display") != "none" || $("#dailyClosingModal").css("display") != "none" || $("#numpadModal").css("display") != "none" || $("#openingModal").css("display") != "none" || $("#previous_receipt").css("display") != "none" || $("#cardCheckoutModal").css("display") != "none")
+    {
+      run = false;
+      combined_barcode = "";
+    }
+
+    if(run)
+    {
+      // check product using barcode
+      if(combined_barcode.length > 1)
+      {
+        $("#barcode").val(combined_barcode);
+        combined_barcode = "";
+        clearInterval(searchFunc);
+        searchFunc = setTimeout(searchAndAddItem, 10);
+      }
+      // check shortcut key
+      else if(combined_barcode.length == 1)
+      {
+        for(var a = 0; a < shortcut_key.length; a++)
+        {
+          if(shortcut_key[a].character)
+          {
+            if(shortcut_key[a].character.toLowerCase() == combined_barcode.toLowerCase())
+            {
+              var func_name = shortcut_key[a].function;
+              func_name = func_name.replace('()','');
+              window[func_name]();
+            }
+          }
+        }
+        combined_barcode = "";
+      }
+    }
+    else
+    {
+      combined_barcode = "";
     }
   }
 

@@ -100,6 +100,7 @@
 
 <script>
   
+  var my_ip = "{{ $ip }}";
   $(document).ready(function(){
 
     $("#add_ip").click(function(){
@@ -107,7 +108,7 @@
       var html = "";
       html += "<tr>";
       html += "<td>#</td>";
-      html += "<td><input type='text' name='cashier_ip' class='form-control' /></td>";
+      html += "<td><input type='text' name='cashier_ip' class='form-control' value="+my_ip+" /></td>";
       html += "<td><input type='text' name='cashier_name' class='form-control' /></td>";
       html += "<td>";
       html += "<button class='btn btn-success' onclick='createCashier(this)'><i class='fas fa-check-circle'></i></button>";

@@ -12,6 +12,7 @@ use App\voucher;
 use App\session;
 use App\cash_float;
 use App\pos_cashier;
+use App\shortcut_key;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -86,6 +87,7 @@ class HomeController extends Controller
       }
 
       $session = session::where('closed', null)->first();
+
       $completed_transaction = [];
       if($session)
       {
@@ -141,7 +143,9 @@ class HomeController extends Controller
         $user_management_list = [$user];
       }
 
-      return view('front.index', compact('user', 'user_management_list', 'pending_transaction', 'subtotal', 'discount', 'have_discount', 'total', 'real_total', 'round_off', 'payment', 'balance', 'transaction_id', 'completed_transaction', 'opening', 'voucher_name'));
+      $shortcut_key = shortcut_key::get();
+
+      return view('front.index', compact('user', 'user_management_list', 'pending_transaction', 'subtotal', 'discount', 'have_discount', 'total', 'real_total', 'round_off', 'payment', 'balance', 'transaction_id', 'completed_transaction', 'opening', 'voucher_name', 'session', 'shortcut_key'));
     }
 
     public function getSetupPage()
@@ -160,13 +164,77 @@ class HomeController extends Controller
       if($access)
       {
         $pos_cashier = pos_cashier::get();
+        $ip = $_SERVER['REMOTE_ADDR'];
 
-        return view('front.setup', compact('user', 'pos_cashier'));
+        return view('front.setup', compact('user', 'pos_cashier', 'ip'));
       }
       else
       {
         return redirect(route('home'));  
       }
+    }
+
+    public function getKeySetupPage()
+    {
+      $user = Auth::user();
+      $access = false;
+
+      if($user)
+      {
+        if($user->user_type == 1)
+        {
+          $access = true;
+        }
+      }
+
+      if($access)
+      {
+        $front_function_list = $this->front_function_list();
+
+        $shortcut_key = shortcut_key::get();
+
+        foreach($shortcut_key as $key)
+        {
+          foreach($front_function_list as $fkey => $front)
+          {
+            if($key->function == $front['function'])
+            {
+              $front_function_list[$fkey]['code'] = $key->code;
+              $front_function_list[$fkey]['character'] = $key->character;
+              break;
+            }
+          }
+        }
+
+        return view('front.key_setup', compact('shortcut_key', 'front_function_list'));
+      }
+      else
+      {
+        return redirect(route('home'));  
+      }
+    }
+
+    public function saveShortcutKey(Request $request)
+    {
+      foreach($request->function as $key => $function)
+      {
+        $code_name = $function."_code";
+        $code = $request->$code_name;
+
+        $char_name = $function."_char";
+        $char = $request->$char_name;
+
+        shortcut_key::updateOrCreate([
+          'function' => $function
+        ],[
+          'function' => $function,
+          'function_name' => $request->function_name[$key],
+          'code' => $code,
+          'character' => $char
+        ]);
+      }
+
+      return redirect(route('key_setup'));
     }
 
     public function searchAndAddItem(Request $request)
@@ -1085,8 +1153,11 @@ class HomeController extends Controller
       }
 
       $barcode_array = array();
-      foreach($product_list as $product)
+      $total_product_list = count($product_list);
+      foreach($product_list as $key => $product)
       {
+        \Log::info("Updating product list on ".$key." / ".$total_product_list);
+
         product::updateOrCreate([
           'barcode' => $product['barcode']
         ],[
@@ -1136,6 +1207,104 @@ class HomeController extends Controller
         $response->message = "Branch sync product URL not found";
 
         return $response;
+      }
+    }
+
+    public function productSync()
+    {
+      $branch_id = env('branch_id');
+
+      if(!$branch_id)
+      {
+        $response = new \stdClass();
+        $response->error = 1;
+        $response->message = "Branch ID is empty, please add in ENV file or clear cache.";
+
+        return response()->json($response);
+      }
+
+      $syncURL = env('hqProductSyncURL');
+
+      if($syncURL)
+      {
+        $response = Http::post($syncURL, [
+          'branch_id' => $branch_id,
+        ]);
+
+        if($response['error'] == 1)
+        {
+          return response()->json($response);
+        }
+
+        $barcode_array = array();
+        $product_list = $response['product_list'];
+        if($product_list && is_array($product_list))
+        {
+          $total_product_list = count($product_list);
+          foreach($product_list as $key => $product)
+          {
+            \Log::info("Updating product list on ".$key." / ".$total_product_list);
+
+            product::updateOrCreate([
+              'barcode' => $product['barcode']
+            ],[
+              'department_id' => $product['department_id'],
+              'category_id' => $product['category_id'],
+              'barcode' => $product['barcode'],
+              'product_name' => $product['product_name'],
+              'price' => $product['price']
+            ]);
+
+            if(!in_array($product['barcode'], $barcode_array))
+            {
+              array_push($barcode_array, $product['barcode']);
+            }
+          }
+        }
+
+        $syncCompletedURL = env('hqProductSyncCompletedURL');
+        if($syncCompletedURL)
+        {
+          $response = Http::post($syncCompletedURL, [
+            'branch_id' => $branch_id,
+            'barcode_array' => $barcode_array
+          ]);
+
+          if($response['error'] == 1)
+          {
+            return response()->json($response);
+          }
+
+          $cashier_ip = $_SERVER['REMOTE_ADDR'];
+          $now = date('Y-m-d H:i:s', strtotime(now()));
+
+          $session = session::create([
+            'ip' => $cashier_ip,
+            'opening_date_time' => $now
+          ]);
+
+          $response = new \stdClass();
+          $response->error = 0;
+          $response->message = "Success";
+
+          return response()->json($response);
+        }
+        else
+        {
+          $response = new \stdClass();
+          $response->error = 1;
+          $response->message = "HQ sync product list completed URL not found.";
+
+          return response()->json($response);
+        }
+      }
+      else
+      {
+        $response = new \stdClass();
+        $response->error = 1;
+        $response->message = "HQ sync product list URL not found.";
+
+        return response()->json($response);
       }
     }
 
@@ -1469,6 +1638,122 @@ class HomeController extends Controller
         transaction::insert($transaction_query);
         transaction_detail::insert($transaction_detail_query);
       }
+    }
+
+    public function front_function_list()
+    {
+      $front_function_list = [
+        [
+          'function' => "showVoucher()",
+          'function_name' => "Show voucher",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "showPreviousReceipt()",
+          'function_name' => "Show previous receipt",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "showOtherMenu()",
+          'function_name' => "Show other menu",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "showOpening()",
+          'function_name' => "Show opening",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "showDailyClosing()",
+          'function_name' => "Show daily closing",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "showCashFloatIn()",
+          'function_name' => "Show cash float in",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "showCashFloatOut()",
+          'function_name' => "Show cash float out",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "showClosingReport()",
+          'function_name' => "Show closing report",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "showUserManagement()",
+          'function_name' => "Show user management",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "SCsyncHQTransaction()",
+          'function_name' => "Sync transaction to HQ",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "SCsyncHQProductList()",
+          'function_name' => "Sync HQ product list",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "showCashCheckOut()",
+          'function_name' => "Show cash checkout",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "showPaymentTypeMenu()",
+          'function_name' => "Show payment type menu",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "payAsDebit()",
+          'function_name' => "Pay bill by Debit Card",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "payAsCredit()",
+          'function_name' => "Pay bill by Credit Card",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "payAsEwallet()",
+          'function_name' => "Pay bill by E-wallet",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "payAsTNG()",
+          'function_name' => "Pay bill by Touch & Go",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "clearTransaction()",
+          'function_name' => "Clear transaction",
+          'code' => null,
+          'character' => null
+        ],
+      ];
+
+      return $front_function_list;
     }
 }
 
