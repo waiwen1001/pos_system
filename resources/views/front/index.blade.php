@@ -2167,12 +2167,12 @@
 
   function disablePosSystem()
   {
-    $("#barcode, #voucherBtn, #cashCheckoutBtn, #paymentTypeBtn, #clearBtn, #previousReceiptBtn").attr("disabled", true);
+    $("#voucherBtn, #cashCheckoutBtn, #paymentTypeBtn, #clearBtn, #previousReceiptBtn").attr("disabled", true);
   }
 
   function enablePosSystem()
   {
-    $("#barcode, #voucherBtn, #cashCheckoutBtn, #paymentTypeBtn, #clearBtn, #previousReceiptBtn").attr("disabled", false);
+    $("#voucherBtn, #cashCheckoutBtn, #paymentTypeBtn, #clearBtn, #previousReceiptBtn").attr("disabled", false);
   }
 
   function submitOpening()
