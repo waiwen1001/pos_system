@@ -2505,7 +2505,7 @@
             for(var b = 0; b < ip_array.length; b++)
             {
               html += "<tr>";
-              html += "<td width='85%'>"+ip_array[b].ip+"</td>";
+              html += "<td width='85%'>"+ip_array[b].cashier_name+"</td>";
               html += "<td>RM</td>";
               html += "<td align='right'>";
               var ip_found = 0;

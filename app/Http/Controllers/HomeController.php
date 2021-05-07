@@ -54,7 +54,7 @@ class HomeController extends Controller
       $transaction_id = null;
       $voucher_name = null;
 
-      $pending_transaction = transaction::where('completed', null)->first();
+      $pending_transaction = transaction::where('completed', null)->where('ip', $ip)->first();
       if($pending_transaction)
       {
         if($pending_transaction->total_discount)
@@ -1332,11 +1332,27 @@ class HomeController extends Controller
 
       $total_ip = transaction_detail::leftJoin('transaction', 'transaction.id', '=', 'transaction_detail.transaction_id')->where('transaction.session_id', $session->id)->leftJoin('product', 'product.id', '=', 'transaction_detail.product_id')->leftJoin('category', 'category.id', '=', 'product.category_id')->leftJoin('department', 'department.id', '=', 'product.department_id')->select('transaction.id', 'transaction.ip', 'transaction.payment_type', 'transaction.total', 'transaction.payment_type_text', 'transaction_detail.product_id', 'transaction_detail.quantity', 'product.product_name', 'product.department_id', 'product.category_id', 'category.name as category_name', 'department.name as department_name')->groupBy('transaction.ip')->get();
 
+      $pos_cashier = pos_cashier::get();
+
       $ip_array = array();
       foreach($total_ip as $ip)
       {
+        $cashier_name = "";
+        if($ip->ip)
+        {
+          foreach($pos_cashier as $cashier_detail)
+          {
+            if($cashier_detail->ip == $ip->ip)
+            {
+              $cashier_name = $cashier_detail->name;
+              break;
+            }
+          }
+        }
+
         $ip_class = new \stdClass();
         $ip_class->ip = $ip->ip;
+        $ip_class->cashier_name = $cashier_name;
         $ip_class->category = array();
         $ip_class->department = array();
         $ip_class->payment_type = array();
