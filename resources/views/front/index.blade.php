@@ -713,7 +713,7 @@
     </div>
   </div>
 
-  <div id="dailyReport">
+  <div id="dailyReport" style="display: none;">
     <div style="padding: 30px;">
       <div style="display: flex; flex-direction: column; text-align: center;">
         <label>HOME U(M) SDN BHD (125272-P)</label>
@@ -1370,7 +1370,7 @@
       submitRemoveVoucher();
     });
 
-    if(opening == 0 && session != "")
+    if(opening == 0)
     {
       $("input[name='cashier_opening_amount']").val("");
       $("#openingModal").modal('show');

@@ -86,7 +86,7 @@ class HomeController extends Controller
         }
       }
 
-      $session = session::where('closed', null)->first();
+      $session = session::where('closed', null)->orderBy('id', 'desc')->first();
 
       $completed_transaction = [];
       if($session)
@@ -269,7 +269,7 @@ class HomeController extends Controller
 
         if(!$transaction)
         {
-          $session = session::where('closed', null)->first();
+          $session = session::where('closed', null)->orderBy('id', 'desc')->first();
 
           $session_id = null;
           if($session)
@@ -807,7 +807,7 @@ class HomeController extends Controller
 
       $now = date('Y-m-d H:i:s', strtotime(now()));
 
-      $session = session::where('closed', null)->first();
+      $session = session::where('closed', null)->orderBy('id', 'desc')->first();
       if(!$session)
       {
         $session = session::create([
@@ -864,7 +864,7 @@ class HomeController extends Controller
       }
       else
       {
-        $session = session::where('closed', null)->first();
+        $session = session::where('closed', null)->orderBy('id', 'desc')->first();
 
         if(!$session)
         {
@@ -899,7 +899,7 @@ class HomeController extends Controller
     public function submitDailyClosing(Request $request)
     {
       $session_id = null;
-      $session = session::where('closed', null)->first();
+      $session = session::where('closed', null)->orderBy('id', 'desc')->first();
 
       if($session)
       {
@@ -953,6 +953,10 @@ class HomeController extends Controller
           ]);
         }
 
+        session::where('closed', null)->update([
+          'closed' => 1
+        ]);
+
         $response = $this->branchSync();
         return $response;
       }
@@ -981,7 +985,7 @@ class HomeController extends Controller
         return response()->json($response);
       }
 
-      $session = session::where('closed', null)->first();
+      $session = session::where('closed', null)->orderBy('id', 'desc')->first();
 
       if(!$session)
       {
@@ -1012,7 +1016,7 @@ class HomeController extends Controller
     {
       $cashier_ip = $_SERVER['REMOTE_ADDR'];
 
-      $session = session::where('closed', null)->first();
+      $session = session::where('closed', null)->orderBy('id', 'desc')->first();
 
       if(!$session)
       {
@@ -1318,6 +1322,12 @@ class HomeController extends Controller
         $response->error = 1;
         $response->message = "Session not found";
         return response()->json($response);
+      }
+
+      $cashier = cashier::where('session_id', $session->id)->first();
+      if(!$cashier)
+      {
+        $session = session::where('closed', 1)->orderBy('id', 'desc')->first();
       }
 
       $total_ip = transaction_detail::leftJoin('transaction', 'transaction.id', '=', 'transaction_detail.transaction_id')->where('transaction.session_id', $session->id)->leftJoin('product', 'product.id', '=', 'transaction_detail.product_id')->leftJoin('category', 'category.id', '=', 'product.category_id')->leftJoin('department', 'department.id', '=', 'product.department_id')->select('transaction.id', 'transaction.ip', 'transaction.payment_type', 'transaction.total', 'transaction.payment_type_text', 'transaction_detail.product_id', 'transaction_detail.quantity', 'product.product_name', 'product.department_id', 'product.category_id', 'category.name as category_name', 'department.name as department_name')->groupBy('transaction.ip')->get();
