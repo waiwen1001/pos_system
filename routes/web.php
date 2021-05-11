@@ -34,6 +34,9 @@ Route::post('/submitCashFloat', 'HomeController@submitCashFloat')->name('submitC
 Route::get('/getClosingAmount', 'HomeController@calculateClosingAmount')->name('calculateClosingAmount');
 Route::post('/transaction_detail', 'HomeController@getTransactionDetail')->name('getTransactionDetail');
 Route::get('/getDailyReport', 'HomeController@getDailyReport')->name('getDailyReport');
+Route::post('/searchRelatedItem', 'HomeController@searchRelatedItem')->name('searchRelatedItem');
+
+
 Route::get('/branchSync', 'HomeController@branchSync')->name('branchSync');
 Route::get('/productSync', 'HomeController@productSync')->name('productSync');
 

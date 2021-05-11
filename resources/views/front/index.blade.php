@@ -681,6 +681,7 @@
     @csrf
   </form>
 
+  <!-- print receipt -->
   <div id="receipt">
     <div>
       <div style="display: flex; flex-direction: column; text-align: center;">
@@ -709,7 +710,7 @@
         <div style="text-align: center; font-size: 6px;">TERIMA KASIH KERANA MEMBELI-BELAH DENGAN KAMI</div>
         <div style="text-align: center; font-size: 6px;">BARANG YANG DIJUAL TIDAK DAPAT DIKEMBALIKAN</div>
 
-        <div style="margin: 10px 0 10px 0; font-size: 8px;">
+        <div style="font-size: 8px;">
           <div style="display: inline-block;" id="receipt_date"></div>
           <div style="display: inline-block; margin-left: 20px;" id="receipt_time"></div>
           <div style="display: inline-block; margin-left: 20px; float: right;">INVOIS : <label id="receipt_invoice_no"></label></div>
@@ -730,6 +731,7 @@
       </div>
     </div>
   </div>
+  <!-- end print receipt -->
 
   <div id="dailyReport" style="display: none;">
     <div style="padding: 30px;">
@@ -1104,6 +1106,7 @@
   var numpad_prefill = 0;
   var searchFunc;
   var voucherFunc;
+  var related_timeout;
   var session = "{{ $session }}";
   var shortcut_key = @json($shortcut_key);
   var user = @json($user);
@@ -1192,7 +1195,7 @@
       }
     });
 
-    $("#barcode").on('keydown', function(e){
+    $("#barcode").on('keyup', function(e){
       clearInterval(searchFunc);
       // enter
       // delay 50ms because keydown will not capture on change
@@ -1209,6 +1212,11 @@
         if(e.which == 13)
         {
           searchFunc = setTimeout(searchAndAddItem, 10);
+        }
+        else
+        {
+          clearTimeout(related_timeout);
+          related_timeout = setTimeout(searchRelatedItem, 300);
         }
       }
     });
@@ -1459,15 +1467,8 @@
     $("#barcode").focus();
 
     let barcode = $("#barcode").val();
-    var get_related_item = 0;
-    if($("#barcode_manual").is(":checked"))
-    {
-      get_related_item = 1;
-    }
 
-    $("#related_item").html("");
-
-    $.post("{{ route('searchAndAddItem') }}", { "_token" : "{{ csrf_token() }}", "barcode" : barcode, "get_related_item" : get_related_item }, function(result){
+    $.post("{{ route('searchAndAddItem') }}", { "_token" : "{{ csrf_token() }}", "barcode" : barcode }, function(result){
       if(result.error == 1)
       {
         $("#search_error_title").html(result.title);
@@ -1492,19 +1493,6 @@
         $("input[name=barcode_manual]").iCheck('uncheck');
       }
       $("#barcode").val('');
-
-      var related_item = result.related_item;
-      var html = "";
-      for(var a = 0; a < related_item.length; a++)
-      {
-        html += "<tr>";
-        html += "<td>"+related_item[a].barcode+"</td>";
-        html += "<td>"+related_item[a].product_name+"</td>";
-        html += "<td>RM <span style='float: right;'>"+related_item[a].price_text+"</span></td>";
-        html += "</tr>";
-      }
-
-      $("#related_item").html(html);
     }).fail(function(xhr){
       if(xhr.status == 401)
       {
@@ -1884,8 +1872,8 @@
         let items_html = "";
         for(var a = 0; a < transaction_detail.length; a++)
         {
-          items_html += "<div style='font-size: 10px;'>"+transaction_detail[a].product_name+"</div>";
-          items_html += "<div style='display: flex; font-size:10px;'>";
+          items_html += "<div style='font-size: 8px;'>"+transaction_detail[a].product_name+"</div>";
+          items_html += "<div style='display: flex; font-size:8px;'>";
           items_html += "<div style='flex: 1;'>"+transaction_detail[a].barcode+"</div>";
           items_html += "<div style='flex: 1;'>"+transaction_detail[a].quantity+".00 X RM "+transaction_detail[a].price_text+"</div>";
           items_html += "<div>RM "+transaction_detail[a].total_text+"</div>";
@@ -2441,7 +2429,7 @@
         $("input[name='cashier_closing_amount']").removeClass("is-invalid").val(result.closing_amount);
         $("#closingModal").modal('show');
 
-        openDrawer("Check closing");
+        openDrawer("Closing amount  <br> RM "+result.closing_amount_text);
       }).fail(function(xhr){
         if(xhr.status == 401)
         {
@@ -2703,6 +2691,8 @@
         var total_report = result.total_report;
         var ip_array = result.ip_array;
         var session = result.session;
+
+        console.log(ip_array);
 
         var html = "";
         html += "<h4 style='text-align:center;'>Daily Sales Report on "+session.opening_date_time+"</h4>";
@@ -3215,9 +3205,48 @@
     var newWin = window.open('','Print-Window');
 
     newWin.document.open();
-    newWin.document.write('<html><body onload="window.print()">'+message+'</body></html>');
+    newWin.document.write('<html><body onload="window.print()" style="text-align:center;">'+message+'</body></html>');
     newWin.document.close();
     setTimeout(function(){newWin.close();},10);
+  }
+
+  function searchRelatedItem()
+  {
+    let barcode = $("#barcode").val();
+    if(barcode != "")
+    {
+      $.post("{{ route('searchRelatedItem') }}", { "_token" : "{{ csrf_token() }}", "barcode" : barcode }, function(result){
+        if(result.error == 0)
+        {
+          var related_item = result.related_item;
+          var html = "";
+          for(var a = 0; a < related_item.length; a++)
+          {
+            html += "<tr>";
+            html += "<td>"+related_item[a].barcode+"</td>";
+            html += "<td>"+related_item[a].product_name+"</td>";
+            html += "<td>RM <span style='float: right;'>"+related_item[a].price_text+"</span></td>";
+            html += "</tr>";
+          }
+
+          $("#related_item").html(html);
+        }
+      }).fail(function(xhr){
+        if(xhr.status == 401)
+        {
+          Swal.fire({
+            title: 'Your account was logged out, please login again.',
+            icon: 'error',
+            confirmButtonText: 'OK',
+          }).then((result) => {
+            /* Read more about isConfirmed, isDenied below */
+            if (result.isConfirmed) {
+              location.reload();
+            }
+          })
+        }
+      });
+    }
   }
 
 </script>

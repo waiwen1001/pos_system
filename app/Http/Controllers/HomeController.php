@@ -353,31 +353,34 @@ class HomeController extends Controller
 
         $transaction_summary = $this->transaction_summary($transaction);
 
-        $get_related_item = $request->get_related_item;
-        $related_item = [];
-        if($get_related_item == 1)
-        {
-          $related_item = product::where('barcode', 'LIKE', $barcode."%")->get();
-
-          foreach($related_item as $related)
-          {
-            $related->price_text = "";
-            if($related->price)
-            {
-              $related->price_text = number_format($related->price, 2);
-            }
-          }
-        }
-
         $response = new \stdClass();
         $response->error = 0;
         $response->message = "Success";
         $response->transaction_summary = $transaction_summary;
         $response->product = $product;
-        $response->related_item = $related_item;
 
         return response()->json($response);
       }
+    }
+
+    public function searchRelatedItem(Request $request)
+    {
+      $related_item = product::where('barcode', 'LIKE', $request->barcode."%")->limit(5)->get();
+      foreach($related_item as $related)
+      {
+        $related->price_text = "";
+        if(is_numeric($related->price) && $related->price)
+        {
+          $related->price_text = number_format($related->price, 2);
+        }
+      }
+
+      $response = new \stdClass();
+      $response->error = 0;
+      $response->message = "Success";
+      $response->related_item = $related_item;
+
+      return response()->json($response);
     }
 
     public function transaction_summary($transaction)
@@ -1115,6 +1118,7 @@ class HomeController extends Controller
       $response->error = 0;
       $response->message = "Success";
       $response->closing_amount = $closing_amount;
+      $response->closing_amount_text = number_format($closing_amount, 2);
 
       return response()->json($response);
     }
@@ -1399,7 +1403,7 @@ class HomeController extends Controller
           {
             if($cashier_detail->ip == $ip->ip)
             {
-              $cashier_name = $cashier_detail->name;
+              $cashier_name = $cashier_detail->cashier_name;
               break;
             }
           }
