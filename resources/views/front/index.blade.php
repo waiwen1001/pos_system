@@ -131,16 +131,24 @@
               <span>{{ $user->name }}</span>
             </button>
             <div class="dropdown-menu dropdown-menu-right">
-              <a class="dropdown-item" href="#" onclick="showClosing()">Logout</a>
+              <a class="dropdown-item" href="#" onclick="closing()">Logout</a>
             </div>
           </div>
 
         </div>
 
         <div class="memo">
-          <div class="memo-title">Notification</div>
+          <!-- <div class="memo-title"></div> -->
           <div class="memo-content">
-            <p>Testing memo</p>
+            <table style="width: 100%; text-align: left;">
+              <thead>
+                <th>Barcode</th>
+                <th>Item name</th>
+                <th>Price</th>
+              </thead>
+              <tbody id="related_item">
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -169,11 +177,18 @@
                       Opening
                       <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showOpening()"></span>
                     </button>
-
                     <button class="dropdown-item" id="closingBtn" {{ $opening == 1 ? '' : 'disabled' }}>
-                      Daily Closing
-                      <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showDailyClosing()"></span>
+                      Closing
+                      <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showClosing()"></span>
                     </button>
+
+                    @if($user->user_type == 1)
+                      <button class="dropdown-item" id="dailyClosingBtn" {{ $opening == 1 ? '' : 'disabled' }}>
+                        Daily Closing
+                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showDailyClosing()"></span>
+                      </button>
+                    @endif
+
                     <div class="dropdown-divider"></div>
                     <button class="dropdown-item" id="floatInBtn" {{ $opening == 1 ? '' : 'disabled' }}>
                       Cash Float ( In )
@@ -486,6 +501,7 @@
           <table id="previous_receipt_table" class="table table-bordered table-striped" cellspacing="0" width="100%" style="width: 100% !important;">
             <thead style="width: 100% !important;">
               <tr>
+                <th>Cashier</th>
                 <th>Invoice No</th>
                 <th>Payment type</th>
                 <th>Reference No</th>
@@ -500,6 +516,7 @@
             <tbody>
               @foreach($completed_transaction as $completed)
                 <tr transaction_id="{{ $completed->id }}">
+                  <td>{{ $completed->cashier_name }}</td>
                   <td>{{ $completed->transaction_no }}</td>
                   <td>{{ $completed->payment_type_text }}</td>
                   <td>
@@ -665,47 +682,48 @@
   </form>
 
   <div id="receipt">
-    <div style="padding: 30px;">
+    <div>
       <div style="display: flex; flex-direction: column; text-align: center;">
-        <label>HOME U(M) SDN BHD (125272-P)</label>
-        <label>S/36,LOT1745, CABANG TIGA PENGKALAN CHEPA</label>
-        <label>RESIT</label>
+        <label style="font-size: 8px;">HOME U(M) SDN BHD (125272-P)</label>
+        <label style="font-size: 8px;">S/36,LOT1745, CABANG TIGA PENGKALAN CHEPA</label>
+        <!-- <label>RESIT</label> -->
       </div>
-      <div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>
+      <div style="border: 1px dashed #999; height: 2px;"></div>
       <div id="receipt_items">
         
       </div>
-      <div style="display: flex; margin-top: 20px;">
+      <div style="display: flex; margin-top: 10px; font-size: 8px;">
         <div style="flex: 1;">Kuantiti: <label id="receipt_total_quantity"></label></div>
         <div style="flex: 1;">Barang: <label id="receipt_total_items"></label></div>
       </div>
-      <div style="border: 2px dashed #999; margin: 10px 0;"></div>
-      <div style="margin-bottom: 20px;">
-        <div style="width: 100%; font-size: 20px; font-weight: bold; display: flex; justify-content: space-between;">
+      <div style="border: 1px dashed #999; margin: 5px 0;"></div>
+      <div style="margin-bottom: 10px;">
+        <div style="width: 100%; font-size: 8px; font-weight: bold; display: flex; justify-content: space-between;">
           <div>Jumlah</div>
           <div id="receipt_total"></div>
         </div>
-        <div id="receipt_other_payment" style="width: 100%; display: flex; justify-content: space-between; font-size: 18px;"></div>
+        <div id="receipt_other_payment" style="width: 100%; display: flex; justify-content: space-between; font-size: 8px;"></div>
       </div>
-      <div style="border: 2px dashed #999; margin: 10px 0;"></div>
+      <div style="border: 1px dashed #999; margin: 10px 0;"></div>
       <div>
-        <div style="text-align: center;">TERIMA KASIH KERANA MEMBELI-BELAH DENGAN KAMI</div>
-        <div style="text-align: center;">BARANG YANG DIJUAL TIDAK DAPAT DIKEMBALIKAN</div>
+        <div style="text-align: center; font-size: 6px;">TERIMA KASIH KERANA MEMBELI-BELAH DENGAN KAMI</div>
+        <div style="text-align: center; font-size: 6px;">BARANG YANG DIJUAL TIDAK DAPAT DIKEMBALIKAN</div>
 
-        <div style="margin: 20px 0 40px 0;">
+        <div style="margin: 10px 0 10px 0; font-size: 8px;">
           <div style="display: inline-block;" id="receipt_date"></div>
           <div style="display: inline-block; margin-left: 20px;" id="receipt_time"></div>
+          <div style="display: inline-block; margin-left: 20px; float: right;">INVOIS : <label id="receipt_invoice_no"></label></div>
         </div>
 
-        <div>
+        <!-- <div>
           <label>Juruwang : <label id="receipt_completed_by"></label> </label>
           <div style="display: flex; justify-content: space-between;">
             <div id="receipt_completed_by_2"></div>
             <div>INVOIS : <label id="receipt_invoice_no"></label></div>
           </div>
-        </div>
+        </div> -->
 
-        <div style="text-align: center;" id="receipt_reprint">
+        <div style="text-align: center; font-size: 8px;" id="receipt_reprint">
           <div style="font-weight: bold;">... CETAK SEMULA SALINAN ...</div>
           <div id="reprint_date_time"></div>
         </div>
@@ -1098,7 +1116,7 @@
     scrollY: '60vh',
     scrollCollapse: true,
     // responsive: true,
-    order: [[ 6, "desc" ]]
+    order: [[ 7, "desc" ]]
   });
 
   var user_management_table = $("#user_management_table").DataTable( {
@@ -1147,7 +1165,7 @@
         {
           swal.close();
         }
-        $(".modal").not("#cardCheckoutModal, #numpadModal").modal('hide');
+        $(".modal").not("#cardCheckoutModal, #numpadModal, #cashFloatModal").modal('hide');
       }
       else if(e.key)
       {
@@ -1370,7 +1388,7 @@
       submitRemoveVoucher();
     });
 
-    if(opening == 0)
+    if(opening == 0 && session != "")
     {
       $("input[name='cashier_opening_amount']").val("");
       $("#openingModal").modal('show');
@@ -1382,7 +1400,7 @@
       $("#openingModal").modal('show');
     });
 
-    $("#closingBtn").click(function(){
+    $("#dailyClosingBtn").click(function(){
 
       $.get("{{ route('calculateClosingAmount') }}", function(result){
         $("#dailyClosingFeedback").hide();
@@ -1396,6 +1414,10 @@
 
         $("input[name='daily_closing_amount']").removeClass("is-invalid").val(result.closing_amount);
       });
+    });
+
+    $("#closingBtn").click(function(){
+      closing();
     });
 
     $("#floatInBtn, #floatOutBtn").click(function(){
@@ -1437,8 +1459,15 @@
     $("#barcode").focus();
 
     let barcode = $("#barcode").val();
+    var get_related_item = 0;
+    if($("#barcode_manual").is(":checked"))
+    {
+      get_related_item = 1;
+    }
 
-    $.post("{{ route('searchAndAddItem') }}", { "_token" : "{{ csrf_token() }}", "barcode" : barcode }, function(result){
+    $("#related_item").html("");
+
+    $.post("{{ route('searchAndAddItem') }}", { "_token" : "{{ csrf_token() }}", "barcode" : barcode, "get_related_item" : get_related_item }, function(result){
       if(result.error == 1)
       {
         $("#search_error_title").html(result.title);
@@ -1463,6 +1492,33 @@
         $("input[name=barcode_manual]").iCheck('uncheck');
       }
       $("#barcode").val('');
+
+      var related_item = result.related_item;
+      var html = "";
+      for(var a = 0; a < related_item.length; a++)
+      {
+        html += "<tr>";
+        html += "<td>"+related_item[a].barcode+"</td>";
+        html += "<td>"+related_item[a].product_name+"</td>";
+        html += "<td>RM <span style='float: right;'>"+related_item[a].price_text+"</span></td>";
+        html += "</tr>";
+      }
+
+      $("#related_item").html(html);
+    }).fail(function(xhr){
+      if(xhr.status == 401)
+      {
+        Swal.fire({
+          title: 'Your account was logged out, please login again.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+        }).then((result) => {
+          /* Read more about isConfirmed, isDenied below */
+          if (result.isConfirmed) {
+            location.reload();
+          }
+        })
+      }
     });
   }
 
@@ -1542,6 +1598,20 @@
       {
         console.log("something wrong");
       }
+    }).fail(function(xhr){
+      if(xhr.status == 401)
+      {
+        Swal.fire({
+          title: 'Your account was logged out, please login again.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+        }).then((result) => {
+          /* Read more about isConfirmed, isDenied below */
+          if (result.isConfirmed) {
+            location.reload();
+          }
+        })
+      }
     });
   }
 
@@ -1600,7 +1670,20 @@
       {
         alert("Error");
       }
-
+    }).fail(function(xhr){
+      if(xhr.status == 401)
+      {
+        Swal.fire({
+          title: 'Your account was logged out, please login again.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+        }).then((result) => {
+          /* Read more about isConfirmed, isDenied below */
+          if (result.isConfirmed) {
+            location.reload();
+          }
+        })
+      }
     });
   }
 
@@ -1629,6 +1712,20 @@
 
             $("#clearItemsModal").modal('hide');
           }
+        }).fail(function(xhr){
+          if(xhr.status == 401)
+          {
+            Swal.fire({
+              title: 'Your account was logged out, please login again.',
+              icon: 'error',
+              confirmButtonText: 'OK',
+            }).then((result) => {
+              /* Read more about isConfirmed, isDenied below */
+              if (result.isConfirmed) {
+                location.reload();
+              }
+            })
+          }
         });
       }
       else
@@ -1653,6 +1750,7 @@
     void_html += "</div>";
 
     var data = "<tr transaction_id="+completed_transaction.id+">";
+    data += "<td>"+completed_transaction.cashier_name+"</td>";
     data += "<td>"+completed_transaction.transaction_no+"</td>";
     data += "<td>"+completed_transaction.payment_type_text+"</td>";
     data += "<td>";
@@ -1708,7 +1806,21 @@
         $(".void_column[transaction_id="+transaction_id+"]").html(html);
         $("#voidModal").modal('hide');
       }
-    })
+    }).fail(function(xhr){
+      if(xhr.status == 401)
+      {
+        Swal.fire({
+          title: 'Your account was logged out, please login again.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+        }).then((result) => {
+          /* Read more about isConfirmed, isDenied below */
+          if (result.isConfirmed) {
+            location.reload();
+          }
+        })
+      }
+    });
   }
 
   function unvoidSubmit()
@@ -1722,7 +1834,21 @@
         $(".void_column[transaction_id="+transaction_id+"]").html(html);
         $("#unvoidModal").modal('hide');
       }
-    })
+    }).fail(function(xhr){
+      if(xhr.status == 401)
+      {
+        Swal.fire({
+          title: 'Your account was logged out, please login again.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+        }).then((result) => {
+          /* Read more about isConfirmed, isDenied below */
+          if (result.isConfirmed) {
+            location.reload();
+          }
+        })
+      }
+    });
   }
 
   function clearTransaction()
@@ -1758,8 +1884,8 @@
         let items_html = "";
         for(var a = 0; a < transaction_detail.length; a++)
         {
-          items_html += "<div>"+transaction_detail[a].product_name+"</div>";
-          items_html += "<div style='display: flex;'>";
+          items_html += "<div style='font-size: 10px;'>"+transaction_detail[a].product_name+"</div>";
+          items_html += "<div style='display: flex; font-size:10px;'>";
           items_html += "<div style='flex: 1;'>"+transaction_detail[a].barcode+"</div>";
           items_html += "<div style='flex: 1;'>"+transaction_detail[a].quantity+".00 X RM "+transaction_detail[a].price_text+"</div>";
           items_html += "<div>RM "+transaction_detail[a].total_text+"</div>";
@@ -1825,7 +1951,20 @@
 
         setTimeout(function(){newWin.close();},10);
       }
-      
+    }).fail(function(xhr){
+      if(xhr.status == 401)
+      {
+        Swal.fire({
+          title: 'Your account was logged out, please login again.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+        }).then((result) => {
+          /* Read more about isConfirmed, isDenied below */
+          if (result.isConfirmed) {
+            location.reload();
+          }
+        })
+      }
     });
   }
 
@@ -1861,7 +2000,20 @@
       {
         alert("Error");
       }
-
+    }).fail(function(xhr){
+      if(xhr.status == 401)
+      {
+        Swal.fire({
+          title: 'Your account was logged out, please login again.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+        }).then((result) => {
+          /* Read more about isConfirmed, isDenied below */
+          if (result.isConfirmed) {
+            location.reload();
+          }
+        })
+      }
     });
   }
 
@@ -1885,7 +2037,20 @@
         $("#editInvoiceNoModal").modal('hide');
         $("#previous_receipt_table tbody tr[transaction_id="+transaction_id+"]").find(".invoice_no").html(edit_invoice_no);
       }
-
+    }).fail(function(xhr){
+      if(xhr.status == 401)
+      {
+        Swal.fire({
+          title: 'Your account was logged out, please login again.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+        }).then((result) => {
+          /* Read more about isConfirmed, isDenied below */
+          if (result.isConfirmed) {
+            location.reload();
+          }
+        })
+      }
     });
   }
 
@@ -1920,7 +2085,20 @@
         {
           $("#items-table tbody tr[item_id="+item_id+"]").remove();
         }
-        
+      }
+    }).fail(function(xhr){
+      if(xhr.status == 401)
+      {
+        Swal.fire({
+          title: 'Your account was logged out, please login again.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+        }).then((result) => {
+          /* Read more about isConfirmed, isDenied below */
+          if (result.isConfirmed) {
+            location.reload();
+          }
+        })
       }
     });
   }
@@ -1964,11 +2142,19 @@
     }
   }
 
-  function showDailyClosing()
+  function showClosing()
   {
     if($("#closingBtn").attr("disabled") != "disabled")
     {
       $("#closingBtn").click();
+    }
+  }
+
+  function showDailyClosing()
+  {
+    if($("#dailyClosingBtn").attr("disabled") != "disabled")
+    {
+      $("#dailyClosingBtn").click();
     }
   }
 
@@ -2130,7 +2316,21 @@
       {
         $("input[name='voucher_code']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>"+result.message+".</strong>");
       }
-    })
+    }).fail(function(xhr){
+      if(xhr.status == 401)
+      {
+        Swal.fire({
+          title: 'Your account was logged out, please login again.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+        }).then((result) => {
+          /* Read more about isConfirmed, isDenied below */
+          if (result.isConfirmed) {
+            location.reload();
+          }
+        })
+      }
+    });
   }
 
   function submitRemoveVoucher()
@@ -2162,17 +2362,31 @@
 
         $("#round_off").html(result.round_off);
       }
+    }).fail(function(xhr){
+      if(xhr.status == 401)
+      {
+        Swal.fire({
+          title: 'Your account was logged out, please login again.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+        }).then((result) => {
+          /* Read more about isConfirmed, isDenied below */
+          if (result.isConfirmed) {
+            location.reload();
+          }
+        })
+      }
     });
   }
 
   function disablePosSystem()
   {
-    $("#voucherBtn, #cashCheckoutBtn, #paymentTypeBtn, #clearBtn, #previousReceiptBtn").attr("disabled", true);
+    $("#voucherBtn, #cashCheckoutBtn, #paymentTypeBtn, #clearBtn, #previousReceiptBtn, #closingBtn, #dailyClosingBtn").attr("disabled", true);
   }
 
   function enablePosSystem()
   {
-    $("#voucherBtn, #cashCheckoutBtn, #paymentTypeBtn, #clearBtn, #previousReceiptBtn").attr("disabled", false);
+    $("#voucherBtn, #cashCheckoutBtn, #paymentTypeBtn, #clearBtn, #previousReceiptBtn, #closingBtn, #dailyClosingBtn").attr("disabled", false);
   }
 
   function submitOpening()
@@ -2190,8 +2404,22 @@
           opening = 1;
 
           $("#openingBtn").attr("disabled", true);
-          $("#closingBtn, #floatInBtn, #floatOutBtn").attr("disabled", false);
+          $("#dailyClosingBtn, #closingBtn, #floatInBtn, #floatOutBtn").attr("disabled", false);
 
+        }
+      }).fail(function(xhr){
+        if(xhr.status == 401)
+        {
+          Swal.fire({
+            title: 'Your account was logged out, please login again.',
+            icon: 'error',
+            confirmButtonText: 'OK',
+          }).then((result) => {
+            /* Read more about isConfirmed, isDenied below */
+            if (result.isConfirmed) {
+              location.reload();
+            }
+          })
         }
       });
     }
@@ -2201,7 +2429,7 @@
     }
   }
 
-  function showClosing()
+  function closing()
   {
     if(opening == 0)
     {
@@ -2212,6 +2440,22 @@
       $.get("{{ route('calculateClosingAmount') }}", function(result){
         $("input[name='cashier_closing_amount']").removeClass("is-invalid").val(result.closing_amount);
         $("#closingModal").modal('show');
+
+        openDrawer("Check closing");
+      }).fail(function(xhr){
+        if(xhr.status == 401)
+        {
+          Swal.fire({
+            title: 'Your account was logged out, please login again.',
+            icon: 'error',
+            confirmButtonText: 'OK',
+          }).then((result) => {
+            /* Read more about isConfirmed, isDenied below */
+            if (result.isConfirmed) {
+              location.reload();
+            }
+          })
+        }
       });
     }
   }
@@ -2227,6 +2471,20 @@
         {
           $("#closingModal").modal('hide');
           logout();
+        }
+      }).fail(function(xhr){
+        if(xhr.status == 401)
+        {
+          Swal.fire({
+            title: 'Your account was logged out, please login again.',
+            icon: 'error',
+            confirmButtonText: 'OK',
+          }).then((result) => {
+            /* Read more about isConfirmed, isDenied below */
+            if (result.isConfirmed) {
+              location.reload();
+            }
+          })
         }
       });
     }
@@ -2281,7 +2539,7 @@
         disablePosSystem();
 
         $("#openingBtn").attr("disabled", false);
-        $("#closingBtn, #floatInBtn, #floatOutBtn").attr("disabled", true);
+        $("#dailyClosingBtn #closingBtn, #floatInBtn, #floatOutBtn").attr("disabled", true);
 
         $("#daily_closing_content").html("This cashier are now closed.");
         $("#daily_closing_toast").toast('show');
@@ -2295,9 +2553,29 @@
         $("#submitDailyClosing").html("Submit").attr("disabled", false);
         $("#dailyClosingFeedback").html("<strong>"+result.message+".</strong>").show();
       }
-    }).fail(function(){
-      alert("Something wrong");
-      $("#submitDailyClosing").html("Submit").attr("disabled", false);
+    }).fail(function(xhr){
+      if(xhr.status == 401)
+      {
+        Swal.fire({
+          title: 'Your account was logged out, please login again.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+        }).then((result) => {
+          /* Read more about isConfirmed, isDenied below */
+          if (result.isConfirmed) {
+            location.reload();
+          }
+        })
+      }
+      else
+      {
+        Swal.fire({
+          title: 'Something wrong.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+        });
+        $("#submitDailyClosing").html("Submit").attr("disabled", false);
+      }
     });
   }
 
@@ -2326,6 +2604,22 @@
 
         $("#success_content").html("Cash float submitted");
         $("#success_toast").toast('show');
+
+        openDrawer(result.message);
+      }
+    }).fail(function(xhr){
+      if(xhr.status == 401)
+      {
+        Swal.fire({
+          title: 'Your account was logged out, please login again.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+        }).then((result) => {
+          /* Read more about isConfirmed, isDenied below */
+          if (result.isConfirmed) {
+            location.reload();
+          }
+        })
       }
     });
   }
@@ -2350,6 +2644,7 @@
       if(result.error == 0)
       {
         $("#syncHQContent").html("Sync completed.");
+        $("#submitDailyClosing").html("Submit").attr("disabled", false);
 
         $("#syncHQBtn").html("Sync completed").attr("disabled", false).off('click').click(function(){
           $("#syncHQModal").modal('hide');
@@ -2364,7 +2659,7 @@
           // blank function do nothing
         }
 
-        if(manual == 1)
+        if(manual == 1 && opening == 1)
         {
           enablePosSystem();
         }
@@ -2389,7 +2684,11 @@
 
       $("#syncHQContent").html("Sync failed, please sync again.");
 
-      alert("something wrong, click Re-sync to sync again.");
+      Swal.fire({
+        title: 'Something wrong, click Re-sync to sync again.',
+        icon: 'error',
+        confirmButtonText: 'OK',
+      })
     });
   }
 
@@ -2558,8 +2857,20 @@
       {
         alert(result.message);
       }
-    }).fail(function(){
-      alert("Something wrong");
+    }).fail(function(xhr){
+      if(xhr.status == 401)
+      {
+        Swal.fire({
+          title: 'Your account was logged out, please login again.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+        }).then((result) => {
+          /* Read more about isConfirmed, isDenied below */
+          if (result.isConfirmed) {
+            location.reload();
+          }
+        })
+      }
     });
   }
 
@@ -2687,6 +2998,20 @@
         {
           $("input[name='new_user_username']").addClass("is-invalid").siblings(".invalid-feedback").html("Username has been used, please keyin a new username.");
         }
+      }).fail(function(xhr){
+        if(xhr.status == 401)
+        {
+          Swal.fire({
+            title: 'Your account was logged out, please login again.',
+            icon: 'error',
+            confirmButtonText: 'OK',
+          }).then((result) => {
+            /* Read more about isConfirmed, isDenied below */
+            if (result.isConfirmed) {
+              location.reload();
+            }
+          })
+        }
       });
     }
   }
@@ -2750,7 +3075,21 @@
         {
           $("input[name='edit_user_username']").addClass("is-invalid").siblings(".invalid-feedback").html("Username has been used, please keyin a new username.");
         }
-      })
+      }).fail(function(xhr){
+        if(xhr.status == 401)
+        {
+          Swal.fire({
+            title: 'Your account was logged out, please login again.',
+            icon: 'error',
+            confirmButtonText: 'OK',
+          }).then((result) => {
+            /* Read more about isConfirmed, isDenied below */
+            if (result.isConfirmed) {
+              location.reload();
+            }
+          })
+        }
+      });
     }
   }
 
@@ -2814,7 +3153,11 @@
 
       $("#syncHQProductListContent").html("Sync failed, please sync again.");
 
-      alert("something wrong, click Re-sync to sync again.");
+      Swal.fire({
+        title: 'Something wrong, click Re-sync to sync again.',
+        icon: 'error',
+        confirmButtonText: 'OK',
+      })
     });
   }
 
@@ -2827,7 +3170,7 @@
       combined_barcode = "";
     }
 
-    if($("#voucherModal").css("display") != "none" || $("#user_management").css("display") != "none" || $("#dailyClosingModal").css("display") != "none" || $("#numpadModal").css("display") != "none" || $("#openingModal").css("display") != "none" || $("#previous_receipt").css("display") != "none" || $("#cardCheckoutModal").css("display") != "none")
+    if($("#voucherModal").css("display") != "none" || $("#user_management").css("display") != "none" || $("#dailyClosingModal").css("display") != "none" || $("#numpadModal").css("display") != "none" || $("#openingModal").css("display") != "none" || $("#previous_receipt").css("display") != "none" || $("#cardCheckoutModal").css("display") != "none" || $("#cashFloatModal").css("display") != "none")
     {
       run = false;
       combined_barcode = "";
@@ -2865,6 +3208,16 @@
     {
       combined_barcode = "";
     }
+  }
+
+  function openDrawer(message)
+  {
+    var newWin = window.open('','Print-Window');
+
+    newWin.document.open();
+    newWin.document.write('<html><body onload="window.print()">'+message+'</body></html>');
+    newWin.document.close();
+    setTimeout(function(){newWin.close();},10);
   }
 
 </script>

@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Hash;
 
 class HomeController extends Controller
 {
+    private $ip;
     /**
      * Create a new controller instance.
      *
@@ -28,6 +29,7 @@ class HomeController extends Controller
      */
     public function __construct()
     {
+        $this->ip = $_SERVER['REMOTE_ADDR'];
         $this->middleware('auth', ['except' => ['syncHQProductList', 'testing', 'branchSync']]);
     }
 
@@ -38,8 +40,6 @@ class HomeController extends Controller
      */
     public function index()
     {
-      $ip = $_SERVER['REMOTE_ADDR'];
-
       $user_list = User::where('removed', null)->get();
       $user = Auth::user();
 
@@ -54,7 +54,7 @@ class HomeController extends Controller
       $transaction_id = null;
       $voucher_name = null;
 
-      $pending_transaction = transaction::where('completed', null)->where('ip', $ip)->first();
+      $pending_transaction = transaction::where('completed', null)->where('ip', $this->ip)->first();
       if($pending_transaction)
       {
         if($pending_transaction->total_discount)
@@ -93,10 +93,13 @@ class HomeController extends Controller
       {
         $completed_transaction = transaction::where('completed', 1)->where('session_id', $session->id)->get();
       }
+
+      $pos_cashier = pos_cashier::get();
       
       foreach($completed_transaction as $completed)
       {
         $completed->void_by_name = "";
+        $completed->cashier_name = "";
         if($completed->void == 1 && $completed->void_by)
         {
           foreach($user_list as $user_detail)
@@ -108,14 +111,25 @@ class HomeController extends Controller
             }
           }
         }
+
+        if($completed->ip)
+        {
+          foreach($pos_cashier as $pos_cashier_detail)
+          {
+            if($pos_cashier_detail->ip == $completed->ip)
+            {
+              $completed->cashier_name = $pos_cashier_detail->cashier_name;
+              break;
+            }
+          }
+        }
       }
 
-      $cashier_ip = $_SERVER['REMOTE_ADDR'];
       // get latest cashier, incase session out, some opening do not have closing
       $cashier = null;
       if($session)
       {
-        $cashier = cashier::where('session_id', $session->id)->where('ip', $cashier_ip)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
+        $cashier = cashier::where('session_id', $session->id)->where('ip', $this->ip)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
       }
 
       $opening = 0;
@@ -164,7 +178,7 @@ class HomeController extends Controller
       if($access)
       {
         $pos_cashier = pos_cashier::get();
-        $ip = $_SERVER['REMOTE_ADDR'];
+        $ip = $this->ip;
 
         return view('front.setup', compact('user', 'pos_cashier', 'ip'));
       }
@@ -265,7 +279,7 @@ class HomeController extends Controller
         }
 
         $user = Auth::user();
-        $transaction = transaction::where('completed', null)->where('user_id', $user->id)->first();
+        $transaction = transaction::where('completed', null)->where('ip', $this->ip)->first();
 
         if(!$transaction)
         {
@@ -278,8 +292,7 @@ class HomeController extends Controller
           }
 
           $cashier_name = null;
-          $cashier_ip = $_SERVER['REMOTE_ADDR'];
-          $cashier_detail = pos_cashier::where('ip', $cashier_ip)->first();
+          $cashier_detail = pos_cashier::where('ip', $this->ip)->first();
 
           if($cashier_detail)
           {
@@ -288,7 +301,7 @@ class HomeController extends Controller
 
           $transaction = transaction::create([
             'session_id' => $session_id,
-            'ip' => $cashier_ip,
+            'ip' => $this->ip,
             'cashier_name' => $cashier_name,
             'transaction_no' => uniqid(),
             'user_id' => $user->id
@@ -340,11 +353,28 @@ class HomeController extends Controller
 
         $transaction_summary = $this->transaction_summary($transaction);
 
+        $get_related_item = $request->get_related_item;
+        $related_item = [];
+        if($get_related_item == 1)
+        {
+          $related_item = product::where('barcode', 'LIKE', $barcode."%")->get();
+
+          foreach($related_item as $related)
+          {
+            $related->price_text = "";
+            if($related->price)
+            {
+              $related->price_text = number_format($related->price, 2);
+            }
+          }
+        }
+
         $response = new \stdClass();
         $response->error = 0;
         $response->message = "Success";
         $response->transaction_summary = $transaction_summary;
         $response->product = $product;
+        $response->related_item = $related_item;
 
         return response()->json($response);
       }
@@ -510,6 +540,16 @@ class HomeController extends Controller
         ]);
 
         $completed_transaction = transaction::where('id', $request->transaction_id)->first();
+
+        $completed_transaction->cashier_name = "";
+        if($completed_transaction->ip)
+        {
+          $pos_cashier = pos_cashier::where('ip', $completed_transaction->ip)->first();
+          if($pos_cashier)
+          {
+            $completed_transaction->cashier_name = $pos_cashier->cashier_name;
+          }
+        }
 
         $completed_transaction->total_text = number_format($completed_transaction->total, 2);
         $completed_transaction->payment_text = number_format($completed_transaction->payment, 2);
@@ -803,25 +843,23 @@ class HomeController extends Controller
     public function submitOpening(Request $request)
     {
       $user = Auth::user();
-      $cashier_ip = $_SERVER['REMOTE_ADDR'];
-
       $now = date('Y-m-d H:i:s', strtotime(now()));
 
       $session = session::where('closed', null)->orderBy('id', 'desc')->first();
       if(!$session)
       {
         $session = session::create([
-          'ip' => $cashier_ip,
+          'ip' => $this->ip,
           'opening_date_time' => $now
         ]);
       }
 
-      $cashier = cashier::where('ip', $cashier_ip)->where('session_id', $session->id)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
+      $cashier = cashier::where('ip', $this->ip)->where('session_id', $session->id)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
 
       if(!$cashier)
       {
         cashier::create([
-          'ip' => $cashier_ip,
+          'ip' => $this->ip,
           'session_id' => $session->id,
           'opening' => 1,
           'opening_amount' => $request->opening_amount,
@@ -849,8 +887,7 @@ class HomeController extends Controller
     public function submitClosing(Request $request)
     {
       $user = Auth::user();
-      $cashier_ip = $_SERVER['REMOTE_ADDR'];
-      $cashier = cashier::where('ip', $cashier_ip)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
+      $cashier = cashier::where('ip', $this->ip)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
 
       $now = date('Y-m-d H:i:s', strtotime(now()));
 
@@ -869,7 +906,7 @@ class HomeController extends Controller
         if(!$session)
         {
           $session = session::create([
-            'ip' => $cashier_ip,
+            'ip' => $this->ip,
             'opening_date_time' => $now
           ]);
         }
@@ -883,7 +920,7 @@ class HomeController extends Controller
 
         cashier::create([
           'session_id' => $session->id,
-          'ip' => $cashier_ip,
+          'ip' => $this->ip,
           'opening' => 1,
           'opening_amount' => $request->closing_amount,
         ]);
@@ -905,17 +942,39 @@ class HomeController extends Controller
       {
         $session_id = $session->id;
       }
-      $transaction = transaction::where('completed', null)->where('session_id', $session_id)->first();
+      $pending_transaction = transaction::where('completed', null)->where('session_id', $session_id)->get();
 
-      if($transaction)
+      if(count($pending_transaction) > 0)
       {
-        $transaction_detail = transaction_detail::where('transaction_id', $transaction->id)->get();
-
-        if(count($transaction_detail) > 0)
+        $cashier_list = array();
+        $cashier_name = "";
+        foreach($pending_transaction as $pending)
         {
+          $transaction_detail = transaction_detail::where('transaction_id', $pending->id)->get();
+          if(count($transaction_detail) > 0)
+          {
+            if($pending->ip)
+            {
+              $pos_cashier = pos_cashier::where('ip', $pending->ip)->first();
+              if($pos_cashier)
+              {
+                if(!in_array($pos_cashier->id, $cashier_list))
+                {
+                  array_push($cashier_list, $pos_cashier->id);
+                  $cashier_name .= $pos_cashier->cashier_name.", ";
+                }
+              }
+            }
+          }
+        }
+
+        if(count($cashier_list) > 0)
+        {
+          $cashier_name = substr($cashier_name, 0, -2);
+
           $response = new \stdClass();
           $response->error = 1;
-          $response->message = "Please clear the transaction before doing closing";
+          $response->message = "Cashier <b>".$cashier_name."</b> still have pending transaction, please clear the transaction before closing";
 
           return response()->json($response);
         }
@@ -930,10 +989,9 @@ class HomeController extends Controller
       if (Auth::validate($credentials))
       {
         $manager = User::where('username', $request->username)->first();
-        $cashier_ip = $_SERVER['REMOTE_ADDR'];
         $now = date('Y-m-d H:i:s', strtotime(now()));
 
-        $cashier = cashier::where('session_id', $session_id)->where('ip', $cashier_ip)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
+        $cashier = cashier::where('session_id', $session_id)->where('ip', $this->ip)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
 
         if($cashier)
         {
@@ -973,8 +1031,7 @@ class HomeController extends Controller
     public function submitCashFloat(Request $request)
     {
       $user = Auth::user();
-      $cashier_ip = $_SERVER['REMOTE_ADDR'];
-      $cashier = cashier::where('ip', $cashier_ip)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
+      $cashier = cashier::where('ip', $this->ip)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
 
       if(!$cashier)
       {
@@ -998,7 +1055,7 @@ class HomeController extends Controller
 
       cash_float::create([
         'user_id' => $user->id,
-        'ip' => $cashier_ip,
+        'ip' => $this->ip,
         'session_id' => $session->id,
         'type' => $request->type,
         'amount' => $request->amount,
@@ -1007,15 +1064,13 @@ class HomeController extends Controller
 
       $response = new \stdClass();
       $response->error = 0;
-      $response->message = "Cash float submitted";
+      $response->message = "Cash float ".$request->type." RM ".$request->amount;;
 
       return response()->json($response);
     }
 
     public function calculateClosingAmount()
     {
-      $cashier_ip = $_SERVER['REMOTE_ADDR'];
-
       $session = session::where('closed', null)->orderBy('id', 'desc')->first();
 
       if(!$session)
@@ -1030,9 +1085,9 @@ class HomeController extends Controller
 
       $closing_amount = 0;
 
-      $transaction_list = transaction::where('session_id', $session->id)->where('ip', $cashier_ip)->where('payment_type', 'cash')->where('completed', 1)->get();
-      $cashier = cashier::where('ip', $cashier_ip)->where('session_id', $session->id)->first();
-      $cash_float_list = cash_float::where('ip', $cashier_ip)->where('session_id', $session->id)->get();
+      $transaction_list = transaction::where('session_id', $session->id)->where('ip', $this->ip)->where('payment_type', 'cash')->where('completed', 1)->get();
+      $cashier = cashier::where('ip', $this->ip)->where('session_id', $session->id)->first();
+      $cash_float_list = cash_float::where('ip', $this->ip)->where('session_id', $session->id)->get();
 
       foreach($transaction_list as $transaction)
       {
@@ -1603,11 +1658,6 @@ class HomeController extends Controller
       return response()->json($response);
     }
 
-    public function myIP()
-    {
-
-    }
-
     public function testing()
     {
       $now = date('Y-m-d H:i:s', strtotime(now()));
@@ -1690,6 +1740,12 @@ class HomeController extends Controller
         [
           'function' => "showOpening()",
           'function_name' => "Show opening",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "showClosing()",
+          'function_name' => "Show closing",
           'code' => null,
           'character' => null
         ],
