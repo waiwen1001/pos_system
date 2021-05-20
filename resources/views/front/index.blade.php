@@ -685,21 +685,21 @@
   <div id="receipt">
     <div>
       <div style="display: flex; flex-direction: column; text-align: center;">
-        <label style="font-size: 8px;">HOME U(M) SDN BHD (125272-P)</label>
-        <label style="font-size: 8px;">S/36,LOT1745, CABANG TIGA PENGKALAN CHEPA</label>
+        <label style="font-size: 11px;">HOME U(M) SDN BHD (125272-P)</label>
+        <label style="font-size: 11px;">S/36,LOT1745, CABANG TIGA PENGKALAN CHEPA</label>
         <!-- <label>RESIT</label> -->
       </div>
-      <div style="border: 1px dashed #999; height: 2px;"></div>
+      <div style="border: 2px dashed #999; height: 2px;"></div>
       <div id="receipt_items">
         
       </div>
-      <div style="display: flex; margin-top: 10px; font-size: 8px;">
+      <div style="display: flex; margin-top: 10px; font-size: 11px;">
         <div style="flex: 1;">Kuantiti: <label id="receipt_total_quantity"></label></div>
         <div style="flex: 1;">Barang: <label id="receipt_total_items"></label></div>
       </div>
       <div style="border: 1px dashed #999; margin: 5px 0;"></div>
       <div style="margin-bottom: 10px;">
-        <div style="width: 100%; font-size: 8px; font-weight: bold; display: flex; justify-content: space-between;">
+        <div style="width: 100%; font-size: 11px; font-weight: bold; display: flex; justify-content: space-between;">
           <div>Jumlah</div>
           <div id="receipt_total"></div>
         </div>
@@ -707,10 +707,10 @@
       </div>
       <div style="border: 1px dashed #999; margin: 10px 0;"></div>
       <div>
-        <div style="text-align: center; font-size: 6px;">TERIMA KASIH KERANA MEMBELI-BELAH DENGAN KAMI</div>
-        <div style="text-align: center; font-size: 6px;">BARANG YANG DIJUAL TIDAK DAPAT DIKEMBALIKAN</div>
+        <div style="text-align: center; font-size: 9px;">TERIMA KASIH KERANA MEMBELI-BELAH DENGAN KAMI</div>
+        <div style="text-align: center; font-size: 9px;">BARANG YANG DIJUAL TIDAK DAPAT DIKEMBALIKAN</div>
 
-        <div style="font-size: 8px;">
+        <div style="font-size: 11px;">
           <div style="display: inline-block;" id="receipt_date"></div>
           <div style="display: inline-block; margin-left: 20px;" id="receipt_time"></div>
           <div style="display: inline-block; margin-left: 20px; float: right;">INVOIS : <label id="receipt_invoice_no"></label></div>
@@ -724,7 +724,7 @@
           </div>
         </div> -->
 
-        <div style="text-align: center; font-size: 8px;" id="receipt_reprint">
+        <div style="text-align: center; font-size: 9px;" id="receipt_reprint">
           <div style="font-weight: bold;">... CETAK SEMULA SALINAN ...</div>
           <div id="reprint_date_time"></div>
         </div>
@@ -1872,8 +1872,8 @@
         let items_html = "";
         for(var a = 0; a < transaction_detail.length; a++)
         {
-          items_html += "<div style='font-size: 8px;'>"+transaction_detail[a].product_name+"</div>";
-          items_html += "<div style='display: flex; font-size:8px;'>";
+          items_html += "<div style='font-size: 11px;'>"+transaction_detail[a].product_name+"</div>";
+          items_html += "<div style='display: flex; font-size:11px;'>";
           items_html += "<div style='flex: 1;'>"+transaction_detail[a].barcode+"</div>";
           items_html += "<div style='flex: 1;'>"+transaction_detail[a].quantity+".00 X RM "+transaction_detail[a].price_text+"</div>";
           items_html += "<div>RM "+transaction_detail[a].total_text+"</div>";
