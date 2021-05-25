@@ -371,7 +371,18 @@ class HomeController extends Controller
 
     public function searchRelatedItem(Request $request)
     {
-      $related_item = product::where('barcode', 'LIKE', $request->barcode."%")->limit(7)->get();
+      $barcode = $request->barcode;
+      $related_item = product::where(function($query) use ($barcode){
+        if(is_numeric($barcode))
+        {
+          $query->where('barcode', 'LIKE', $barcode."%");
+        }
+        else
+        {
+          $query->where('barcode', 'LIKE', $barcode."%")->orWhere('product_name', 'LIKE', '%'.$barcode.'%');
+        }
+      })->limit(7)->get();
+
       foreach($related_item as $related)
       {
         $related->price_text = "";
@@ -962,15 +973,18 @@ class HomeController extends Controller
       }
       $pending_transaction = transaction::where('completed', null)->where('session_id', $session_id)->get();
 
+      $on_pending = false;
       if(count($pending_transaction) > 0)
       {
         $cashier_list = array();
         $cashier_name = "";
+
         foreach($pending_transaction as $pending)
         {
           $transaction_detail = transaction_detail::where('transaction_id', $pending->id)->get();
           if(count($transaction_detail) > 0)
           {
+            $on_pending = true;
             if($pending->ip)
             {
               $pos_cashier = pos_cashier::where('ip', $pending->ip)->first();
@@ -982,11 +996,15 @@ class HomeController extends Controller
                   $cashier_name .= $pos_cashier->cashier_name.", ";
                 }
               }
+              else
+              {
+                $cashier_name .= $pending->ip.", ";
+              }
             }
           }
         }
 
-        if(count($cashier_list) > 0)
+        if($on_pending)
         {
           $cashier_name = substr($cashier_name, 0, -2);
 

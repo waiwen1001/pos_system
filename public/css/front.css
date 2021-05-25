@@ -76,9 +76,11 @@ body { font-family: arial; }
 tr.selected { background: #ddd; }
 
 .items-list::-webkit-scrollbar { width: 6px; background-color: #F5F5F5; }
-
-.items-list::-webkit-scrollbar-thumb { background-color: #000000; }
-
+.items-list::-webkit-scrollbar-thumb { background-color: #666666; }
 .items-list::-webkit-scrollbar-track { -webkit-box-shadow: inset 0 0 6px rgb(0 0 0 / 30%); background-color: #F5F5F5; }
+
+body::-webkit-scrollbar { width: 6px; background-color: #F5F5F5; }
+body::-webkit-scrollbar-thumb { background-color: #666666; }
+body::-webkit-scrollbar-track { -webkit-box-shadow: inset 0 0 6px rgb(0 0 0 / 30%); background-color: #F5F5F5; }
 
 

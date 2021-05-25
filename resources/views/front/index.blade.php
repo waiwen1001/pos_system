@@ -419,7 +419,7 @@
         <div class="modal-body">
           <div class="numpad">
             <div class="numpad_input">
-              <input type="number" class="form-control" name="received_payment" value="0" /> 
+              <input type="text" class="form-control" name="received_payment" value="0" /> 
               <span class="invalid-feedback" role="alert"></span>
             </div>
             <div class="numpad_func_btn">
@@ -717,7 +717,7 @@
             <div id="receipt_change"></div>
           </div>
         </div>
-        <div id="receipt_other_payment" style="width: 100%; display: flex; justify-content: space-between; font-size: 8px; font-weight: bold;"></div>
+        <div id="receipt_other_payment" style="width: 100%; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold;"></div>
       </div>
       <div style="border: 1px dashed #000; margin: 10px 0;"></div>
       <div>
@@ -1254,6 +1254,7 @@
       }
       else
       {
+        $("#related_item").html("");
         total_related = 0;
         selecting_related = 1;
         $("#barcode").attr("disabled", true);
@@ -1311,10 +1312,15 @@
       showInvoiceInput();
     });
 
-    $("input[name=received_payment]").on('keydown', function(e){
+    $("input[name=received_payment]").on('keyup', function(e){
       if(e.which == 13)
       {
         $(".numpad_btn.submit").click();
+      }
+      else if(isNaN(e.key) && e.key.length == 1 && e.key != ".")
+      {
+        var received_payment = $("input[name='received_payment']").val().slice(0, -1);
+        $("input[name='received_payment']").val(received_payment);
       }
     });
 
@@ -2783,87 +2789,87 @@
         html += "<h4 style='text-align:center;'>Daily Sales Report on "+session.opening_date_time+"</h4>";
         html += '<div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>';
 
-        if(category_report.length > 0)
-        {
-          html += "<table style='width: 100%;'>";
-          for(var a = 0; a < category_report.length; a++)
-          {
-            html += "<tr>";
-            html += "<td width='85%'>"+category_report[a].category_name+"</td>";
-            html += "<td>RM</td>";
-            html += "<td align='right'>"+category_report[a].category_total+"</td>";
-            html += "</tr>";
+        // if(category_report.length > 0)
+        // {
+        //   html += "<table style='width: 100%;'>";
+        //   for(var a = 0; a < category_report.length; a++)
+        //   {
+        //     html += "<tr>";
+        //     html += "<td width='85%'>"+category_report[a].category_name+"</td>";
+        //     html += "<td>RM</td>";
+        //     html += "<td align='right'>"+category_report[a].category_total+"</td>";
+        //     html += "</tr>";
 
-            // html += "<div>";
+        //     // html += "<div>";
 
-            // for(var b = 0; b < ip_array.length; b++)
-            // {
-            //   html += "<div style='display:flex;'>";
-            //   html += "<div style='flex:1;'>"+ip_array[b].ip+"</div>";
-            //   var ip_found = 0;
-            //   for(var c = 0; c < ip_array[b].category.length; c++)
-            //   {
-            //     if(ip_array[b].category[c].category_id == category_report[a].category_id)
-            //     {
-            //       html += "<div style='flex:1; text-align:right;'>RM "+ip_array[b].category[c].total+"</div>";
-            //       ip_found = 1;
-            //       break;
-            //     }
-            //   }
+        //     // for(var b = 0; b < ip_array.length; b++)
+        //     // {
+        //     //   html += "<div style='display:flex;'>";
+        //     //   html += "<div style='flex:1;'>"+ip_array[b].ip+"</div>";
+        //     //   var ip_found = 0;
+        //     //   for(var c = 0; c < ip_array[b].category.length; c++)
+        //     //   {
+        //     //     if(ip_array[b].category[c].category_id == category_report[a].category_id)
+        //     //     {
+        //     //       html += "<div style='flex:1; text-align:right;'>RM "+ip_array[b].category[c].total+"</div>";
+        //     //       ip_found = 1;
+        //     //       break;
+        //     //     }
+        //     //   }
 
-            //   if(ip_found == 0)
-            //   {
-            //     html += "<div style='flex:1; text-align:right;'>RM 0.00</div>";
-            //   }
+        //     //   if(ip_found == 0)
+        //     //   {
+        //     //     html += "<div style='flex:1; text-align:right;'>RM 0.00</div>";
+        //     //   }
 
-            //   html += "</div>";
-            // }
-            // html += "</div>";
-          }
-          html += "</table>";
+        //     //   html += "</div>";
+        //     // }
+        //     // html += "</div>";
+        //   }
+        //   html += "</table>";
           
-          html += '<div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>';
-        }
+        //   html += '<div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>';
+        // }
 
-        if(department_report.length > 0)
-        {
-          html += "<table style='width: 100%;'>";
-          for(var a = 0; a < department_report.length; a++)
-          {
-            html += "<tr>";
-            html += "<td width='85%'>"+department_report[a].department_name+"</td>";
-            html += "<td>RM</td>";
-            html += "<td align='right'>"+department_report[a].department_total+"</td>";
-            html += "</tr>";
+        // if(department_report.length > 0)
+        // {
+        //   html += "<table style='width: 100%;'>";
+        //   for(var a = 0; a < department_report.length; a++)
+        //   {
+        //     html += "<tr>";
+        //     html += "<td width='85%'>"+department_report[a].department_name+"</td>";
+        //     html += "<td>RM</td>";
+        //     html += "<td align='right'>"+department_report[a].department_total+"</td>";
+        //     html += "</tr>";
 
-            // html += "<div>";
-            // for(var b = 0; b < ip_array.length; b++)
-            // {
-            //   html += "<div style='display:flex;'>";
-            //   html += "<div style='flex:1;'>"+ip_array[b].ip+"</div>";
-            //   var ip_found = 0;
-            //   for(var c = 0; c < ip_array[b].department.length; c++)
-            //   {
-            //     if(ip_array[b].department[c].department_id == department_report[a].department_id)
-            //     {
-            //       html += "<div style='flex:1; text-align:right;'>RM "+ip_array[b].department[c].total+"</div>";
-            //       ip_found = 1;
-            //       break;
-            //     }
-            //   }
+        //     // html += "<div>";
+        //     // for(var b = 0; b < ip_array.length; b++)
+        //     // {
+        //     //   html += "<div style='display:flex;'>";
+        //     //   html += "<div style='flex:1;'>"+ip_array[b].ip+"</div>";
+        //     //   var ip_found = 0;
+        //     //   for(var c = 0; c < ip_array[b].department.length; c++)
+        //     //   {
+        //     //     if(ip_array[b].department[c].department_id == department_report[a].department_id)
+        //     //     {
+        //     //       html += "<div style='flex:1; text-align:right;'>RM "+ip_array[b].department[c].total+"</div>";
+        //     //       ip_found = 1;
+        //     //       break;
+        //     //     }
+        //     //   }
 
-            //   if(ip_found == 0)
-            //   {
-            //     html += "<div style='flex:1; text-align:right;'>RM 0.00</div>";
-            //   }
-            //   html += "</div>";
-            // }
-            // html += "</div>";
-          }
-          html += "</table>";
+        //     //   if(ip_found == 0)
+        //     //   {
+        //     //     html += "<div style='flex:1; text-align:right;'>RM 0.00</div>";
+        //     //   }
+        //     //   html += "</div>";
+        //     // }
+        //     // html += "</div>";
+        //   }
+        //   html += "</table>";
 
-          html += '<div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>';
-        }
+        //   html += '<div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>';
+        // }
 
         if(payment_type_report.length > 0)
         {

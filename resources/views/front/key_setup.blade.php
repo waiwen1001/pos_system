@@ -100,9 +100,11 @@
     $("#saveShortcutKey").click(function(){
       var char_array = [];
       var duplicated = 0;
+      var banned = 0;
       $("input[input_type='char']").removeClass('error');
       $("input[input_type='char']").each(function(){
         var input_val = $(this).val().toLowerCase();
+
         if(char_array.includes(input_val) && input_val != "")
         {
           duplicated = 1;
@@ -112,6 +114,12 @@
         {
           char_array.push(input_val);
         }
+
+        var keycode = $(this).parent().parent().find("input[input_type='code']").val();
+        if(keycode == 38 || keycode == 40)
+        {
+          banned = 1;
+        }
       });
 
       if(duplicated == 1)
@@ -120,6 +128,14 @@
           icon: 'error',
           title: 'Error',
           text: 'Shortcut key cannot be same.',
+        });
+      }
+      else if(banned == 1)
+      {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Shortcut key cannot use ArrowUp and ArrowDown.',
         });
       }
       else
