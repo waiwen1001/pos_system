@@ -34,7 +34,7 @@
   
   <div class="" style="position: absolute; background: #F2F2F2; padding: 20px; width: 100%; height: 100%;">
     <div class="row" style="height: 100%;">
-      <div class="col-lg-5 col-sm-12">
+      <div class="col-lg-5 col-sm-12" style="max-height: 100%;">
         <div class="left-box">
           <div class="items-list">
             <table id="items-table">
@@ -686,10 +686,10 @@
     <div>
       <div style="display: flex; flex-direction: column; text-align: center;">
         <label style="font-size: 8px;">HOME U(M) SDN BHD (125272-P)</label>
-        <label style="font-size: 8px;">S/36,LOT1745, CABANG TIGA PENGKALAN CHEPA</label>
+        <label style="font-size: 8px;">S/36,LOT1745, <br> CABANG TIGA PENGKALAN CHEPA</label>
         <!-- <label>RESIT</label> -->
       </div>
-      <div style="border: 1px dashed #999; height: 2px;"></div>
+      <div style="border: 1px dashed #000; height: 2px;"></div>
       <div id="receipt_items">
         
       </div>
@@ -697,23 +697,40 @@
         <div style="flex: 1;">Kuantiti: <label id="receipt_total_quantity"></label></div>
         <div style="flex: 1;">Barang: <label id="receipt_total_items"></label></div>
       </div>
-      <div style="border: 1px dashed #999; margin: 5px 0;"></div>
+      <div style="border: 1px dashed #000; margin: 5px 0;"></div>
       <div style="margin-bottom: 10px;">
+        <div style="width: 100%; font-size: 8px; display: flex; justify-content: space-between;">
+          <div>Jenis Bayaran</div>
+          <div id="receipt_payment_type"></div>
+        </div>
         <div style="width: 100%; font-size: 8px; font-weight: bold; display: flex; justify-content: space-between;">
-          <div>Jumlah</div>
+          <div>Jumlah Bil</div>
           <div id="receipt_total"></div>
         </div>
-        <div id="receipt_other_payment" style="width: 100%; display: flex; justify-content: space-between; font-size: 8px;"></div>
+        <div id="receipt_cash" style="display: none;">
+          <div style="width: 100%; font-size: 8px; font-weight: bold; display: flex; justify-content: space-between;">
+            <div>Jumlah Bayaran</div>
+            <div id="receipt_received_payment"></div>
+          </div>
+          <div style="width: 100%; font-size: 8px; font-weight: bold; display: flex; justify-content: space-between;">
+            <div>Jumlah Baki</div>
+            <div id="receipt_change"></div>
+          </div>
+        </div>
+        <div id="receipt_other_payment" style="width: 100%; display: flex; justify-content: space-between; font-size: 8px; font-weight: bold;"></div>
       </div>
-      <div style="border: 1px dashed #999; margin: 10px 0;"></div>
+      <div style="border: 1px dashed #000; margin: 10px 0;"></div>
       <div>
         <div style="text-align: center; font-size: 6px;">TERIMA KASIH KERANA MEMBELI-BELAH DENGAN KAMI</div>
         <div style="text-align: center; font-size: 6px;">BARANG YANG DIJUAL TIDAK DAPAT DIKEMBALIKAN</div>
 
         <div style="font-size: 8px;">
           <div style="display: inline-block;" id="receipt_date"></div>
-          <div style="display: inline-block; margin-left: 20px;" id="receipt_time"></div>
-          <div style="display: inline-block; margin-left: 20px; float: right;">INVOIS : <label id="receipt_invoice_no"></label></div>
+          <div style="display: inline-block; float: right;" id="receipt_time"></div>
+        </div>
+
+        <div style="font-size: 8px; text-align: center;">
+          <div style="display: inline-block;">INVOIS : <label id="receipt_invoice_no"></label></div>
         </div>
 
         <!-- <div>
@@ -1110,6 +1127,8 @@
   var session = "{{ $session }}";
   var shortcut_key = @json($shortcut_key);
   var user = @json($user);
+  var selecting_related = 1;
+  var total_related = 0;
 
   var transaction_total = "{{ $real_total }}";
   var opening = "{{ $opening }}";
@@ -1168,9 +1187,53 @@
         {
           swal.close();
         }
-        $(".modal").not("#cardCheckoutModal, #numpadModal, #cashFloatModal").modal('hide');
+
+        if($("#openingModal").css("display") != "none")
+        {
+          $("#submitOpening").click();
+        }
+        else if($("#closingModal").css("display") != "none")
+        {
+          $("#submitClosing").click();
+        }
+        else if($("#cashFloatModal").css("display") != "none")
+        {
+          $("#submitCashFloat").click();
+        }
+        else if($("#clearItemsModal").css("display") != "none")
+        {
+          submitClearTransaction(1);
+        }
+        else if($("#dailyClosingModal").css("display") != "none")
+        {
+          $("#submitDailyClosing").click();
+        }
+        else if($("#barcode_manual").is(":checked") == true && total_related > 0)
+        {
+          addRelatedItem();
+        }
+        else
+        {
+          $(".modal").not("#cardCheckoutModal, #numpadModal, #cashFloatModal").modal('hide');
+        }
       }
-      else if(e.key)
+      // up down
+      else if(e.which == 38 || e.which == 40)
+      {
+        if(total_related > 0)
+        {
+          if(e.which == 38 && selecting_related > 1)
+          {
+            selecting_related--;
+          }
+          else if(e.which == 40 && selecting_related != total_related)
+          {
+            selecting_related++;
+          }
+          selectRelated();
+        }
+      }
+      else if(e.key && opening == 1)
       {
         if(e.key.length == 1)
         {
@@ -1191,6 +1254,8 @@
       }
       else
       {
+        total_related = 0;
+        selecting_related = 1;
         $("#barcode").attr("disabled", true);
       }
     });
@@ -1208,12 +1273,7 @@
       }
       else
       {
-        // enter
-        if(e.which == 13)
-        {
-          searchFunc = setTimeout(searchAndAddItem, 10);
-        }
-        else
+        if((e.key && e.key.length == 1) || e.which == 8)
         {
           clearTimeout(related_timeout);
           related_timeout = setTimeout(searchRelatedItem, 300);
@@ -1400,12 +1460,21 @@
     {
       $("input[name='cashier_opening_amount']").val("");
       $("#openingModal").modal('show');
+
+      setTimeout(function(){
+        $("input[name='cashier_opening_amount']").focus();
+      }, 500);
+
       disablePosSystem();
     }
 
     $("#openingBtn").click(function(){
       $("input[name='cashier_opening_amount']").val("");
       $("#openingModal").modal('show');
+
+      setTimeout(function(){
+        $("input[name='cashier_opening_amount']").focus();
+      }, 500);
     });
 
     $("#dailyClosingBtn").click(function(){
@@ -1458,7 +1527,6 @@
       let date = new Date();
       $("#time").text(`${date.toLocaleTimeString()}`);
     },1000);
-
   });
 
   function searchAndAddItem()
@@ -1531,7 +1599,7 @@
       html += "<i class='fa fa-plus' onclick='editQuantity(this, \"minus\", \""+item_detail.id+"\")'></i>";
       html += "</div>";
       html += "</td>";
-      html += "<td>RM "+item_detail.subtotal_text+"</td>";
+      html += "<td class='subtotal'>RM "+item_detail.subtotal_text+"</td>";
       html += "<td>";
       html += "<button class='btn btn-dark items-cancel' onclick='cancelItem(\""+item_detail.id+"\")'>Cancel</button>";
       html += "</td>";
@@ -1885,15 +1953,20 @@
         $("#receipt_total_quantity").html(transaction.total_quantity);
         $("#receipt_total_items").html(transaction.total_items);
         $("#receipt_total").html("RM "+transaction.total_text);
+        $("#receipt_payment_type").html(transaction.payment_type_text);
 
         if(transaction.payment_type != "cash")
         {
           $("#receipt_other_payment").show();
-          $("#receipt_other_payment").html("<div>"+transaction.payment_type_text+"</div><div>"+transaction.total_text+"</div>");
+          $("#receipt_other_payment").html("<div>"+transaction.payment_type_text+"</div><div>RM "+transaction.total_text+"</div>");
+          $("#receipt_cash").hide();
         }
         else
         {
           $("#receipt_other_payment").hide();
+          $("#receipt_cash").show();
+          $("#receipt_received_payment").html("RM "+transaction.payment_text);
+          $("#receipt_change").html("RM "+transaction.balance_text);
         }
 
         $("#receipt_date").html(transaction.receipt_date);
@@ -1986,7 +2059,16 @@
       }
       else
       {
-        alert("Error");
+        Swal.fire({
+          title: result.message,
+          icon: 'error',
+          confirmButtonText: 'OK',
+        }).then((result) => {
+          /* Read more about isConfirmed, isDenied below */
+          if (result.isConfirmed) {
+            swal.close();
+          }
+        })
       }
     }).fail(function(xhr){
       if(xhr.status == 401)
@@ -2050,29 +2132,29 @@
         if(result.quantity > 0)
         {
           $(_this).siblings("label").html(result.quantity);
-          $("#items-table tbody tr[item_id="+item_id+"] td.subtotal").html(result.subtotal);
-
-          let transaction_summary = result.transaction_summary;
-          transaction_total = transaction_summary.real_total;
-
-          $("#price").html(transaction_summary.subtotal);
-          $("#total").html(transaction_summary.total);
-
-          if(transaction_summary.round_off == "0.00")
-          {
-            $("#round_off_box").hide();
-          }
-          else
-          {
-            $("#round_off_box").show();
-          }
-
-          $("#round_off").html(transaction_summary.round_off);
+          $("#items-table tbody tr[item_id="+item_id+"] td.subtotal").html("RM "+result.subtotal);
         }
         else
         {
           $("#items-table tbody tr[item_id="+item_id+"]").remove();
         }
+
+        let transaction_summary = result.transaction_summary;
+        transaction_total = transaction_summary.real_total;
+
+        $("#price").html(transaction_summary.subtotal);
+        $("#total").html(transaction_summary.total);
+
+        if(transaction_summary.round_off == "0.00")
+        {
+          $("#round_off_box").hide();
+        }
+        else
+        {
+          $("#round_off_box").show();
+        }
+
+        $("#round_off").html(transaction_summary.round_off);
       }
     }).fail(function(xhr){
       if(xhr.status == 401)
@@ -2369,12 +2451,12 @@
 
   function disablePosSystem()
   {
-    $("#voucherBtn, #cashCheckoutBtn, #paymentTypeBtn, #clearBtn, #previousReceiptBtn, #closingBtn, #dailyClosingBtn").attr("disabled", true);
+    $("#voucherBtn, #cashCheckoutBtn, #paymentTypeBtn, #clearBtn, #previousReceiptBtn, #closingBtn, #dailyClosingBtn, input[name='barcode_manual']").attr("disabled", true);
   }
 
   function enablePosSystem()
   {
-    $("#voucherBtn, #cashCheckoutBtn, #paymentTypeBtn, #clearBtn, #previousReceiptBtn, #closingBtn, #dailyClosingBtn").attr("disabled", false);
+    $("#voucherBtn, #cashCheckoutBtn, #paymentTypeBtn, #clearBtn, #previousReceiptBtn, #closingBtn, #dailyClosingBtn, input[name='barcode_manual']").attr("disabled", false);
   }
 
   function submitOpening()
@@ -2429,7 +2511,10 @@
         $("input[name='cashier_closing_amount']").removeClass("is-invalid").val(result.closing_amount);
         $("#closingModal").modal('show');
 
-        openDrawer("Closing amount  <br> RM "+result.closing_amount_text);
+        setTimeout(function(){
+          $("input[name='cashier_closing_amount']").focus();
+          openDrawer("Closing amount  <br> RM "+result.closing_amount_text);
+        }, 500);
       }).fail(function(xhr){
         if(xhr.status == 401)
         {
@@ -3160,7 +3245,7 @@
       combined_barcode = "";
     }
 
-    if($("#voucherModal").css("display") != "none" || $("#user_management").css("display") != "none" || $("#dailyClosingModal").css("display") != "none" || $("#numpadModal").css("display") != "none" || $("#openingModal").css("display") != "none" || $("#previous_receipt").css("display") != "none" || $("#cardCheckoutModal").css("display") != "none" || $("#cashFloatModal").css("display") != "none")
+    if($("#voucherModal").css("display") != "none" || $("#user_management").css("display") != "none" || $("#dailyClosingModal").css("display") != "none" || $("#numpadModal").css("display") != "none" || $("#openingModal").css("display") != "none" || $("#previous_receipt").css("display") != "none" || $("#cardCheckoutModal").css("display") != "none" || $("#cashFloatModal").css("display") != "none" || $("#openingModal").css("display") != "none" || $("#closingModal").css("display") != "none")
     {
       run = false;
       combined_barcode = "";
@@ -3219,10 +3304,14 @@
         if(result.error == 0)
         {
           var related_item = result.related_item;
+
+          total_related = related_item.length;
+          selecting_related = 1;
+
           var html = "";
           for(var a = 0; a < related_item.length; a++)
           {
-            html += "<tr>";
+            html += "<tr class='"+(a == 0 ? "selected" : "" )+"' barcode='"+related_item[a].barcode+"'>";
             html += "<td>"+related_item[a].barcode+"</td>";
             html += "<td>"+related_item[a].product_name+"</td>";
             html += "<td>RM <span style='float: right;'>"+related_item[a].price_text+"</span></td>";
@@ -3247,6 +3336,23 @@
         }
       });
     }
+  }
+
+  function selectRelated()
+  {
+    $("#related_item tr").removeClass("selected");
+    $("#related_item tr:nth-child("+selecting_related+")").addClass("selected");
+  }
+
+  function addRelatedItem()
+  {
+    var barcode = $("#related_item tr.selected").attr("barcode");
+    $("#barcode").val(barcode);
+    searchAndAddItem();
+
+    total_related = 0;
+    selecting_related = 1;
+    $("#related_item").html("");
   }
 
 </script>

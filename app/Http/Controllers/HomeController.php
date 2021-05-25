@@ -54,7 +54,14 @@ class HomeController extends Controller
       $transaction_id = null;
       $voucher_name = null;
 
-      $pending_transaction = transaction::where('completed', null)->where('ip', $this->ip)->first();
+      $session = session::where('closed', null)->orderBy('id', 'desc')->first();
+
+      $pending_transaction = array();
+      if($session)
+      {
+        $pending_transaction = transaction::where('session_id', $session->id)->where('completed', null)->where('ip', $this->ip)->first();
+      }
+      
       if($pending_transaction)
       {
         if($pending_transaction->total_discount)
@@ -85,8 +92,6 @@ class HomeController extends Controller
           }
         }
       }
-
-      $session = session::where('closed', null)->orderBy('id', 'desc')->first();
 
       $completed_transaction = [];
       if($session)
@@ -158,8 +163,9 @@ class HomeController extends Controller
       }
 
       $shortcut_key = shortcut_key::get();
+      $ip = $this->ip;
 
-      return view('front.index', compact('user', 'user_management_list', 'pending_transaction', 'subtotal', 'discount', 'have_discount', 'total', 'real_total', 'round_off', 'payment', 'balance', 'transaction_id', 'completed_transaction', 'opening', 'voucher_name', 'session', 'shortcut_key'));
+      return view('front.index', compact('user', 'user_management_list', 'pending_transaction', 'subtotal', 'discount', 'have_discount', 'total', 'real_total', 'round_off', 'payment', 'balance', 'transaction_id', 'completed_transaction', 'opening', 'voucher_name', 'session', 'shortcut_key', 'ip'));
     }
 
     public function getSetupPage()
@@ -365,7 +371,7 @@ class HomeController extends Controller
 
     public function searchRelatedItem(Request $request)
     {
-      $related_item = product::where('barcode', 'LIKE', $request->barcode."%")->limit(5)->get();
+      $related_item = product::where('barcode', 'LIKE', $request->barcode."%")->limit(7)->get();
       foreach($related_item as $related)
       {
         $related->price_text = "";
@@ -454,6 +460,15 @@ class HomeController extends Controller
       $user = Auth::user();
 
       $transaction = transaction::where('id', $request->transaction_id)->first();
+
+      if(!$transaction)
+      {
+        $response = new \stdClass();
+        $response->error = 1;
+        $response->message = "Transaction not found";
+        return response()->json($response);
+      }
+
       $transaction_detail = transaction_detail::where('transaction_id', $request->transaction_id)->get();
 
       $payment_type = $request->payment_type;
@@ -1143,6 +1158,13 @@ class HomeController extends Controller
       $transaction->total_quantity = $total_quantity;
       $transaction->total_items = $total_items;
       $transaction->total_text = number_format($transaction->total, 2);
+      $transaction->payment_text = "";
+      $transaction->balance_text = "";
+      if($transaction->payment_type == "cash")
+      {
+        $transaction->payment_text = number_format($transaction->payment, 2);
+        $transaction->balance_text = number_format($transaction->balance, 2);
+      }
 
       $transaction->receipt_date = date('l, d-m-Y', strtotime($transaction->created_at));
       $transaction->receipt_time = date('H:i', strtotime($transaction->created_at));
