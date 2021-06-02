@@ -13,6 +13,7 @@ use App\session;
 use App\cash_float;
 use App\pos_cashier;
 use App\shortcut_key;
+use App\Invoice_sequence;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -305,13 +306,45 @@ class HomeController extends Controller
             $cashier_name = $cashier_detail->cashier_name;
           }
 
+          //Generate new invoice number
+
+          $seq = Invoice_sequence::first();
+
+          if(date("Y-m-d",strtotime($seq->updated_at)) == date('Y-m-d', strtotime(now()))){
+            $transaction_no = $seq->branch_code.date("Ymd").$seq->next_seq;
+          }else{
+            $transaction_no = $seq->branch_code.date("Ymd")."00001";
+          }
+
           $transaction = transaction::create([
             'session_id' => $session_id,
             'ip' => $this->ip,
             'cashier_name' => $cashier_name,
-            'transaction_no' => uniqid(),
+            'transaction_no' => $transaction_no,
             'user_id' => $user->id
           ]);
+
+          if(date("Y-m-d",strtotime($seq->updated_at)) == date('Y-m-d', strtotime(now()))){
+            $next = $seq->next_seq;
+            $next = intval($next) + 1;
+            $i=5;
+            while($i>strlen($next)){
+              $next = "0".$next;
+            }
+
+            Invoice_sequence::where('id',1)->update([
+              'current_seq' => $seq->next_seq,
+              'next_seq' => $next,
+            ]);
+
+          }else{
+
+            Invoice_sequence::where('id',1)->update([
+              'current_seq' => '00001',
+              'next_seq' => '00002',
+            ]);
+
+          }
 
           transaction_detail::create([
             'transaction_id' => $transaction->id,

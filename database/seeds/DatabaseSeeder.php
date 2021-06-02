@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
@@ -11,6 +12,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        // $this->call(UsersTableSeeder::class);
+        DB::table('invoice_sequence')->insert([
+            'branch_code' => 'A',
+            'current_seq' => '00000',
+            'next_seq' => '00001',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }
