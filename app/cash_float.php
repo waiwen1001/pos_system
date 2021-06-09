@@ -11,6 +11,7 @@ class cash_float extends Model
     'user_id',
     'ip',
     'session_id',
+    'opening_id',
     'type',
     'amount',
     'remarks'

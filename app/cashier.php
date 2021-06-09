@@ -18,6 +18,8 @@ class cashier extends Model
       'closing',
       'closing_by',
       'closing_amount',
+      'calculated_amount',
+      'diff',
       'closing_date_time',
     ];
 }

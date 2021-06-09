@@ -260,6 +260,7 @@ class HomeController extends Controller
 
     public function searchAndAddItem(Request $request)
     {
+      $now = date('Y-m-d H:i:s', strtotime(now()));
       $barcode = $request->barcode;
 
       if(!$barcode)
@@ -285,6 +286,14 @@ class HomeController extends Controller
           return response()->json($response);
         }
 
+        if($product->promotion_start && $product->promotion_end && $product->promotion_price)
+        {
+          if($product->promotion_start <= $now && $product->promotion_end >= $now)
+          {
+            $product->price = $product->promotion_price;
+          }
+        }
+
         $user = Auth::user();
         $transaction = transaction::where('completed', null)->where('ip', $this->ip)->first();
 
@@ -293,9 +302,16 @@ class HomeController extends Controller
           $session = session::where('closed', null)->orderBy('id', 'desc')->first();
 
           $session_id = null;
+          $opening_id = null;
           if($session)
           {
             $session_id = $session->id;
+            $opening = cashier::where('session_id', $session->id)->where('ip', $this->ip)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
+
+            if($opening)
+            {
+              $opening_id = $opening->id;
+            }
           }
 
           $cashier_name = null;
@@ -318,6 +334,7 @@ class HomeController extends Controller
 
           $transaction = transaction::create([
             'session_id' => $session_id,
+            'opening_id' => $opening_id,
             'ip' => $this->ip,
             'cashier_name' => $cashier_name,
             'transaction_no' => $transaction_no,
@@ -343,7 +360,6 @@ class HomeController extends Controller
               'current_seq' => '00001',
               'next_seq' => '00002',
             ]);
-
           }
 
           transaction_detail::create([
@@ -367,9 +383,10 @@ class HomeController extends Controller
           if($transaction_detail)
           {
             transaction_detail::where('id', $transaction_detail->id)->update([
+              'price' => round($product->price, 2),
               'quantity' => $transaction_detail->quantity + 1,
-              'subtotal' => round($transaction_detail->subtotal + $product->price, 2),
-              'total' => round($transaction_detail->total + $product->price, 2)
+              'subtotal' => round( ($transaction_detail->quantity + 1) * $product->price, 2),
+              'total' => round( ($transaction_detail->quantity + 1) * $product->price, 2)
             ]);
           }
           else
@@ -518,7 +535,7 @@ class HomeController extends Controller
       $payment_type = $request->payment_type;
 
       $received_cash = 0;
-      $invoice_no = null;
+      $reference_no = null;
       $total = 0;
       $subtotal = 0;
       $total_discount = 0;
@@ -560,8 +577,8 @@ class HomeController extends Controller
       } 
       else
       {
-        $invoice_no = $request->invoice_no;
-        if($invoice_no)
+        $reference_no = $request->reference_no;
+        if($reference_no)
         {
           $valid_payment = true;
         }
@@ -587,7 +604,7 @@ class HomeController extends Controller
       if($valid_payment)
       {
         transaction::where('id', $request->transaction_id)->update([
-          'invoice_no' => $invoice_no,
+          'reference_no' => $reference_no,
           'subtotal' => round($subtotal, 2),
           'total_discount' => round($total_discount, 2),
           'payment' => round($received_cash, 2),
@@ -687,10 +704,10 @@ class HomeController extends Controller
       return response()->json($response);
     }
 
-    public function editInvoiceNo(Request $request)
+    public function editReferenceNo(Request $request)
     {
       transaction::where('id', $request->transaction_id)->update([
-        'invoice_no' => $request->invoice_no
+        'reference_no' => $request->reference_no
       ]);
 
       $response = new \stdClass();
@@ -976,6 +993,8 @@ class HomeController extends Controller
         cashier::where('id', $cashier->id)->update([
           'closing' => 1,
           'closing_amount' => $request->closing_amount,
+          'calculated_amount' => $request->calculated_amount,
+          'diff' => $request->closing_amount - $request->calculated_amount,
           'closing_by' => $user->id,
           'closing_date_time' => $now
         ]);
@@ -1067,6 +1086,8 @@ class HomeController extends Controller
           cashier::where('id', $cashier->id)->update([
             'closing' => 1,
             'closing_amount' => $request->closing_amount,
+            'calculated_amount' => $request->calculated_amount,
+            'diff' => $request->closing_amount - $request->calculated_amount,
             'closing_by' => $manager->id,
             'closing_date_time' => $now
           ]);
@@ -1100,16 +1121,6 @@ class HomeController extends Controller
     public function submitCashFloat(Request $request)
     {
       $user = Auth::user();
-      $cashier = cashier::where('ip', $this->ip)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
-
-      if(!$cashier)
-      {
-        $response = new \stdClass();
-        $response->error = 1;
-        $response->message = "Cashier not found";
-
-        return response()->json($response);
-      }
 
       $session = session::where('closed', null)->orderBy('id', 'desc')->first();
 
@@ -1122,10 +1133,22 @@ class HomeController extends Controller
         return response()->json($response);
       }
 
+      $cashier = cashier::where('session_id', $session->id)->where('ip', $this->ip)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
+
+      if(!$cashier)
+      {
+        $response = new \stdClass();
+        $response->error = 1;
+        $response->message = "Cashier not found";
+
+        return response()->json($response);
+      }
+
       cash_float::create([
         'user_id' => $user->id,
         'ip' => $this->ip,
         'session_id' => $session->id,
+        'opening_id' => $cashier->id,
         'type' => $request->type,
         'amount' => $request->amount,
         'remarks' => $request->remarks
@@ -1154,9 +1177,10 @@ class HomeController extends Controller
 
       $closing_amount = 0;
 
-      $transaction_list = transaction::where('session_id', $session->id)->where('ip', $this->ip)->where('payment_type', 'cash')->where('completed', 1)->get();
-      $cashier = cashier::where('ip', $this->ip)->where('session_id', $session->id)->first();
-      $cash_float_list = cash_float::where('ip', $this->ip)->where('session_id', $session->id)->get();
+      $cashier = cashier::where('ip', $this->ip)->where('session_id', $session->id)->where('opening', 1)->where('closing', null)->orderBy('created_at', 'desc')->first();
+      $transaction_list = transaction::where('session_id', $session->id)->where('opening_id', $cashier->id)->where('ip', $this->ip)->where('payment_type', 'cash')->where('completed', 1)->get();
+      
+      $cash_float_list = cash_float::where('ip', $this->ip)->where('session_id', $session->id)->where('opening_id', $cashier->id)->get();
 
       foreach($transaction_list as $transaction)
       {
@@ -1301,7 +1325,10 @@ class HomeController extends Controller
           'category_id' => $product['category_id'],
           'barcode' => $product['barcode'],
           'product_name' => $product['product_name'],
-          'price' => $product['price']
+          'price' => $product['price'],
+          'promotion_start' => '2021-06-01 00:00:00',
+          'promotion_end' => '2021-06-30 23:59:59',
+          'promotion_price' => 20
         ]);
 
         if(!in_array($product['barcode'], $barcode_array))
@@ -1374,6 +1401,7 @@ class HomeController extends Controller
 
         $barcode_array = array();
         $product_list = $response['product_list'];
+
         if($product_list && is_array($product_list))
         {
           $total_product_list = count($product_list);
@@ -1388,7 +1416,10 @@ class HomeController extends Controller
               'category_id' => $product['category_id'],
               'barcode' => $product['barcode'],
               'product_name' => $product['product_name'],
-              'price' => $product['price']
+              'price' => $product['price'],
+              'promotion_start' => '2021-06-01 00:00:00',
+              'promotion_end' => '2021-06-30 23:59:59',
+              'promotion_price' => 20
             ]);
 
             if(!in_array($product['barcode'], $barcode_array))

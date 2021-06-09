@@ -502,7 +502,7 @@
             <thead style="width: 100% !important;">
               <tr>
                 <th>Cashier</th>
-                <th>Invoice No</th>
+                <th>Transaction No</th>
                 <th>Payment type</th>
                 <th>Reference No</th>
                 <th>Total</th>
@@ -520,9 +520,9 @@
                   <td>{{ $completed->transaction_no }}</td>
                   <td>{{ $completed->payment_type_text }}</td>
                   <td>
-                    <p class="invoice_no">{{ $completed->invoice_no }}</p>
+                    <p class="reference_no">{{ $completed->reference_no }}</p>
                     @if($completed->payment_type != "cash")
-                      <a href="#" onclick="editInvoiceNo('{{ $completed->id }}', '{{ $completed->invoice_no }}')">Edit</a>
+                      <a href="#" onclick="editReferenceNo('{{ $completed->id }}', '{{ $completed->reference_no }}')">Edit</a>
                     @endif
                   </td>
                   <td>RM {{ number_format($completed->total, 2) }}</td>
@@ -730,14 +730,14 @@
         </div>
 
         <div style="font-size: 8px; text-align: center;">
-          <div style="display: inline-block;">INVOIS : <label id="receipt_invoice_no"></label></div>
+          <div style="display: inline-block;">INVOIS : <label id="receipt_transaction_no"></label></div>
         </div>
 
         <!-- <div>
           <label>Juruwang : <label id="receipt_completed_by"></label> </label>
           <div style="display: flex; justify-content: space-between;">
             <div id="receipt_completed_by_2"></div>
-            <div>INVOIS : <label id="receipt_invoice_no"></label></div>
+            <div>INVOIS : <label id="receipt_transaction_no"></label></div>
           </div>
         </div> -->
 
@@ -774,7 +774,7 @@
         <div class="modal-body">
           <label>Payment type : </label>
           <label id="payment_type_text"></label>
-          <input type="text" class="form-control" name="invoice_no" />
+          <input type="text" class="form-control" name="reference_no" />
           <span class="invalid-feedback" role="alert"></span>
         </div>
         <div class="modal-footer">
@@ -805,22 +805,22 @@
     </div>
   </div>
 
-  <div class="modal fade" id="editInvoiceNoModal" tabindex="-1" role="dialog" aria-labelledby="editInvoiceNoModalLabel" aria-hidden="true">
+  <div class="modal fade" id="editReferenceNoModal" tabindex="-1" role="dialog" aria-labelledby="editReferenceNoModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="editInvoiceNoModalLabel">Edit Reference No</h5>
+          <h5 class="modal-title" id="editReferenceNoModalLabel">Edit Reference No</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
         <div class="modal-body">
-          <input type="text" class="form-control" name="edit_invoice_no" />
+          <input type="text" class="form-control" name="edit_reference_no" />
           <span class="invalid-feedback" role="alert"></span>
         </div>
         <div class="modal-footer">
           <input type='hidden' name='edit_transaction_no' />
-          <button type="button" class="btn btn-success" id="submitEditInvoiceNo">Submit</button>
+          <button type="button" class="btn btn-success" id="submitEditReferenceNo">Submit</button>
         </div>
       </div>
     </div>
@@ -859,6 +859,7 @@
         <div class="modal-body">
           <label>Cashier cash</label>
           <input type="text" class="form-control" name="cashier_closing_amount" />
+          <input type="hidden" name="calculated_closing_amount" value="0" />
           <span class="invalid-feedback" role="alert"></span>
         </div>
         <div class="modal-footer">
@@ -894,6 +895,7 @@
           <div class="form-group">
             <label>Cashier cash</label>
             <input type="text" class="form-control" name="daily_closing_amount" />
+            <input type="hidden" name="daily_calculated_amount" value="0" />
             <span class="invalid-feedback" role="alert"></span>
           </div>
 
@@ -1289,7 +1291,7 @@
       }
     });
 
-    $("input[name='invoice_no']").on('keydown', function(e){
+    $("input[name='reference_no']").on('keydown', function(e){
       if(e.which == 13)
       {
         $("#submitCardPayment").click();
@@ -1302,14 +1304,14 @@
     });
 
     $(".cardPayment").click(function(){
-      $("input[name='invoice_no']").removeClass("is-invalid");
+      $("input[name='reference_no']").removeClass("is-invalid");
 
       var payment_type = $(this).attr("payment_type");
       var payment_type_text = $(this).attr("payment_type_text");
       
       $("#payment_type").val(payment_type);
       $("#payment_type_text").html(payment_type_text);
-      showInvoiceInput();
+      showReferenceInput();
     });
 
     $("input[name=received_payment]").on('keyup', function(e){
@@ -1419,27 +1421,27 @@
     });
 
     $("#submitCardPayment").click(function(){
-      var invoice_no = $("input[name='invoice_no']").val();
-      if(invoice_no)
+      var reference_no = $("input[name='reference_no']").val();
+      if(reference_no)
       {
         submitCardPayment();
       }
       else
       {
-        $("input[name='invoice_no']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Reference No cannot be empty.</strong>");
+        $("input[name='reference_no']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Reference No cannot be empty.</strong>");
       }
     });
 
-    $("#submitEditInvoiceNo").click(function(){
+    $("#submitEditReferenceNo").click(function(){
 
-      var edit_invoice_no = $("input[name='edit_invoice_no']").val();
-      if(edit_invoice_no)
+      var edit_reference_no = $("input[name='edit_reference_no']").val();
+      if(edit_reference_no)
       {
-        submitEditInvoiceNo();
+        submitEditReferenceNo();
       }
       else
       {
-        $("input[name='edit_invoice_no']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Reference No cannot be empty.</strong>");
+        $("input[name='edit_reference_no']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Reference No cannot be empty.</strong>");
       }
     });
 
@@ -1496,6 +1498,7 @@
         }, 500);
 
         $("input[name='daily_closing_amount']").removeClass("is-invalid").val(result.closing_amount);
+        $("input[name='daily_calculated_amount']").val(result.closing_amount);
       });
     });
 
@@ -1818,8 +1821,8 @@
     data += "<td>";
     if(completed_transaction.payment_type != "cash")
     {
-      data += "<p class='invoice_no'>"+completed_transaction.invoice_no+"</p>";
-      data += "<a href='#' onclick='editInvoiceNo(\""+completed_transaction.id+"\", \""+completed_transaction.invoice_no+"\")'>Edit</a>";
+      data += "<p class='reference_no'>"+completed_transaction.reference_no+"</p>";
+      data += "<a href='#' onclick='editReferenceNo(\""+completed_transaction.id+"\", \""+completed_transaction.reference_no+"\")'>Edit</a>";
     }
     data += "</td>";
     data += "<td>RM "+completed_transaction.total_text+"</td>";
@@ -1979,7 +1982,7 @@
         $("#receipt_time").html("Time : "+transaction.receipt_time);
 
         $("#receipt_completed_by, #receipt_completed_by_2").html(transaction.completed_by_name);
-        $("#receipt_invoice_no").html(transaction.transaction_no);
+        $("#receipt_transaction_no").html(transaction.transaction_no);
 
         if(reprint == 1)
         {
@@ -2035,22 +2038,22 @@
     });
   }
 
-  function showInvoiceInput()
+  function showReferenceInput()
   {
-    $("input[name='invoice_no']").val("");
+    $("input[name='reference_no']").val("");
     $("#cardCheckoutModal").modal('show');
     setTimeout(function(){
-      $("input[name='invoice_no']").focus();
+      $("input[name='reference_no']").focus();
     }, 500);
   }
 
   function submitCardPayment()
   {
     var transaction_id = $("#transaction_id").val();
-    var invoice_no = $("input[name='invoice_no']").val();
+    var reference_no = $("input[name='reference_no']").val();
     var payment_type = $("#payment_type").val();
 
-    $.post("{{ route('submitTransaction') }}", {"_token" : "{{ csrf_token() }}", "transaction_id" : transaction_id, "payment_type" : payment_type, "invoice_no" : invoice_no }, function(result){
+    $.post("{{ route('submitTransaction') }}", {"_token" : "{{ csrf_token() }}", "transaction_id" : transaction_id, "payment_type" : payment_type, "reference_no" : reference_no }, function(result){
 
       $("#cardCheckoutModal").modal('hide');
       if(result.error == 0)
@@ -2058,7 +2061,7 @@
         $("#completedTransactionModal").modal('show');
 
         transactionCompleted(result.completed_transaction.id, 0);
-        $("input[name='invoice_no']").val("");
+        $("input[name='reference_no']").val("");
 
         submitClearTransaction(0);
         prependCompletedTransaction(result.completed_transaction);
@@ -2093,25 +2096,25 @@
     });
   }
 
-  function editInvoiceNo(transaction_id, invoice_no)
+  function editReferenceNo(transaction_id, reference_no)
   {
     $("input[name='edit_transaction_no']").val(transaction_id);
-    $("input[name='edit_invoice_no']").val(invoice_no);
+    $("input[name='reference_no']").val(reference_no);
 
-    $("#editInvoiceNoModal").modal('show');
+    $("#editReferenceNoModal").modal('show');
   }
 
-  function submitEditInvoiceNo()
+  function submitEditReferenceNo()
   {
     var transaction_id = $("input[name='edit_transaction_no']").val();
-    var edit_invoice_no = $("input[name='edit_invoice_no']").val();
+    var edit_reference_no = $("input[name='edit_reference_no']").val();
 
-    $.post("{{ route('editInvoiceNo') }}", { "_token" : "{{ csrf_token() }}", "transaction_id" : transaction_id, "invoice_no" : edit_invoice_no }, function(result){
+    $.post("{{ route('editReferenceNo') }}", { "_token" : "{{ csrf_token() }}", "transaction_id" : transaction_id, "reference_no" : edit_reference_no }, function(result){
 
       if(result.error == 0)
       {
-        $("#editInvoiceNoModal").modal('hide');
-        $("#previous_receipt_table tbody tr[transaction_id="+transaction_id+"]").find(".invoice_no").html(edit_invoice_no);
+        $("#editReferenceNoModal").modal('hide');
+        $("#previous_receipt_table tbody tr[transaction_id="+transaction_id+"]").find(".reference_no").html(edit_reference_no);
       }
     }).fail(function(xhr){
       if(xhr.status == 401)
@@ -2516,6 +2519,7 @@
       $.get("{{ route('calculateClosingAmount') }}", function(result){
         $("input[name='cashier_closing_amount']").removeClass("is-invalid").val(result.closing_amount);
         $("#closingModal").modal('show');
+        $("input[name='calculated_closing_amount']").val(result.closing_amount);
 
         setTimeout(function(){
           $("input[name='cashier_closing_amount']").focus();
@@ -2542,10 +2546,11 @@
   function submitClosing()
   {
     var closing_amount = $("input[name='cashier_closing_amount']").val();
+    var calculated_closing_amount = $("input[name='calculated_closing_amount']").val();
 
     if(closing_amount)
     {
-      $.post("{{ route('submitClosing') }}", {"_token" : "{{ csrf_token() }}", "closing_amount" : closing_amount}, function(result){
+      $.post("{{ route('submitClosing') }}", {"_token" : "{{ csrf_token() }}", "closing_amount" : closing_amount, ' calculated_amount' : calculated_closing_amount}, function(result){
         if(result.error == 0)
         {
           $("#closingModal").modal('hide');
@@ -2583,6 +2588,7 @@
     var manager_username = $("input[name='manager_username']").val();
     var manager_password = $("input[name='manager_password']").val();
     var daily_closing_amount = $("input[name='daily_closing_amount']").val();
+    var daily_calculated_amount = $("input[name='daily_calculated_amount']").val();
 
     var proceed = 1;
 
@@ -2610,7 +2616,7 @@
       return;
     }
 
-    $.post("{{ route('submitDailyClosing') }}", {"_token" : "{{ csrf_token() }}", "username" : manager_username, "password" : manager_password, "closing_amount" : daily_closing_amount}, function(result){
+    $.post("{{ route('submitDailyClosing') }}", {"_token" : "{{ csrf_token() }}", "username" : manager_username, "password" : manager_password, "closing_amount" : daily_closing_amount, 'calculated_amount' : daily_calculated_amount }, function(result){
       if(result.error == 0)
       {
         $("#dailyClosingModal").modal('hide');

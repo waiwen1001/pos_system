@@ -13,5 +13,8 @@ class product extends Model
       'barcode',
       'product_name',
       'price',
+      'promotion_start',
+      'promotion_end',
+      'promotion_price'
     ];
 }

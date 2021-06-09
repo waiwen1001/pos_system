@@ -23,7 +23,7 @@ Route::post('/submitTransaction', 'HomeController@submitTransaction')->name('sub
 Route::post('/submitVoidTransaction', 'HomeController@submitVoidTransaction')->name('submitVoidTransaction');
 Route::post('/submitUnvoidTransaction', 'HomeController@submitUnvoidTransaction')->name('submitUnvoidTransaction');
 Route::post('/clearTransaction', 'HomeController@clearTransaction')->name('clearTransaction');
-Route::post('/editInvoiceNo', 'HomeController@editInvoiceNo')->name('editInvoiceNo');
+Route::post('/editReferenceNo', 'HomeController@editReferenceNo')->name('editReferenceNo');
 Route::post('/editQuantity', 'HomeController@editQuantity')->name('editQuantity');
 Route::post('/submitVoucher', 'HomeController@submitVoucher')->name('submitVoucher');
 Route::post('/removeVoucher', 'HomeController@removeVoucher')->name('removeVoucher');

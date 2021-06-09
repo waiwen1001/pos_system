@@ -9,10 +9,11 @@ class transaction extends Model
     protected $table = 'transaction';
     protected $fillable = [
       'session_id',
+      'opening_id',
       'ip',
       'cashier_name',
       'transaction_no',
-      'invoice_no',
+      'reference_no',
       'user_id',
       'subtotal',
       'total_discount',
