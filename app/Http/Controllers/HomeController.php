@@ -133,24 +133,31 @@ class HomeController extends Controller
 
       // get latest cashier, incase session out, some opening do not have closing
       $cashier = null;
+      $now = date('Y-m-d H:i:s', strtotime(now()));
+      $opening = 0;
+
       if($session)
       {
         $cashier = cashier::where('session_id', $session->id)->where('ip', $this->ip)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
-      }
 
-      $opening = 0;
-      if($cashier)
-      {
-        $opening = 1;
+        $prev_cashier = cashier::where('session_id', $session->id)->where('ip', $this->ip)->where('opening', 1)->where('closing', 1)->orderBy('id', 'desc')->first();
 
-        if($cashier->opening_by == null)
+        if($cashier)
         {
-          $now = date('Y-m-d H:i:s', strtotime(now()));
-
-          cashier::where('id', $cashier->id)->update([
+          $opening = 1;
+        }
+        elseif(!$cashier && $prev_cashier)
+        {
+          cashier::create([
+            'ip' => $this->ip,
+            'session_id' => $session->id,
+            'opening' => 1,
+            'opening_amount' => $prev_cashier->closing_amount,
             'opening_by' => $user->id,
             'opening_date_time' => $now
           ]);
+
+          $opening = 1;
         }
       }
 
@@ -299,21 +306,6 @@ class HomeController extends Controller
 
         if(!$transaction)
         {
-          $session = session::where('closed', null)->orderBy('id', 'desc')->first();
-
-          $session_id = null;
-          $opening_id = null;
-          if($session)
-          {
-            $session_id = $session->id;
-            $opening = cashier::where('session_id', $session->id)->where('ip', $this->ip)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
-
-            if($opening)
-            {
-              $opening_id = $opening->id;
-            }
-          }
-
           $cashier_name = null;
           $cashier_detail = pos_cashier::where('ip', $this->ip)->first();
 
@@ -332,9 +324,15 @@ class HomeController extends Controller
             $transaction_no = $seq->branch_code.date("Ymd")."00001";
           }
 
+          $session_id = null;
+          $session = session::where('closed', null)->orderBy('id', 'desc')->first();
+          if($session)
+          {
+            $session_id = $session->id;
+          } 
+
           $transaction = transaction::create([
             'session_id' => $session_id,
-            'opening_id' => $opening_id,
             'ip' => $this->ip,
             'cashier_name' => $cashier_name,
             'transaction_no' => $transaction_no,
@@ -348,7 +346,7 @@ class HomeController extends Controller
             while($i>strlen($next)){
               $next = "0".$next;
             }
-
+            
             Invoice_sequence::where('id',1)->update([
               'current_seq' => $seq->next_seq,
               'next_seq' => $next,
@@ -600,10 +598,24 @@ class HomeController extends Controller
           $payment_type_text = "Touch & Go";
         }
       }
+
+      $session = session::where('closed', null)->orderBy('id', 'desc')->first();
+
+      $opening_id = null;
+      if($session)
+      {
+        $opening = cashier::where('session_id', $session->id)->where('ip', $this->ip)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
+
+        if($opening)
+        {
+          $opening_id = $opening->id;
+        }
+      }  
       
       if($valid_payment)
       {
         transaction::where('id', $request->transaction_id)->update([
+          'opening_id' => $opening_id,
           'reference_no' => $reference_no,
           'subtotal' => round($subtotal, 2),
           'total_discount' => round($total_discount, 2),
@@ -998,13 +1010,6 @@ class HomeController extends Controller
           'closing_by' => $user->id,
           'closing_date_time' => $now
         ]);
-
-        cashier::create([
-          'session_id' => $session->id,
-          'ip' => $this->ip,
-          'opening' => 1,
-          'opening_amount' => $request->closing_amount,
-        ]);
       }
 
       $response = new \stdClass();
@@ -1023,6 +1028,42 @@ class HomeController extends Controller
       {
         $session_id = $session->id;
       }
+
+      $pending_cashier = cashier::where('session_id', $session->id)->where('ip', '<>', $this->ip)->whereNull('closing')->get();
+      if(count($pending_cashier) > 0)
+      {
+        $cashier_list = array();
+        $cashier_name = "";
+
+        foreach($pending_cashier as $cashier)
+        {
+          if($cashier->ip)
+          {
+            $pos_cashier = pos_cashier::where('ip', $cashier->ip)->first();
+            if($pos_cashier)
+            {
+              if(!in_array($pos_cashier->id, $cashier_list))
+              {
+                array_push($cashier_list, $pos_cashier->id);
+                $cashier_name .= $pos_cashier->cashier_name.", ";
+              }
+            }
+            else
+            {
+              $cashier_name .= $cashier->ip.", ";
+            }
+          }
+        }
+
+        $cashier_name = substr($cashier_name, 0, -2);
+
+        $response = new \stdClass();
+        $response->error = 1;
+        $response->message = "Cashier <b>".$cashier_name."</b> still opening, please close the cashier before proceed daily closing";
+
+        return response()->json($response);
+      }
+
       $pending_transaction = transaction::where('completed', null)->where('session_id', $session_id)->get();
 
       $on_pending = false;
@@ -1326,9 +1367,9 @@ class HomeController extends Controller
           'barcode' => $product['barcode'],
           'product_name' => $product['product_name'],
           'price' => $product['price'],
-          'promotion_start' => '2021-06-01 00:00:00',
-          'promotion_end' => '2021-06-30 23:59:59',
-          'promotion_price' => 20
+          'promotion_start' => $product['promotion_start'],
+          'promotion_end' => $product['promotion_end'],
+          'promotion_price' => $product['promotion_price']
         ]);
 
         if(!in_array($product['barcode'], $barcode_array))
@@ -1417,9 +1458,9 @@ class HomeController extends Controller
               'barcode' => $product['barcode'],
               'product_name' => $product['product_name'],
               'price' => $product['price'],
-              'promotion_start' => '2021-06-01 00:00:00',
-              'promotion_end' => '2021-06-30 23:59:59',
-              'promotion_price' => 20
+              'promotion_start' => $product['promotion_start'],
+              'promotion_end' => $product['promotion_end'],
+              'promotion_price' => $product['promotion_price'],
             ]);
 
             if(!in_array($product['barcode'], $barcode_array))

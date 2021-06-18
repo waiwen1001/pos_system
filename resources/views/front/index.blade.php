@@ -1499,6 +1499,20 @@
 
         $("input[name='daily_closing_amount']").removeClass("is-invalid").val(result.closing_amount);
         $("input[name='daily_calculated_amount']").val(result.closing_amount);
+      }).fail(function(xhr){
+        if(xhr.status == 401)
+        {
+          Swal.fire({
+            title: 'Your account was logged out, please login again.',
+            icon: 'error',
+            confirmButtonText: 'OK',
+          }).then((result) => {
+            /* Read more about isConfirmed, isDenied below */
+            if (result.isConfirmed) {
+              location.reload();
+            }
+          })
+        }
       });
     });
 
