@@ -1418,6 +1418,15 @@ class HomeController extends Controller
     {
       $branch_id = env('branch_id');
 
+      $create_session = 0;
+      if(isset($_GET['create_session']))
+      {
+        if($_GET['create_session'] == 1)
+        {
+          $create_session = 1;
+        }
+      }
+
       if(!$branch_id)
       {
         $response = new \stdClass();
@@ -1486,11 +1495,14 @@ class HomeController extends Controller
           $cashier_ip = $_SERVER['REMOTE_ADDR'];
           $now = date('Y-m-d H:i:s', strtotime(now()));
 
-          $session = session::create([
-            'ip' => $cashier_ip,
-            'opening_date_time' => $now
-          ]);
-
+          if($create_session == 1)
+          {
+            $session = session::create([
+              'ip' => $cashier_ip,
+              'opening_date_time' => $now
+            ]);
+          }
+          
           $response = new \stdClass();
           $response->error = 0;
           $response->message = "Success";

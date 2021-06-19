@@ -214,7 +214,7 @@
                         Sync transaction to HQ
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="SCsyncHQTransaction()"></span>
                       </button>
-                      <button class="dropdown-item" onclick="syncProductList()">
+                      <button class="dropdown-item" onclick="syncProductList(0)">
                         Sync HQ product list
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="SCsyncHQProductList()"></span>
                       </button>
@@ -1161,7 +1161,7 @@
 
     if(session == "")
     {
-      syncProductList();
+      syncProductList(1);
     }
 
     for(var a = 0; a < shortcut_key.length; a++)
@@ -2295,7 +2295,7 @@
   {
     if(user.user_type == 1)
     {
-      syncProductList();
+      syncProductList(0);
     }
   }
 
@@ -3201,7 +3201,7 @@
     syncHQ(1);
   }
 
-  function syncProductList()
+  function syncProductList(create_session)
   {
     window.onbeforeunload = function() {
       return "Please do not refresh the page.";
@@ -3219,8 +3219,11 @@
 
     $("#syncProductListModal").modal('show');
     disablePosSystem();
+
+    var route_url = "{{ route('productSync', ['create_session' => 'create_value']) }}";
+    route_url = route_url.replace('create_value', create_session);
     
-    $.get("{{ route('productSync') }}", function(result){
+    $.get(route_url, function(result){
       if(result.error == 0)
       {
         $("#syncHQProductListContent").html("Sync completed.");
@@ -3230,14 +3233,14 @@
         }
 
         $("#syncProductListBtn").html("Sync completed").attr("disabled", false).off('click').click(function(){
-          location.reload();      
+          location.reload();
           // logout();
         });
       }
       else
       {
         $("#syncProductListBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
-          syncProductList();
+          syncProductList(create_session);
           $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
         });
 
@@ -3248,7 +3251,7 @@
       
     }).fail(function(){
       $("#syncProductListBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
-        syncProductList();
+        syncProductList(create_session);
         $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
       });
 
