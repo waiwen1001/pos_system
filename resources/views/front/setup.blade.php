@@ -45,8 +45,9 @@
           <thead class="thead-dark">
             <tr>
               <th style="width: 10%;">ID</th>
-              <th style="width: 30%;">Cashier IP</th>
-              <th style="width: 40%;">Cashier Name</th>
+              <th style="width: 20%;">Type</th>
+              <th style="width: 20%;">IP</th>
+              <th style="width: 30%;">Device Name</th>
               <th style="width: 20%;">Action</th>
             </tr>
           </thead>
@@ -54,6 +55,19 @@
             @foreach($pos_cashier as $cashier)
               <tr>
                 <td>{{ $cashier->id }}</td>
+                <td>
+                  <p>
+                    @if($cashier->type == 1)
+                      Server
+                    @elseif($cashier->type == 2)
+                      Cashier
+                    @endif
+                  </p>
+                  <select class="form-control hide" name="device_type">
+                    <option value="2">Cashier</option>
+                    <option value="1">Server</option>
+                  </select>
+                </td>
                 <td>
                   <p>{{ $cashier->ip }}</p>
                   <input type='text' name='cashier_ip' class='form-control hide' value='{{ $cashier->ip }}' />
@@ -108,6 +122,12 @@
       var html = "";
       html += "<tr>";
       html += "<td>#</td>";
+      html += "<td>";
+      html += '<select class="form-control" name="device_type">';
+      html += '<option value="2">Cashier</option>';
+      html += '<option value="1">Server</option>';
+      html += '</select>';
+      html += "</td>";
       html += "<td><input type='text' name='cashier_ip' class='form-control' value="+my_ip+" /></td>";
       html += "<td><input type='text' name='cashier_name' class='form-control' /></td>";
       html += "<td>";
@@ -124,9 +144,11 @@
   function createCashier(_this)
   {
     var parent = $(_this).parent().parent();
+    var type = parent.find("select[name='device_type']").val();
     var ip = parent.find("input[name='cashier_ip']").val();
     var name = parent.find("input[name='cashier_name']").val();
 
+    parent.find("select[name='device_type']").removeClass("is-invalid");
     parent.find("input[name='cashier_ip']").removeClass("is-invalid");
     parent.find("input[name='cashier_name']").removeClass("is-invalid");
 
@@ -143,25 +165,48 @@
       parent.find("input[name='cashier_name']").addClass("is-invalid");
     }
 
+    if(!type)
+    {
+      check = false;
+      parent.find("select[name='device_type']").addClass("is-invalid");
+    }
+
     if(!check)
     {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'IP and Name cannot be empty.',
+        text: 'Type, IP and name cannot be empty.',
       });
 
       return;
     }
 
-    $.post("{{ route('createCashier') }}", { "_token" : "{{ csrf_token() }}", "ip" : ip, "name" : name }, function(result){
+    $.post("{{ route('createCashier') }}", { "_token" : "{{ csrf_token() }}", "type" : type, "ip" : ip, "name" : name }, function(result){
       if(result.error == 0)
       {
         var pos_cashier = result.pos_cashier;
+        var device_type_text = "";
+        var device_type_html = "";
+
+        device_type_html += "<select class='form-control hide' name='device_type'>";
+        if(pos_cashier.type == 1)
+        {
+          device_type_text = "Server";
+          device_type_html += "<option value='2'>Cashier</option><option value='1' selected>Server</option>";
+        }
+        else if(pos_cashier.type == 2)
+        {
+          device_type_text = "Cashier";
+          device_type_html += "<option value='2' selected>Cashier</option><option value='1'>Server</option>";
+        }
+
+        device_type_html += "</select>";
 
         parent.find("td:nth-child(1)").html(pos_cashier.id);
-        parent.find("td:nth-child(2)").html("<p>"+pos_cashier.ip+"</p><input type='text' name='cashier_ip' class='form-control hide' value='"+pos_cashier.ip+"' />");
-        parent.find("td:nth-child(3)").html("<p>"+pos_cashier.cashier_name+"</p><input type='text' name='cashier_name' class='form-control hide' value='"+pos_cashier.cashier_name+"' />");
+        parent.find("td:nth-child(2)").html("<p>"+device_type_text+"</p>"+device_type_html);
+        parent.find("td:nth-child(3)").html("<p>"+pos_cashier.ip+"</p><input type='text' name='cashier_ip' class='form-control hide' value='"+pos_cashier.ip+"' />");
+        parent.find("td:nth-child(4)").html("<p>"+pos_cashier.cashier_name+"</p><input type='text' name='cashier_name' class='form-control hide' value='"+pos_cashier.cashier_name+"' />");
 
         var html = ""
         html += '<button class="btn btn-primary" onclick="editCashier(this)" func_type="edit">';
@@ -180,7 +225,7 @@
         html += '<i class="fas fa-times-circle"></i>';
         html += '</button>';
 
-        parent.find("td:nth-child(4)").html(html);
+        parent.find("td:nth-child(5)").html(html);
 
         Swal.fire({
           icon: 'success',
@@ -238,13 +283,15 @@
 
     parent.find("td:nth-child(2) p").addClass("hide");
     parent.find("td:nth-child(3) p").addClass("hide");
-    parent.find("td:nth-child(4) button[func_type='edit']").addClass("hide");
-    parent.find("td:nth-child(4) button[func_type='delete']").addClass("hide");
+    parent.find("td:nth-child(4) p").addClass("hide");
+    parent.find("td:nth-child(5) button[func_type='edit']").addClass("hide");
+    parent.find("td:nth-child(6) button[func_type='delete']").addClass("hide");
 
-    parent.find("td:nth-child(2) input").removeClass("hide");
+    parent.find("td:nth-child(2) select").removeClass("hide");
     parent.find("td:nth-child(3) input").removeClass("hide");
-    parent.find("td:nth-child(4) button[func_type='save']").removeClass("hide");
-    parent.find("td:nth-child(4) button[func_type='cancel']").removeClass("hide");
+    parent.find("td:nth-child(4) input").removeClass("hide");
+    parent.find("td:nth-child(5) button[func_type='save']").removeClass("hide");
+    parent.find("td:nth-child(6) button[func_type='cancel']").removeClass("hide");
   }
 
   function cancelCashier(_this)
@@ -253,22 +300,26 @@
 
     parent.find("td:nth-child(2) p").removeClass("hide");
     parent.find("td:nth-child(3) p").removeClass("hide");
-    parent.find("td:nth-child(4) button[func_type='edit']").removeClass("hide");
-    parent.find("td:nth-child(4) button[func_type='delete']").removeClass("hide");
+    parent.find("td:nth-child(4) p").removeClass("hide");
+    parent.find("td:nth-child(5) button[func_type='edit']").removeClass("hide");
+    parent.find("td:nth-child(6) button[func_type='delete']").removeClass("hide");
 
-    parent.find("td:nth-child(2) input").addClass("hide");
+    parent.find("td:nth-child(2) select").addClass("hide");
     parent.find("td:nth-child(3) input").addClass("hide");
-    parent.find("td:nth-child(4) button[func_type='save']").addClass("hide");
-    parent.find("td:nth-child(4) button[func_type='cancel']").addClass("hide");
+    parent.find("td:nth-child(4) input").addClass("hide");
+    parent.find("td:nth-child(5) button[func_type='save']").addClass("hide");
+    parent.find("td:nth-child(6) button[func_type='cancel']").addClass("hide");
   }
 
   function saveCashier(_this, id)
   {
     var parent = $(_this).parent().parent();
 
+    parent.find("select[name='device_type']").removeClass("is-invalid");
     parent.find("input[name='cashier_ip']").removeClass("is-invalid");
     parent.find("input[name='cashier_name']").removeClass("is-invalid");
 
+    var type = parent.find("select[name='device_type']").val();
     var ip = parent.find("input[name='cashier_ip']").val();
     var name = parent.find("input[name='cashier_name']").val();
 
@@ -285,31 +336,48 @@
       parent.find("input[name='cashier_name']").addClass("is-invalid");
     }
 
+    if(!type)
+    {
+      check = false;
+      parent.find("select[name='device_type']").addClass("is-invalid");
+    }
+
     if(!check)
     {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'IP and Name cannot be empty.',
+        text: 'Type, IP and name cannot be empty.',
       });
 
       return;
     }
 
-    $.post("{{ route('editCashier') }}", { "_token" : "{{ csrf_token() }}", 'id' : id, 'ip' : ip, 'name' : name }, function(result){
+    $.post("{{ route('editCashier') }}", { "_token" : "{{ csrf_token() }}", 'id' : id, 'ip' : ip, 'type' : type, 'name' : name }, function(result){
       if(result.error == 0)
       {
         var pos_cashier = result.pos_cashier;
+        var device_type_text = "";
+        if(pos_cashier.type == 1)
+        {
+          device_type_text = "Server";
+        }
+        else if(pos_cashier.type == 2)
+        {
+          device_type_text = "Cashier";
+        }
 
-        parent.find("td:nth-child(2) p").removeClass("hide").html(pos_cashier.ip);
-        parent.find("td:nth-child(3) p").removeClass("hide").html(pos_cashier.cashier_name);
-        parent.find("td:nth-child(4) button[func_type='edit']").removeClass("hide");
-        parent.find("td:nth-child(4) button[func_type='delete']").removeClass("hide");
+        parent.find("td:nth-child(2) p").removeClass("hide").html(device_type_text);
+        parent.find("td:nth-child(3) p").removeClass("hide").html(pos_cashier.ip);
+        parent.find("td:nth-child(4) p").removeClass("hide").html(pos_cashier.cashier_name);
+        parent.find("td:nth-child(5) button[func_type='edit']").removeClass("hide");
+        parent.find("td:nth-child(6) button[func_type='delete']").removeClass("hide");
 
-        parent.find("td:nth-child(2) input").addClass("hide").val(pos_cashier.ip);
-        parent.find("td:nth-child(3) input").addClass("hide").val(pos_cashier.cashier_name);
-        parent.find("td:nth-child(4) button[func_type='save']").addClass("hide");
-        parent.find("td:nth-child(4) button[func_type='cancel']").addClass("hide");
+        parent.find("td:nth-child(2) select").addClass("hide").val(pos_cashier.type);
+        parent.find("td:nth-child(3) input").addClass("hide").val(pos_cashier.ip);
+        parent.find("td:nth-child(4) input").addClass("hide").val(pos_cashier.cashier_name);
+        parent.find("td:nth-child(5) button[func_type='save']").addClass("hide");
+        parent.find("td:nth-child(6) button[func_type='cancel']").addClass("hide");
 
         Swal.fire({
           icon: 'success',

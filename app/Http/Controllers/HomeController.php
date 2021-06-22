@@ -173,7 +173,15 @@ class HomeController extends Controller
       $shortcut_key = shortcut_key::get();
       $ip = $this->ip;
 
-      return view('front.index', compact('user', 'user_management_list', 'pending_transaction', 'subtotal', 'discount', 'have_discount', 'total', 'real_total', 'round_off', 'payment', 'balance', 'transaction_id', 'completed_transaction', 'opening', 'voucher_name', 'session', 'shortcut_key', 'ip'));
+      // default is cashier
+      $device_type = 2;
+      $device = pos_cashier::where('ip', $ip)->first();
+      if($device)
+      {
+        $device_type = $device->type;
+      }
+
+      return view('front.index', compact('user', 'user_management_list', 'pending_transaction', 'subtotal', 'discount', 'have_discount', 'total', 'real_total', 'round_off', 'payment', 'balance', 'transaction_id', 'completed_transaction', 'opening', 'voucher_name', 'session', 'shortcut_key', 'ip', 'device_type'));
     }
 
     public function getSetupPage()
@@ -581,21 +589,37 @@ class HomeController extends Controller
           $valid_payment = true;
         }
 
-        if($payment_type == "e-wallet")
+        // if($payment_type == "e-wallet")
+        // {
+        //   $payment_type_text = "E-Wallet";
+        // }
+        // elseif($payment_type == "debit_card")
+        // {
+        //   $payment_type_text = "Debit Card";
+        // }
+        // elseif($payment_type == "credit_card")
+        // {
+        //   $payment_type_text = "Credit Card";
+        // }
+        if($payment_type == "card")
         {
-          $payment_type_text = "E-Wallet";
-        }
-        elseif($payment_type == "debit_card")
-        {
-          $payment_type_text = "Debit Card";
-        }
-        elseif($payment_type == "credit_card")
-        {
-          $payment_type_text = "Credit Card";
+          $payment_type_text = "Card";
         }
         elseif($payment_type == "tng")
         {
           $payment_type_text = "Touch & Go";
+        }
+        elseif($payment_type == "maybank_qr")
+        {
+          $payment_type_text = "Maybank QRCode";
+        }
+        elseif($payment_type == "grab_pay")
+        {
+          $payment_type_text = "Grab Pay";
+        }
+        elseif($payment_type == "Boost")
+        {
+          $payment_type_text = "Boost";
         }
       }
 
@@ -1120,19 +1144,19 @@ class HomeController extends Controller
         $manager = User::where('username', $request->username)->first();
         $now = date('Y-m-d H:i:s', strtotime(now()));
 
-        $cashier = cashier::where('session_id', $session_id)->where('ip', $this->ip)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
+        // $cashier = cashier::where('session_id', $session_id)->where('ip', $this->ip)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
 
-        if($cashier)
-        {
-          cashier::where('id', $cashier->id)->update([
-            'closing' => 1,
-            'closing_amount' => $request->closing_amount,
-            'calculated_amount' => $request->calculated_amount,
-            'diff' => $request->closing_amount - $request->calculated_amount,
-            'closing_by' => $manager->id,
-            'closing_date_time' => $now
-          ]);
-        }
+        // if($cashier)
+        // {
+        //   cashier::where('id', $cashier->id)->update([
+        //     'closing' => 1,
+        //     'closing_amount' => $request->closing_amount,
+        //     'calculated_amount' => $request->calculated_amount,
+        //     'diff' => $request->closing_amount - $request->calculated_amount,
+        //     'closing_by' => $manager->id,
+        //     'closing_date_time' => $now
+        //   ]);
+        // }
         
         if($session)
         {
@@ -1243,12 +1267,16 @@ class HomeController extends Controller
         {
           $closing_amount -= $cash_float->amount;
         }
+        elseif($cash_float->type == "refund")
+        {
+          $closing_amount -= $cash_float->amount;
+        }
       }
 
       $response = new \stdClass();
       $response->error = 0;
       $response->message = "Success";
-      $response->closing_amount = $closing_amount;
+      $response->closing_amount = round($closing_amount, 2);
       $response->closing_amount_text = number_format($closing_amount, 2);
 
       return response()->json($response);
@@ -1705,8 +1733,14 @@ class HomeController extends Controller
         return response()->json($response);
       }
 
+      $user_type = $request->user_type;
+      if($user_type == 0)
+      {
+        $user_type = null;
+      }
+
       $user_detail = User::create([
-        'user_type' => null,
+        'user_type' => $user_type,
         'name' => $request->name,
         'username' => $request->username,
         'email' => uniqid()."@test.com",
@@ -1769,6 +1803,7 @@ class HomeController extends Controller
       }
 
       $pos_cashier = pos_cashier::create([
+        'type' => $request->type,
         'ip' => $request->ip,
         'cashier_name' => $request->name
       ]);
@@ -1805,6 +1840,7 @@ class HomeController extends Controller
       }
 
       pos_cashier::where('id', $request->id)->update([
+        'type' => $request->type,
         'ip' => $request->ip,
         'cashier_name' => $request->name
       ]);
@@ -1929,6 +1965,12 @@ class HomeController extends Controller
           'character' => null
         ],
         [
+          'function' => "showRefund()",
+          'function_name' => "Show refund",
+          'code' => null,
+          'character' => null
+        ],
+        [
           'function' => "showClosingReport()",
           'function_name' => "Show closing report",
           'code' => null,
@@ -1964,27 +2006,51 @@ class HomeController extends Controller
           'code' => null,
           'character' => null
         ],
+        // [
+        //   'function' => "payAsDebit()",
+        //   'function_name' => "Pay bill by Debit Card",
+        //   'code' => null,
+        //   'character' => null
+        // ],
+        // [
+        //   'function' => "payAsCredit()",
+        //   'function_name' => "Pay bill by Credit Card",
+        //   'code' => null,
+        //   'character' => null
+        // ],
         [
-          'function' => "payAsDebit()",
-          'function_name' => "Pay bill by Debit Card",
+          'function' => "payAsCard()",
+          'function_name' => "Pay bill by Card",
           'code' => null,
           'character' => null
         ],
-        [
-          'function' => "payAsCredit()",
-          'function_name' => "Pay bill by Credit Card",
-          'code' => null,
-          'character' => null
-        ],
-        [
-          'function' => "payAsEwallet()",
-          'function_name' => "Pay bill by E-wallet",
-          'code' => null,
-          'character' => null
-        ],
+        // [
+        //   'function' => "payAsEwallet()",
+        //   'function_name' => "Pay bill by E-wallet",
+        //   'code' => null,
+        //   'character' => null
+        // ],
         [
           'function' => "payAsTNG()",
           'function_name' => "Pay bill by Touch & Go",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "payAsMaybank()",
+          'function_name' => "Pay bill by Maybank QRCode",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "payAsGrab()",
+          'function_name' => "Pay bill by Grab Pay",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "payAsBoost()",
+          'function_name' => "Pay bill by Boots",
           'code' => null,
           'character' => null
         ],

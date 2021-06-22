@@ -9,6 +9,7 @@ class pos_cashier extends Model
     protected $table = 'pos_cashier';
     protected $fillable = [
       'ip',
+      'type',
       'cashier_name'
     ];
 }

@@ -173,51 +173,61 @@
                   <span class="shortcut_func_key" style="display: none; left: -15px; top: -10px;" func_name="showOtherMenu()"></span>
 
                   <div class="dropdown-menu" aria-labelledby="otherDropDownBtn">
-                    <button class="dropdown-item" id="openingBtn" {{ $opening == 0 ? '' : 'disabled' }}>
-                      Opening
-                      <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showOpening()"></span>
-                    </button>
-                    <button class="dropdown-item" id="closingBtn" {{ $opening == 1 ? '' : 'disabled' }}>
-                      Closing
-                      <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showClosing()"></span>
-                    </button>
+                    @if($device_type == 2)
+                      <button class="dropdown-item" id="openingBtn" {{ $opening == 0 ? '' : 'disabled' }}>
+                        Opening
+                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showOpening()"></span>
+                      </button>
+                      <button class="dropdown-item" id="closingBtn" {{ $opening == 1 ? '' : 'disabled' }}>
+                        Closing
+                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showClosing()"></span>
+                      </button>
+                    @endif
 
-                    @if($user->user_type == 1)
-                      <button class="dropdown-item" id="dailyClosingBtn" {{ $opening == 1 ? '' : 'disabled' }}>
+                    @if($user->user_type == 1 && $device_type == 1)
+                      <button class="dropdown-item" id="dailyClosingBtn">
                         Daily Closing
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showDailyClosing()"></span>
                       </button>
                     @endif
 
-                    <div class="dropdown-divider"></div>
-                    <button class="dropdown-item" id="floatInBtn" {{ $opening == 1 ? '' : 'disabled' }}>
-                      Cash Float ( In )
-                      <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showCashFloatIn()"></span>
-                    </button>
-                    <button class="dropdown-item" id="floatOutBtn" {{ $opening == 1 ? '' : 'disabled' }}>
-                      Cash Float ( Out )
-                      <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showCashFloatOut()"></span>
-                    </button>
+                    @if($device_type == 2)
+                      <div class="dropdown-divider"></div>
+                      <button class="dropdown-item" id="floatInBtn" {{ $opening == 1 ? '' : 'disabled' }}>
+                        Cash Float ( In )
+                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showCashFloatIn()"></span>
+                      </button>
+                      <button class="dropdown-item" id="floatOutBtn" {{ $opening == 1 ? '' : 'disabled' }}>
+                        Cash Float ( Out )
+                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showCashFloatOut()"></span>
+                      </button>
+                      <button class="dropdown-item" id="refundBtn" {{ $opening == 1 ? '' : 'disabled' }}>
+                        Refund
+                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showRefund()"></span>
+                      </button>
+                    @endif
                     @if($user->user_type == 1)
                       <div class="dropdown-divider"></div>
                       <button class="dropdown-item" onclick="dailyReport()">
                         Closing Report
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showClosingReport()"></span>
                       </button>
-                      <div class="dropdown-divider"></div>
-                      <button class="dropdown-item" onclick="userManagement()">
-                        User Management
-                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showUserManagement()"></span>
-                      </button>
-                      <div class="dropdown-divider"></div>
-                      <button class="dropdown-item" onclick="syncTOHQ()">
-                        Sync transaction to HQ
-                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="SCsyncHQTransaction()"></span>
-                      </button>
-                      <button class="dropdown-item" onclick="syncProductList(0)">
-                        Sync HQ product list
-                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="SCsyncHQProductList()"></span>
-                      </button>
+                      @if($device_type == 1)
+                        <div class="dropdown-divider"></div>
+                        <button class="dropdown-item" onclick="userManagement()">
+                          User Management
+                          <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showUserManagement()"></span>
+                        </button>
+                        <div class="dropdown-divider"></div>
+                        <button class="dropdown-item" onclick="syncTOHQ()">
+                          Sync transaction to HQ
+                          <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="SCsyncHQTransaction()"></span>
+                        </button>
+                        <button class="dropdown-item" onclick="syncProductList(0)">
+                          Sync HQ product list
+                          <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="SCsyncHQProductList()"></span>
+                        </button>
+                      @endif
                       <button class="dropdown-item" onclick="showKeySetup()">
                         Shortcut key setup
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showKeySetup()"></span>
@@ -229,7 +239,7 @@
               </div>
 
               <div class="col-4">
-                <button class="btn btn-dark" onclick="showCashCheckOut()">Cash Checkout</button>
+                <button class="btn btn-dark" id="cashCheckoutBtn" onclick="showCashCheckOut()">Cash Checkout</button>
                 <span class="shortcut_func_key" style="display: none;" func_name="showCashCheckOut()"></span>
               </div>
 
@@ -240,21 +250,37 @@
                   </button>
                   <span class="shortcut_func_key" style="display: none; left: -15px; top: -10px;" func_name="showPaymentTypeMenu()"></span>
                   <div class="dropdown-menu" aria-labelledby="paymentTypeBtn">
-                    <button class="dropdown-item cardPayment" payment_type="debit_card" payment_type_text="Debit card" href="#">
+                    <!-- <button class="dropdown-item cardPayment" payment_type="debit_card" payment_type_text="Debit card" href="#">
                       Debit card
                       <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsDebit()"></span>
                     </button>
                     <button class="dropdown-item cardPayment" payment_type="credit_card" payment_type_text="Credit card" href="#">
                       Credit card
                       <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsCredit()"></span>
+                    </button> -->
+                    <button class="dropdown-item cardPayment" payment_type="card" payment_type_text="Card" href="#">
+                      Card
+                      <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsCard()"></span>
                     </button>
-                    <button class="dropdown-item cardPayment" payment_type="e-wallet" payment_type_text="E-wallet" href="#">
+                    <!-- <button class="dropdown-item cardPayment" payment_type="e-wallet" payment_type_text="E-wallet" href="#">
                       E-wallet
                       <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsEwallet()"></span>
-                    </button>
+                    </button> -->
                     <button class="dropdown-item cardPayment" payment_type="tng" payment_type_text="Touch & Go" href="#">
                       Touch & Go
                       <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsTNG()"></span>
+                    </button>
+                    <button class="dropdown-item cardPayment" payment_type="maybank_qr" payment_type_text="Maybank QRPay" href="#">
+                      Maybank QRPay
+                      <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsMaybank()"></span>
+                    </button>
+                    <button class="dropdown-item cardPayment" payment_type="grab_pay" payment_type_text="Grab Pay" href="#">
+                      Grab Pay
+                      <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsGrab()"></span>
+                    </button>
+                    <button class="dropdown-item cardPayment" payment_type="boost" payment_type_text="Boost" href="#">
+                      Boost
+                      <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsBoost()"></span>
                     </button>
                   </div>
                 </div>
@@ -892,12 +918,12 @@
             <span class="invalid-feedback" role="alert"></span>
           </div>
 
-          <div class="form-group">
+          <!-- <div class="form-group">
             <label>Cashier cash</label>
             <input type="text" class="form-control" name="daily_closing_amount" />
             <input type="hidden" name="daily_calculated_amount" value="0" />
             <span class="invalid-feedback" role="alert"></span>
-          </div>
+          </div> -->
 
           <span id="dailyClosingFeedback" class="invalid-feedback" role="alert"></span>
 
@@ -1012,6 +1038,15 @@
           </div>
 
           <div class="form-group">
+            <label>User type</label>
+            <select class="form-control" name="user_type">
+              <option value="0">Cashier</option>
+              <option value="1">Management</option>
+            </select>
+            <span class="invalid-feedback" role="alert"></span>
+          </div>
+
+          <div class="form-group">
             <label>Username</label>
             <input type="text" name="new_user_username" class="form-control" />
             <span class="invalid-feedback" role="alert"></span>
@@ -1031,7 +1066,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" onclick="submitAddUser()">Add</button>
+          <button type="button" class="btn btn-primary" onclick="submitAddUser(this)">Add</button>
         </div>
       </div>
     </div>
@@ -1131,6 +1166,7 @@
   var user = @json($user);
   var selecting_related = 1;
   var total_related = 0;
+  var device_type = "{{ $device_type }}";
 
   var transaction_total = "{{ $real_total }}";
   var opening = "{{ $opening }}";
@@ -1412,7 +1448,6 @@
         return;
       }
 
-      console.log()
       submitCashPayment();
     });
 
@@ -1464,7 +1499,7 @@
       submitRemoveVoucher();
     });
 
-    if(opening == 0 && session != "")
+    if(opening == 0 && session != "" && device_type == 2)
     {
       $("input[name='cashier_opening_amount']").val("");
       $("#openingModal").modal('show');
@@ -1473,6 +1508,11 @@
         $("input[name='cashier_opening_amount']").focus();
       }, 500);
 
+      disablePosSystem();
+    }
+
+    if(device_type == 1)
+    {
       disablePosSystem();
     }
 
@@ -1487,40 +1527,40 @@
 
     $("#dailyClosingBtn").click(function(){
 
-      $.get("{{ route('calculateClosingAmount') }}", function(result){
-        $("#dailyClosingFeedback").hide();
+      $("#dailyClosingModal").modal('show');
+      setTimeout(function(){
+        $("input[name='manager_username']").focus();
+      }, 500);
 
-        $("input[name='manager_username'], input[name='manager_password']").val("");
-        $("#dailyClosingModal").modal('show');
+      // $.get("{{ route('calculateClosingAmount') }}", function(result){
+      //   $("#dailyClosingFeedback").hide();
 
-        setTimeout(function(){
-          $("input[name='manager_username']").focus();
-        }, 500);
-
-        $("input[name='daily_closing_amount']").removeClass("is-invalid").val(result.closing_amount);
-        $("input[name='daily_calculated_amount']").val(result.closing_amount);
-      }).fail(function(xhr){
-        if(xhr.status == 401)
-        {
-          Swal.fire({
-            title: 'Your account was logged out, please login again.',
-            icon: 'error',
-            confirmButtonText: 'OK',
-          }).then((result) => {
-            /* Read more about isConfirmed, isDenied below */
-            if (result.isConfirmed) {
-              location.reload();
-            }
-          })
-        }
-      });
+      //   $("input[name='manager_username'], input[name='manager_password']").val("");
+        
+      //   $("input[name='daily_closing_amount']").removeClass("is-invalid").val(result.closing_amount);
+      //   $("input[name='daily_calculated_amount']").val(result.closing_amount);
+      // }).fail(function(xhr){
+      //   if(xhr.status == 401)
+      //   {
+      //     Swal.fire({
+      //       title: 'Your account was logged out, please login again.',
+      //       icon: 'error',
+      //       confirmButtonText: 'OK',
+      //     }).then((result) => {
+      //       /* Read more about isConfirmed, isDenied below */
+      //       if (result.isConfirmed) {
+      //         location.reload();
+      //       }
+      //     })
+      //   }
+      // });
     });
 
     $("#closingBtn").click(function(){
       closing();
     });
 
-    $("#floatInBtn, #floatOutBtn").click(function(){
+    $("#floatInBtn, #floatOutBtn, #refundBtn").click(function(){
       $("input[name='cash_float']").val("");
       if($(this).attr("id") == "floatInBtn")
       {
@@ -1531,6 +1571,11 @@
       {
         $("input[name='cash_float_type']").val('out');
         $("#cash_float_title").html("Cash Float ( Out )");
+      }
+      else if($(this).attr("id") == "refundBtn")
+      {
+        $("input[name='cash_float_type']").val('refund');
+        $("#cash_float_title").html("Refund");
       }
 
       $("#cashFloatModal").modal('show');
@@ -2316,35 +2361,67 @@
     }
   }
 
-  function payAsDebit()
+  // function payAsDebit()
+  // {
+  //   if($("#paymentTypeBtn").attr("disabled") != "disabled")
+  //   {
+  //     $(".cardPayment[payment_type='debit_card']").click();
+  //   }
+  // }
+
+  // function payAsCredit()
+  // {
+  //   if($("#paymentTypeBtn").attr("disabled") != "disabled")
+  //   {
+  //     $(".cardPayment[payment_type='credit_card']").click();
+  //   }
+  // }
+
+  function payAsCard()
   {
     if($("#paymentTypeBtn").attr("disabled") != "disabled")
     {
-      $(".cardPayment[payment_type='debit_card']").click();
+      $(".cardPayment[payment_type='card']").click();
     }
   }
 
-  function payAsCredit()
-  {
-    if($("#paymentTypeBtn").attr("disabled") != "disabled")
-    {
-      $(".cardPayment[payment_type='credit_card']").click();
-    }
-  }
-
-  function payAsEwallet()
-  {
-    if($("#paymentTypeBtn").attr("disabled") != "disabled")
-    {
-      $(".cardPayment[payment_type='e-wallet']").click();
-    }
-  }
+  // function payAsEwallet()
+  // {
+  //   if($("#paymentTypeBtn").attr("disabled") != "disabled")
+  //   {
+  //     $(".cardPayment[payment_type='e-wallet']").click();
+  //   }
+  // }
 
   function payAsTNG()
   {
     if($("#paymentTypeBtn").attr("disabled") != "disabled")
     {
       $(".cardPayment[payment_type='tng']").click();
+    }
+  }
+
+  function payAsMaybank()
+  {
+    if($("#paymentTypeBtn").attr("disabled") != "disabled")
+    {
+      $(".cardPayment[payment_type='maybank_qr']").click();
+    }
+  }
+
+  function payAsGrab()
+  {
+    if($("#paymentTypeBtn").attr("disabled") != "disabled")
+    {
+      $(".cardPayment[payment_type='grab_pay']").click();
+    }
+  }
+
+  function payAsBoost()
+  {
+    if($("#paymentTypeBtn").attr("disabled") != "disabled")
+    {
+      $(".cardPayment[payment_type='boost']").click();
     }
   }
 
@@ -2474,12 +2551,12 @@
 
   function disablePosSystem()
   {
-    $("#voucherBtn, #cashCheckoutBtn, #paymentTypeBtn, #clearBtn, #previousReceiptBtn, #closingBtn, #dailyClosingBtn, input[name='barcode_manual']").attr("disabled", true);
+    $("#voucherBtn, #cashCheckoutBtn, #paymentTypeBtn, #clearBtn, #previousReceiptBtn, #closingBtn, input[name='barcode_manual']").attr("disabled", true);
   }
 
   function enablePosSystem()
   {
-    $("#voucherBtn, #cashCheckoutBtn, #paymentTypeBtn, #clearBtn, #previousReceiptBtn, #closingBtn, #dailyClosingBtn, input[name='barcode_manual']").attr("disabled", false);
+    $("#voucherBtn, #cashCheckoutBtn, #paymentTypeBtn, #clearBtn, #previousReceiptBtn, #closingBtn, input[name='barcode_manual']").attr("disabled", false);
   }
 
   function submitOpening()
@@ -2497,7 +2574,7 @@
           opening = 1;
 
           $("#openingBtn").attr("disabled", true);
-          $("#dailyClosingBtn, #closingBtn, #floatInBtn, #floatOutBtn").attr("disabled", false);
+          $("#closingBtn, #floatInBtn, #floatOutBtn").attr("disabled", false);
 
         }
       }).fail(function(xhr){
@@ -2601,8 +2678,8 @@
 
     var manager_username = $("input[name='manager_username']").val();
     var manager_password = $("input[name='manager_password']").val();
-    var daily_closing_amount = $("input[name='daily_closing_amount']").val();
-    var daily_calculated_amount = $("input[name='daily_calculated_amount']").val();
+    // var daily_closing_amount = $("input[name='daily_closing_amount']").val();
+    // var daily_calculated_amount = $("input[name='daily_calculated_amount']").val();
 
     var proceed = 1;
 
@@ -2618,11 +2695,11 @@
       proceed = 0;
     }
 
-    if(!daily_closing_amount)
-    {
-      $("input[name='daily_closing_amount']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Closing amount cannot be empty.</strong>");
-      proceed = 0;
-    }
+    // if(!daily_closing_amount)
+    // {
+    //   $("input[name='daily_closing_amount']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Closing amount cannot be empty.</strong>");
+    //   proceed = 0;
+    // }
 
     if(proceed == 0)
     {
@@ -2630,7 +2707,7 @@
       return;
     }
 
-    $.post("{{ route('submitDailyClosing') }}", {"_token" : "{{ csrf_token() }}", "username" : manager_username, "password" : manager_password, "closing_amount" : daily_closing_amount, 'calculated_amount' : daily_calculated_amount }, function(result){
+    $.post("{{ route('submitDailyClosing') }}", {"_token" : "{{ csrf_token() }}", "username" : manager_username, "password" : manager_password }, function(result){
       if(result.error == 0)
       {
         $("#dailyClosingModal").modal('hide');
@@ -2638,7 +2715,7 @@
         disablePosSystem();
 
         $("#openingBtn").attr("disabled", false);
-        $("#dailyClosingBtn #closingBtn, #floatInBtn, #floatOutBtn").attr("disabled", true);
+        $("#closingBtn, #floatInBtn, #floatOutBtn").attr("disabled", true);
 
         $("#daily_closing_content").html("This cashier are now closed.");
         $("#daily_closing_toast").toast('show');
@@ -2750,6 +2827,8 @@
           if(manual == 0)
           {
             dailyReport();
+
+            location.reload();
           }       
           // logout();
         });
@@ -2758,7 +2837,7 @@
           // blank function do nothing
         }
 
-        if(manual == 1 && opening == 1)
+        if(manual == 1 && opening == 1 && device_type == 2)
         {
           enablePosSystem();
         }
@@ -3021,14 +3100,17 @@
     });
   }
 
-  function submitAddUser()
-  {
+  function submitAddUser(_this)
+  { 
+    $(_this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
+
     $("input[name='new_user_name'], input[name='new_user_username'], input[name='new_user_password'], input[name='new_user_password_confirmation']").removeClass("is-invalid");
 
     var new_user_name = $("input[name='new_user_name']").val();
     var new_user_username = $("input[name='new_user_username']").val();
     var new_user_password = $("input[name='new_user_password']").val();
     var new_user_password_confirmation = $("input[name='new_user_password_confirmation']").val();
+    var user_type = $("select[name='user_type']").val();
 
     var failed = false;
     if(!new_user_name)
@@ -3064,7 +3146,8 @@
 
     if(failed == false)
     { 
-      $.post("{{ route('addNewUser') }}", { "_token" : "{{ csrf_token() }}", "name" : new_user_name, "username" : new_user_username, "password" : new_user_password }, function(result){
+      $.post("{{ route('addNewUser') }}", { "_token" : "{{ csrf_token() }}", "name" : new_user_name, "username" : new_user_username, "password" : new_user_password, "user_type" : user_type }, function(result){
+        $(_this).html("Add").attr("disabled", false);
         if(result.error == 0)
         {
           var created_user_detail = result.user_detail;
@@ -3100,6 +3183,7 @@
           $("input[name='new_user_username']").addClass("is-invalid").siblings(".invalid-feedback").html("Username has been used, please keyin a new username.");
         }
       }).fail(function(xhr){
+        $(_this).html("Add").attr("disabled", false);
         if(xhr.status == 401)
         {
           Swal.fire({
@@ -3114,6 +3198,10 @@
           })
         }
       });
+    }
+    else
+    {
+      $(_this).html("Add").attr("disabled", false);
     }
   }
 
@@ -3209,7 +3297,7 @@
 
     var html = "";
     html += '<div style="display: block; font-size: 50px; color: #007bff;">';
-    html += '<i class="fas fa-spinner fa-spin"></i> ';
+    html += '<i class="fas fa-spinner fa-spin"></i>';
     html += '</div>';
     html += 'Syncing data to HQ, please do not refresh the page.';
     html += '</div>';
