@@ -64,8 +64,8 @@
                     @endif
                   </p>
                   <select class="form-control hide" name="device_type">
-                    <option value="2">Cashier</option>
-                    <option value="1">Server</option>
+                    <option value="2" {{ $cashier->type == 2 ? 'selected' : '' }}>Cashier</option>
+                    <option value="1" {{ $cashier->type == 1 ? 'selected' : '' }}>Server</option>
                   </select>
                 </td>
                 <td>

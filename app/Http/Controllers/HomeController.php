@@ -617,7 +617,7 @@ class HomeController extends Controller
         {
           $payment_type_text = "Grab Pay";
         }
-        elseif($payment_type == "Boost")
+        elseif($payment_type == "boost")
         {
           $payment_type_text = "Boost";
         }
@@ -2057,6 +2057,12 @@ class HomeController extends Controller
         [
           'function' => "clearTransaction()",
           'function_name' => "Clear transaction",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "clickManualKeyin()",
+          'function_name' => "Manual keyin barcode",
           'code' => null,
           'character' => null
         ],

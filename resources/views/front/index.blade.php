@@ -632,7 +632,7 @@
           @if($user->user_type == 1)
             <button class="btn btn-success" type="button" onclick="addNewUser()">
               <i class="fas fa-plus"></i>
-              Add New Cashier
+              Add New User
             </button>
           @endif
         </div>
@@ -1218,6 +1218,8 @@
         {
           $("#numpadModal").modal('hide');
         }
+
+        $("input[name='barcode_manual']").iCheck("uncheck");
       }
       else if(e.which == 13)
       {
@@ -2425,6 +2427,16 @@
     }
   }
 
+  function clickManualKeyin()
+  {
+    let manual_val = $("input[name='barcode_manual']").is(":checked");
+    if(!manual_val)
+    {
+      $("input[name='barcode_manual']").iCheck("check");
+      $("#barcode").focus();
+    }
+  }
+
   function showKeySetup()
   {
     if(user.user_type == 1)
@@ -2827,10 +2839,9 @@
           if(manual == 0)
           {
             dailyReport();
-
-            location.reload();
+            logout();
           }       
-          // logout();
+          
         });
 
         window.onbeforeunload = function () {
