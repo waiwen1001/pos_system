@@ -325,12 +325,14 @@ class HomeController extends Controller
           //Generate new invoice number
 
           $seq = Invoice_sequence::first();
-
-          if(date("Y-m-d",strtotime($seq->updated_at)) == date('Y-m-d', strtotime(now()))){
+          $now = now();
+          if(date("Y-m-d",strtotime($seq->updated_at)) == date("Y-m-d", strtotime($now))){
             $transaction_no = $seq->branch_code.date("Ymd").$seq->next_seq;
           }else{
-            $transaction_no = $seq->branch_code.date("Ymd")."00001";
+            $transaction_no = $seq->branch_code.date("Ymd", strtotime($now))."00001";
           }
+
+          //Part 1
 
           $session_id = null;
           $session = session::where('closed', null)->orderBy('id', 'desc')->first();
@@ -347,7 +349,9 @@ class HomeController extends Controller
             'user_id' => $user->id
           ]);
 
-          if(date("Y-m-d",strtotime($seq->updated_at)) == date('Y-m-d', strtotime(now()))){
+          //Invoice number part 2 start
+
+          if(date("Y-m-d",strtotime($seq->updated_at)) == date('Y-m-d', strtotime($now))){
             $next = $seq->next_seq;
             $next = intval($next) + 1;
             $i=5;
@@ -367,6 +371,8 @@ class HomeController extends Controller
               'next_seq' => '00002',
             ]);
           }
+
+          //End invoice number here
 
           transaction_detail::create([
             'transaction_id' => $transaction->id,
