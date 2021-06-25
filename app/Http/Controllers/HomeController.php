@@ -1332,6 +1332,19 @@ class HomeController extends Controller
       $transaction->receipt_date = date('l, d-m-Y', strtotime($transaction->created_at));
       $transaction->receipt_time = date('H:i', strtotime($transaction->created_at));
 
+      $transaction->voucher_name = "";
+      if($transaction->total_discount > 0 && $transaction->voucher_code)
+      {
+        $voucher = voucher::where('code', $transaction->voucher_code)->first();
+        if($voucher)
+        {
+          $transaction->voucher_name = $voucher->name;
+        }
+      }
+
+      $transaction->total_discount_text = number_format($transaction->total_discount, 2);
+      $transaction->subtotal_text = number_format($transaction->subtotal, 2);
+
       $response = new \stdClass();
       $response->error = 0;
       $response->message = "Success";
@@ -1538,7 +1551,7 @@ class HomeController extends Controller
               'code' => $voucher['code'],
               'type' => $voucher['type'],
               'amount' => $voucher['amount'],
-              'active' => 1
+              'active' => $voucher['active']
             ]);
           }
         }

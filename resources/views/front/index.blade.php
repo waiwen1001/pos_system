@@ -734,6 +734,16 @@
           <div>Jenis Bayaran</div>
           <div id="receipt_payment_type"></div>
         </div>
+        <div id="receipt_voucher" style="display: none;">
+          <div style="width: 100%; font-size: 11px; font-weight: bold; display: flex; justify-content: space-between;">
+            <div>Jumlah Harga Asal</div>
+            <div id="receipt_ori_payment"></div>
+          </div>
+          <div style="width: 100%; font-size: 11px; font-weight: bold; display: flex; justify-content: space-between;">
+            <div id="receipt_voucher_name"></div>
+            <div id="receipt_discount"></div>
+          </div>
+        </div>
         <div style="width: 100%; font-size: 11px; font-weight: bold; display: flex; justify-content: space-between;">
           <div>Jumlah Bil</div>
           <div id="receipt_total"></div>
@@ -2030,6 +2040,11 @@
         $("#receipt_total").html("RM "+transaction.total_text);
         $("#receipt_payment_type").html(transaction.payment_type_text);
 
+        $("#receipt_voucher").hide();
+        $("#receipt_ori_payment").html("");
+        $("#receipt_voucher_name").html("");
+        $("#receipt_discount").html("");
+
         if(transaction.payment_type != "cash")
         {
           $("#receipt_other_payment").show();
@@ -2042,6 +2057,14 @@
           $("#receipt_cash").show();
           $("#receipt_received_payment").html("RM "+transaction.payment_text);
           $("#receipt_change").html("RM "+transaction.balance_text);
+        }
+
+        if(transaction.total_discount > 0)
+        {
+          $("#receipt_voucher").show();
+          $("#receipt_ori_payment").html("RM "+transaction.subtotal_text);
+          $("#receipt_voucher_name").html("Diskaun : ( "+transaction.voucher_name+" )");
+          $("#receipt_discount").html("RM "+transaction.total_discount_text);
         }
 
         $("#receipt_date").html(transaction.receipt_date);
