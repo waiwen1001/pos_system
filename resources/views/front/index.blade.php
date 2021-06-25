@@ -716,8 +716,8 @@
   <div id="receipt">
     <div>
       <div style="display: flex; flex-direction: column; text-align: center;">
-        <label style="font-size: 11px;">{{ $branch_name }}</label>
-        <label style="font-size: 11px;">{!! nl2br(e($branch_address)) !!}</label>
+        <label style="font-size: 11px;">HOME U(M) SDN BHD (125272-P)</label>
+        <label style="font-size: 11px;">{!! nl2br(e($branch_address)) !!}</label><br/>
         <!-- <label>RESIT</label> -->
       </div>
       <div style="border: 2px dashed #000; height: 2px;"></div>
@@ -794,8 +794,8 @@
   <div id="dailyReport" style="display: none;">
     <div style="padding: 30px;">
       <div style="display: flex; flex-direction: column; text-align: center;">
-        <label>{{ $branch_name }}</label>
-        <label>{!! nl2br(e($branch_address)) !!}</label>
+        <label>HOME U(M) SDN BHD (125272-P)</label>
+        <label>{!! nl2br(e($branch_address)) !!}</label><br/>
       </div>
       <div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>
       <div id="dailyReportContent">
