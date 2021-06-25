@@ -214,6 +214,10 @@
                       </button>
                       @if($device_type == 1)
                         <div class="dropdown-divider"></div>
+                        <button class="dropdown-item" onclick="showBranchProfile()">
+                          Branch Profile
+                          <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showBranchProfile()"></span>
+                        </button>
                         <button class="dropdown-item" onclick="userManagement()">
                           User Management
                           <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showUserManagement()"></span>
@@ -232,6 +236,7 @@
                         Shortcut key setup
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showKeySetup()"></span>
                       </button>
+
                     @endif
                   </div>
                 </div>
@@ -711,8 +716,8 @@
   <div id="receipt">
     <div>
       <div style="display: flex; flex-direction: column; text-align: center;">
-        <label style="font-size: 11px;">HOME U(M) SDN BHD (125272-P)</label>
-        <label style="font-size: 11px;">S/36,LOT1745, CABANG TIGA PENGKALAN CHEPA</label>
+        <label style="font-size: 11px;">{{ $branch_name }}</label>
+        <label style="font-size: 11px;">{!! nl2br(e($branch_address)) !!}</label>
         <!-- <label>RESIT</label> -->
       </div>
       <div style="border: 2px dashed #000; height: 2px;"></div>
@@ -779,8 +784,8 @@
   <div id="dailyReport" style="display: none;">
     <div style="padding: 30px;">
       <div style="display: flex; flex-direction: column; text-align: center;">
-        <label>HOME U(M) SDN BHD (125272-P)</label>
-        <label>S/36,LOT1745, CABANG TIGA PENGKALAN CHEPA</label>
+        <label>{{ $branch_name }}</label>
+        <label>{!! nl2br(e($branch_address)) !!}</label>
       </div>
       <div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>
       <div id="dailyReportContent">
@@ -2446,7 +2451,17 @@
         '_blank'
       );
     }
-    
+  }
+
+  function showBranchProfile()
+  {
+    if(user.user_type == 1 && device_type == 1)
+    {
+      window.open(
+        '{{ route("getBranchProfile") }}',
+        '_blank'
+      );
+    }
   }
   
   function submitVoucher()
@@ -2886,135 +2901,38 @@
     $.get("{{ route('getDailyReport') }}", function(result){
       if(result.error == 0)
       {
-        var category_report = result.category_report;
-        var department_report = result.department_report;
+        // var category_report = result.category_report;
+        // var department_report = result.department_report;
         var payment_type_report = result.payment_type_report;
-        var total_report = result.total_report;
-        var ip_array = result.ip_array;
+        var pos_cashier = result.pos_cashier;
         var session = result.session;
-
-        console.log(ip_array);
 
         var html = "";
         html += "<h4 style='text-align:center;'>Daily Sales Report on "+session.opening_date_time+"</h4>";
         html += '<div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>';
-
-        // if(category_report.length > 0)
-        // {
-        //   html += "<table style='width: 100%;'>";
-        //   for(var a = 0; a < category_report.length; a++)
-        //   {
-        //     html += "<tr>";
-        //     html += "<td width='85%'>"+category_report[a].category_name+"</td>";
-        //     html += "<td>RM</td>";
-        //     html += "<td align='right'>"+category_report[a].category_total+"</td>";
-        //     html += "</tr>";
-
-        //     // html += "<div>";
-
-        //     // for(var b = 0; b < ip_array.length; b++)
-        //     // {
-        //     //   html += "<div style='display:flex;'>";
-        //     //   html += "<div style='flex:1;'>"+ip_array[b].ip+"</div>";
-        //     //   var ip_found = 0;
-        //     //   for(var c = 0; c < ip_array[b].category.length; c++)
-        //     //   {
-        //     //     if(ip_array[b].category[c].category_id == category_report[a].category_id)
-        //     //     {
-        //     //       html += "<div style='flex:1; text-align:right;'>RM "+ip_array[b].category[c].total+"</div>";
-        //     //       ip_found = 1;
-        //     //       break;
-        //     //     }
-        //     //   }
-
-        //     //   if(ip_found == 0)
-        //     //   {
-        //     //     html += "<div style='flex:1; text-align:right;'>RM 0.00</div>";
-        //     //   }
-
-        //     //   html += "</div>";
-        //     // }
-        //     // html += "</div>";
-        //   }
-        //   html += "</table>";
-          
-        //   html += '<div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>';
-        // }
-
-        // if(department_report.length > 0)
-        // {
-        //   html += "<table style='width: 100%;'>";
-        //   for(var a = 0; a < department_report.length; a++)
-        //   {
-        //     html += "<tr>";
-        //     html += "<td width='85%'>"+department_report[a].department_name+"</td>";
-        //     html += "<td>RM</td>";
-        //     html += "<td align='right'>"+department_report[a].department_total+"</td>";
-        //     html += "</tr>";
-
-        //     // html += "<div>";
-        //     // for(var b = 0; b < ip_array.length; b++)
-        //     // {
-        //     //   html += "<div style='display:flex;'>";
-        //     //   html += "<div style='flex:1;'>"+ip_array[b].ip+"</div>";
-        //     //   var ip_found = 0;
-        //     //   for(var c = 0; c < ip_array[b].department.length; c++)
-        //     //   {
-        //     //     if(ip_array[b].department[c].department_id == department_report[a].department_id)
-        //     //     {
-        //     //       html += "<div style='flex:1; text-align:right;'>RM "+ip_array[b].department[c].total+"</div>";
-        //     //       ip_found = 1;
-        //     //       break;
-        //     //     }
-        //     //   }
-
-        //     //   if(ip_found == 0)
-        //     //   {
-        //     //     html += "<div style='flex:1; text-align:right;'>RM 0.00</div>";
-        //     //   }
-        //     //   html += "</div>";
-        //     // }
-        //     // html += "</div>";
-        //   }
-        //   html += "</table>";
-
-        //   html += '<div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>';
-        // }
 
         if(payment_type_report.length > 0)
         {
           html += "<table style='width: 100%;'>";
           for(var a = 0; a < payment_type_report.length; a++)
           {
+            let payment_type = payment_type_report[a].payment_type;
             html += "<tr>";
             html += "<td width='85%'>"+payment_type_report[a].payment_type_text+"</td>";
             html += "<td>RM</td>";
             html += "<td align='right'>"+payment_type_report[a].payment_type_total+"</td>";
             html += "</tr>";
 
-            for(var b = 0; b < ip_array.length; b++)
+            for(var b = 0; b < pos_cashier.length; b++)
             {
-              html += "<tr>";
-              html += "<td width='85%'>"+ip_array[b].cashier_name+"</td>";
-              html += "<td>RM</td>";
-              html += "<td align='right'>";
-              var ip_found = 0;
-              for(var c = 0; c < ip_array[b].payment_type.length; c++)
+              if(pos_cashier[b][payment_type] != "0.00")
               {
-                if(ip_array[b].payment_type[c].payment_type == payment_type_report[a].payment_type)
-                {
-                  html += ip_array[b].payment_type[c].total;
-                  ip_found = 1;
-                  break;
-                }
+                html += "<tr>";
+                html += "<td width='85%'>"+pos_cashier[b].cashier_name+"</td>";
+                html += "<td>RM</td>";
+                html += "<td align='right'>"+pos_cashier[b][payment_type]+"</td>";
+                html += "</tr>";
               }
-
-              if(ip_found == 0)
-              {
-                html += "0.00";
-              }
-              html += "</td>";
-              html += "</tr>";
             }
 
             html += "<tr>";
@@ -3025,13 +2943,10 @@
           html += '<div style="border: 2px dashed #999; height: 2px; margin: 10px 0 30px 0;"></div>';
         }
 
-        if(total_report != null)
-        {
-          html += "<div style='display:flex;'>";
-          html += "<div style='flex:1;'>Total Sales Today</div>";
-          html += "<div style='flex:1; text-align:right;'>RM "+ (total_report.total_report != "" && total_report.total_report != null ? total_report.total_report : "0" )+"</div>";
-          html += "</div>";
-        }
+        html += "<div style='display:flex;'>";
+        html += "<div style='flex:1;'>Total Sales Today</div>";
+        html += "<div style='flex:1; text-align:right;'>RM "+ result.total_sales+"</div>";
+        html += "</div>";
 
         $("#dailyReportContent").html(html);
 

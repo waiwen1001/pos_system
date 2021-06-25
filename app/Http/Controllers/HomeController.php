@@ -14,6 +14,7 @@ use App\cash_float;
 use App\pos_cashier;
 use App\shortcut_key;
 use App\Invoice_sequence;
+use App\profile;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -43,6 +44,15 @@ class HomeController extends Controller
     {
       $user_list = User::where('removed', null)->get();
       $user = Auth::user();
+
+      $branch_name = null;
+      $branch_address = null;
+      $profile = profile::first();
+      if($profile)
+      {
+        $branch_name = $profile->branch_name;
+        $branch_address = $profile->address;
+      }
 
       $subtotal = 0;
       $discount = 0;
@@ -97,7 +107,7 @@ class HomeController extends Controller
       $completed_transaction = [];
       if($session)
       {
-        $completed_transaction = transaction::where('completed', 1)->where('session_id', $session->id)->get();
+        $completed_transaction = transaction::where('completed', 1)->where('session_id', $session->id)->where('ip', $this->ip)->get();
       }
 
       $pos_cashier = pos_cashier::get();
@@ -181,7 +191,7 @@ class HomeController extends Controller
         $device_type = $device->type;
       }
 
-      return view('front.index', compact('user', 'user_management_list', 'pending_transaction', 'subtotal', 'discount', 'have_discount', 'total', 'real_total', 'round_off', 'payment', 'balance', 'transaction_id', 'completed_transaction', 'opening', 'voucher_name', 'session', 'shortcut_key', 'ip', 'device_type'));
+      return view('front.index', compact('user', 'user_management_list', 'pending_transaction', 'subtotal', 'discount', 'have_discount', 'total', 'real_total', 'round_off', 'payment', 'balance', 'transaction_id', 'completed_transaction', 'opening', 'voucher_name', 'session', 'shortcut_key', 'ip', 'device_type', 'branch_name', 'branch_address'));
     }
 
     public function getSetupPage()
@@ -1574,133 +1584,52 @@ class HomeController extends Controller
         $session = session::where('closed', 1)->orderBy('id', 'desc')->first();
       }
 
-      $total_ip = transaction_detail::leftJoin('transaction', 'transaction.id', '=', 'transaction_detail.transaction_id')->where('transaction.session_id', $session->id)->leftJoin('product', 'product.id', '=', 'transaction_detail.product_id')->leftJoin('category', 'category.id', '=', 'product.category_id')->leftJoin('department', 'department.id', '=', 'product.department_id')->select('transaction.id', 'transaction.ip', 'transaction.payment_type', 'transaction.total', 'transaction.payment_type_text', 'transaction_detail.product_id', 'transaction_detail.quantity', 'product.product_name', 'product.department_id', 'product.category_id', 'category.name as category_name', 'department.name as department_name')->groupBy('transaction.ip')->get();
+      $all_ip = transaction::where('session_id', $session->id)->groupBy('ip')->pluck('ip')->toArray();
+      $pos_cashier = pos_cashier::whereIn('ip', $all_ip)->get();
 
-      $pos_cashier = pos_cashier::get();
-
-      $ip_array = array();
-      foreach($total_ip as $ip)
+      $payment_type_list = ['cash', 'card', 'boost', 'tng', 'maybank_qr', 'grab_pay'];
+      foreach($pos_cashier as $pos)
       {
-        $cashier_name = "";
-        if($ip->ip)
+        foreach($payment_type_list as $payment_type)
         {
-          foreach($pos_cashier as $cashier_detail)
-          {
-            if($cashier_detail->ip == $ip->ip)
-            {
-              $cashier_name = $cashier_detail->cashier_name;
-              break;
-            }
-          }
-        }
-
-        $ip_class = new \stdClass();
-        $ip_class->ip = $ip->ip;
-        $ip_class->cashier_name = $cashier_name;
-        $ip_class->category = array();
-        $ip_class->department = array();
-        $ip_class->payment_type = array();
-
-        array_push($ip_array, $ip_class);
-      }
-
-      $category_report = transaction_detail::leftJoin('transaction', 'transaction.id', '=', 'transaction_detail.transaction_id')->where('transaction.session_id', $session->id)->leftJoin('product', 'product.id', '=', 'transaction_detail.product_id')->leftJoin('category', 'category.id', '=', 'product.category_id')->leftJoin('department', 'department.id', '=', 'product.department_id')->select('transaction.id', 'transaction.ip', 'transaction.payment_type', 'transaction.total', 'transaction.payment_type_text', 'transaction_detail.product_id', 'transaction_detail.quantity', 'product.product_name', 'product.department_id', 'product.category_id', 'category.name as category_name', 'department.name as department_name')->selectRaw('FORMAT(SUM(transaction.total), 2) as category_total')->groupBy('product.category_id')->get();
-
-      $category_array = array();
-      foreach($category_report as $category)
-      {
-        array_push($category_array, $category->category_id);
-      }
-
-      foreach($category_array as $category_id)
-      {
-        $cashier_category = transaction_detail::leftJoin('transaction', 'transaction.id', '=', 'transaction_detail.transaction_id')->where('transaction.session_id', $session->id)->leftJoin('product', 'product.id', '=', 'transaction_detail.product_id')->leftJoin('category', 'category.id', '=', 'product.category_id')->leftJoin('department', 'department.id', '=', 'product.department_id')->select('transaction.id', 'transaction.ip', 'transaction.payment_type', 'transaction.total', 'transaction.payment_type_text', 'transaction_detail.product_id', 'transaction_detail.quantity', 'product.product_name', 'product.department_id', 'product.category_id', 'category.name as category_name', 'department.name as department_name')->selectRaw('FORMAT(SUM(transaction.total), 2) as category_total')->where('product.category_id', $category_id)->groupBy('transaction.ip')->get();
-
-        foreach($cashier_category as $category_detail)
-        {
-          foreach($ip_array as $key => $ip_detail)
-          {
-            if($category_detail->ip == $ip_detail->ip)
-            {
-              $cashier_category_detail = new \stdClass();
-              $cashier_category_detail->category_id = $category_id;
-              $cashier_category_detail->total = $category_detail->category_total;
-
-              array_push($ip_array[$key]->category, $cashier_category_detail);
-              break;
-            }
-          }
+          $pos[$payment_type] = 0;
         }
       }
 
-      $department_report = transaction_detail::leftJoin('transaction', 'transaction.id', '=', 'transaction_detail.transaction_id')->where('transaction.session_id', $session->id)->leftJoin('product', 'product.id', '=', 'transaction_detail.product_id')->leftJoin('category', 'category.id', '=', 'product.category_id')->leftJoin('department', 'department.id', '=', 'product.department_id')->select('transaction.id', 'transaction.ip', 'transaction.payment_type', 'transaction.total', 'transaction.payment_type_text', 'transaction_detail.product_id', 'transaction_detail.quantity', 'product.product_name', 'product.department_id', 'product.category_id', 'category.name as category_name', 'department.name as department_name')->selectRaw('FORMAT(SUM(transaction.total), 2) as department_total')->groupBy('product.department_id')->get();
+      $all_transaction = transaction::where('session_id', $session->id)->get();
 
-      $department_array = array();
-      foreach($department_report as $department)
+      $total_sales = 0;
+      foreach($all_transaction as $all)
       {
-        array_push($department_array, $department->department_id);
-      }
-
-      foreach($department_array as $department_id)
-      {
-        $cashier_department = transaction_detail::leftJoin('transaction', 'transaction.id', '=', 'transaction_detail.transaction_id')->where('transaction.session_id', $session->id)->leftJoin('product', 'product.id', '=', 'transaction_detail.product_id')->leftJoin('category', 'category.id', '=', 'product.category_id')->leftJoin('department', 'department.id', '=', 'product.department_id')->select('transaction.id', 'transaction.ip', 'transaction.payment_type', 'transaction.total', 'transaction.payment_type_text', 'transaction_detail.product_id', 'transaction_detail.quantity', 'product.product_name', 'product.department_id', 'product.category_id', 'category.name as category_name', 'department.name as department_name')->selectRaw('FORMAT(SUM(transaction.total), 2) as department_total')->where('product.department_id', $department_id)->groupBy('transaction.ip')->get();
-
-        foreach($cashier_department as $department_detail)
+        $total_sales += $all->total;
+        $payment_type = $all->payment_type;
+        foreach($pos_cashier as $pos)
         {
-          foreach($ip_array as $key => $ip_detail)
+          if($pos->ip == $all->ip)
           {
-            if($department_detail->ip == $ip_detail->ip)
-            {
-              $cashier_department_detail = new \stdClass();
-              $cashier_department_detail->department_id = $department_id;
-              $cashier_department_detail->total = $department_detail->department_total;
-
-              array_push($ip_array[$key]->department, $cashier_department_detail);
-              break;
-            }
+            $pos[$payment_type] += $all->total;
+            break;
           }
+          
         }
       }
 
-      $payment_type_report = transaction_detail::leftJoin('transaction', 'transaction.id', '=', 'transaction_detail.transaction_id')->where('transaction.session_id', $session->id)->leftJoin('product', 'product.id', '=', 'transaction_detail.product_id')->leftJoin('category', 'category.id', '=', 'product.category_id')->leftJoin('department', 'department.id', '=', 'product.department_id')->select('transaction.id', 'transaction.ip', 'transaction.payment_type', 'transaction.total', 'transaction.payment_type_text', 'transaction_detail.product_id', 'transaction_detail.quantity', 'product.product_name', 'product.department_id', 'product.category_id', 'category.name as category_name', 'department.name as department_name')->selectRaw('FORMAT(SUM(transaction.total), 2) as payment_type_total')->groupBy('transaction.payment_type')->get();
-
-      $payment_type_array = array();
-      foreach($payment_type_report as $payment_type)
+      foreach($pos_cashier as $pos)
       {
-        array_push($payment_type_array, $payment_type->payment_type);
-      }
-
-      foreach($payment_type_array as $payment_type)
-      {
-        $cashier_payment_type = transaction_detail::leftJoin('transaction', 'transaction.id', '=', 'transaction_detail.transaction_id')->where('transaction.session_id', $session->id)->leftJoin('product', 'product.id', '=', 'transaction_detail.product_id')->leftJoin('category', 'category.id', '=', 'product.category_id')->leftJoin('department', 'department.id', '=', 'product.department_id')->select('transaction.id', 'transaction.ip', 'transaction.payment_type', 'transaction.total', 'transaction.payment_type_text', 'transaction_detail.product_id', 'transaction_detail.quantity', 'product.product_name', 'product.department_id', 'product.category_id', 'category.name as category_name', 'department.name as department_name')->selectRaw('FORMAT(SUM(transaction.total), 2) as payment_type_total')->where('transaction.payment_type', $payment_type)->groupBy('transaction.ip')->get();
-
-        foreach($cashier_payment_type as $payment_type_detail)
+        foreach($payment_type_list as $payment_type)
         {
-          foreach($ip_array as $key => $ip_detail)
-          {
-            if($payment_type_detail->ip == $ip_detail->ip)
-            {
-              $cashier_payment_type_detail = new \stdClass();
-              $cashier_payment_type_detail->payment_type = $payment_type;
-              $cashier_payment_type_detail->total = $payment_type_detail->payment_type_total;
-
-              array_push($ip_array[$key]->payment_type, $cashier_payment_type_detail);
-              break;
-            }
-          }
+          $pos[$payment_type] = number_format($pos[$payment_type], 2);
         }
       }
 
-      $total_report = transaction_detail::leftJoin('transaction', 'transaction.id', '=', 'transaction_detail.transaction_id')->where('transaction.session_id', $session->id)->leftJoin('product', 'product.id', '=', 'transaction_detail.product_id')->leftJoin('category', 'category.id', '=', 'product.category_id')->leftJoin('department', 'department.id', '=', 'product.department_id')->select('transaction.id', 'transaction.ip', 'transaction.payment_type', 'transaction.total', 'transaction.payment_type_text', 'transaction_detail.product_id', 'transaction_detail.quantity', 'product.product_name', 'product.department_id', 'product.category_id', 'category.name as category_name', 'department.name as department_name')->selectRaw('FORMAT(SUM(transaction.total), 2) as total_report')->first();
+      $payment_type_report = transaction::where('session_id', $session->id)->select('*')->selectRaw('FORMAT(SUM(transaction.total), 2) as payment_type_total')->groupBy('payment_type')->get();
 
       $response = new \stdClass();
       $response->error = 0;
       $response->message = "Success";
-      $response->category_report = $category_report;
-      $response->department_report = $department_report;
       $response->payment_type_report = $payment_type_report;
-      $response->total_report = $total_report;
-      $response->ip_array = $ip_array;
+      $response->total_sales = number_format($total_sales, 2);
+      $response->pos_cashier = $pos_cashier;
       $response->session = $session;
 
       return response()->json($response);
@@ -1857,6 +1786,7 @@ class HomeController extends Controller
 
     public function testing()
     {
+      dd($this->getDailyReport());
       $now = date('Y-m-d H:i:s', strtotime(now()));
       $started_id = 34;
 
@@ -2061,6 +1991,18 @@ class HomeController extends Controller
           'character' => null
         ],
         [
+          'function' => "showKeySetup()",
+          'function_name' => "Show shortcut key setup page",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "showBranchProfile()",
+          'function_name' => "Show branch profile setup page",
+          'code' => null,
+          'character' => null
+        ],
+        [
           'function' => "clickManualKeyin()",
           'function_name' => "Manual keyin barcode",
           'code' => null,
@@ -2069,6 +2011,76 @@ class HomeController extends Controller
       ];
 
       return $front_function_list;
+    }
+
+    public function getBranchProfile()
+    {
+      $user = Auth::user();
+
+      if($user->user_type != 1)
+      {
+        return redirect(route('home'));
+      }
+
+      $invoice_sequence = Invoice_sequence::first();
+      $profile = profile::first();
+
+      $branch_code = null;
+      $branch_name = null;
+      $branch_address = null;
+
+      if($invoice_sequence)
+      {
+        $branch_code = $invoice_sequence->branch_code;
+      }
+
+      if($profile)
+      {
+        $branch_name = $profile->branch_name;
+        $branch_address = $profile->address;
+      }
+
+      return view('front.profile', compact('branch_code', 'branch_name', 'branch_address'));
+    }
+
+    public function updateProfile(Request $request)
+    {
+      $invoice_sequence = Invoice_sequence::first();
+      $profile = profile::first();
+
+      if($invoice_sequence)
+      {
+        Invoice_sequence::where('id', $invoice_sequence->id)->update([
+          'branch_code' => $request->branch_code
+        ]);
+      }
+      else
+      {
+        Invoice_sequence::create([
+          'branch_code' => $request->branch_code,
+          'current_seq' => '00000',
+          'next_seq' => '00001',
+          'created_at' => now(),
+          'updated_at' => now(),
+        ]);
+      }
+
+      if($profile)
+      {
+        profile::where('id', $profile->id)->update([
+          'branch_name' => $request->branch_name,
+          'address' => $request->branch_address,
+        ]);
+      }
+      else
+      {
+        profile::create([
+          'branch_name' => $request->branch_name,
+          'address' => $request->branch_address,
+        ]);
+      }
+
+      return redirect(route('getBranchProfile'));
     }
 }
 
