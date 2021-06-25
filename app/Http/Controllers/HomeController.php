@@ -94,9 +94,9 @@ class HomeController extends Controller
 
         $transaction_id = $pending_transaction->id;
 
-        if($pending_transaction->voucher_id)
+        if($pending_transaction->voucher_code)
         {
-          $voucher_detail = voucher::where('id', $pending_transaction->voucher_id)->first();
+          $voucher_detail = voucher::where('code', $pending_transaction->voucher_code)->first();
           if($voucher_detail)
           {
             $voucher_name = $voucher_detail->name;
@@ -746,7 +746,8 @@ class HomeController extends Controller
 
       transaction::where('id', $request->transaction_id)->update([
         'total_discount' => 0,
-        'voucher_id' => null
+        'voucher_id' => null,
+        'voucher_code' => null
       ]);
 
       $response = new \stdClass();
@@ -863,7 +864,8 @@ class HomeController extends Controller
 
         transaction::where('id', $transaction->id)->update([
           'total_discount' => $total_discount,
-          'voucher_id' => $active_voucher->id
+          'voucher_id' => $active_voucher->id,
+          'voucher_code' => $active_voucher->code
         ]);
 
         $response = new \stdClass();
@@ -891,7 +893,8 @@ class HomeController extends Controller
     {
       transaction::where('id', $request->transaction_id)->update([
         'total_discount' => 0,
-        'voucher_id' => null
+        'voucher_id' => null,
+        'voucher_code' => null,
       ]);
 
       $transaction_detail = transaction_detail::where('transaction_id', $request->transaction_id)->get();
@@ -1520,6 +1523,23 @@ class HomeController extends Controller
             {
               array_push($barcode_array, $product['barcode']);
             }
+          }
+        }
+
+        $voucher_list = $response['voucher_list'];
+        voucher::truncate();
+
+        if($voucher_list && is_array($voucher_list))
+        {
+          foreach($voucher_list as $voucher)
+          {
+            voucher::create([
+              'name' => $voucher['name'],
+              'code' => $voucher['code'],
+              'type' => $voucher['type'],
+              'amount' => $voucher['amount'],
+              'active' => 1
+            ]);
           }
         }
 
