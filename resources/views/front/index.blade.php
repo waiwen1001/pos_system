@@ -214,10 +214,10 @@
                       </button>
                       @if($device_type == 1)
                         <div class="dropdown-divider"></div>
-                        <button class="dropdown-item" onclick="showBranchProfile()">
+                        <!-- <button class="dropdown-item" onclick="showBranchProfile()">
                           Branch Profile
                           <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showBranchProfile()"></span>
-                        </button>
+                        </button> -->
                         <button class="dropdown-item" onclick="userManagement()">
                           User Management
                           <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showUserManagement()"></span>
@@ -1719,21 +1719,31 @@
         $("#items-table tbody tr[item_id="+item_id+"]").remove();
 
         let transaction_summary = result.transaction_summary;
-        transaction_total = transaction_summary.real_total;
-
-        $("#price").html(transaction_summary.subtotal);
-        $("#total").html(transaction_summary.total);
-
-        if(transaction_summary.round_off == "0.00")
+        if(transaction_summary == null)
         {
+          transaction_total = 0;
+          $("#price").html("0.00");
+          $("#total").html("0.00");
           $("#round_off_box").hide();
+          $("#round_off").html("");
         }
         else
         {
-          $("#round_off_box").show();
-        }
+          transaction_total = transaction_summary.real_total;
+          $("#price").html(transaction_summary.subtotal);
+          $("#total").html(transaction_summary.total);
 
-        $("#round_off").html(transaction_summary.round_off);
+          if(transaction_summary.round_off == "0.00")
+          {
+            $("#round_off_box").hide();
+          }
+          else
+          {
+            $("#round_off_box").show();
+          }
+
+          $("#round_off").html(transaction_summary.round_off);
+        }
       }
       else
       {
@@ -2238,21 +2248,29 @@
         }
 
         let transaction_summary = result.transaction_summary;
-        transaction_total = transaction_summary.real_total;
-
-        $("#price").html(transaction_summary.subtotal);
-        $("#total").html(transaction_summary.total);
-
-        if(transaction_summary.round_off == "0.00")
+        if(transaction_summary == null)
         {
+          transaction_total = 0;
+          $("#price").html("0.00");
+          $("#total").html("0.00");
           $("#round_off_box").hide();
-        }
+          $("#round_off").html("");
+        } 
         else
         {
-          $("#round_off_box").show();
+          transaction_total = transaction_summary.real_total;
+          $("#price").html(transaction_summary.subtotal);
+          $("#total").html(transaction_summary.total);
+          if(transaction_summary.round_off == "0.00")
+          {
+            $("#round_off_box").hide();
+          }
+          else
+          {
+            $("#round_off_box").show();
+          }
+          $("#round_off").html(transaction_summary.round_off);
         }
-
-        $("#round_off").html(transaction_summary.round_off);
       }
     }).fail(function(xhr){
       if(xhr.status == 401)

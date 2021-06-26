@@ -332,18 +332,6 @@ class HomeController extends Controller
             $cashier_name = $cashier_detail->cashier_name;
           }
 
-          //Generate new invoice number
-
-          $seq = Invoice_sequence::first();
-          $now = now();
-          if(date("Y-m-d",strtotime($seq->updated_at)) == date("Y-m-d", strtotime($now))){
-            $transaction_no = $seq->branch_code.date("Ymd").$seq->next_seq;
-          }else{
-            $transaction_no = $seq->branch_code.date("Ymd", strtotime($now))."00001";
-          }
-
-          //Part 1
-
           $session_id = null;
           $session = session::where('closed', null)->orderBy('id', 'desc')->first();
           if($session)
@@ -355,34 +343,8 @@ class HomeController extends Controller
             'session_id' => $session_id,
             'ip' => $this->ip,
             'cashier_name' => $cashier_name,
-            'transaction_no' => $transaction_no,
             'user_id' => $user->id
           ]);
-
-          //Invoice number part 2 start
-
-          if(date("Y-m-d",strtotime($seq->updated_at)) == date('Y-m-d', strtotime($now))){
-            $next = $seq->next_seq;
-            $next = intval($next) + 1;
-            $i=5;
-            while($i>strlen($next)){
-              $next = "0".$next;
-            }
-            
-            Invoice_sequence::where('id',1)->update([
-              'current_seq' => $seq->next_seq,
-              'next_seq' => $next,
-            ]);
-
-          }else{
-
-            Invoice_sequence::where('id',1)->update([
-              'current_seq' => '00001',
-              'next_seq' => '00002',
-            ]);
-          }
-
-          //End invoice number here
 
           transaction_detail::create([
             'transaction_id' => $transaction->id,
@@ -526,9 +488,18 @@ class HomeController extends Controller
     {
       transaction_detail::where('id', $request->item_id)->delete();
 
-      $transaction = transaction::where('id', $request->transaction_id)->first();
+      $transaction_detail = transaction_detail::where('transaction_id', $request->transaction_id)->get();
 
-      $transaction_summary = $this->transaction_summary($transaction);
+      $transaction_summary = null;
+      if(count($transaction_detail) == 0)
+      {
+        transaction::where('id', $request->transaction_id)->delete();
+      }
+      else
+      {
+        $transaction = transaction::where('id', $request->transaction_id)->first();
+        $transaction_summary = $this->transaction_summary($transaction);
+      }
 
       $response = new \stdClass();
       $response->error = 0;
@@ -579,23 +550,21 @@ class HomeController extends Controller
       }
 
       $total = $total - $total_discount;
-
+      $total_summary = $this->roundDecimal($total);
+      $total = $total_summary->final_total;
+      $round_off = $total_summary->round_off;
+      
       $payment_type_text = "";
       if($payment_type == "cash")
       {
         $received_cash = $request->received_cash;
-
-        $total_summary = $this->roundDecimal($total);
-        $total = $total_summary->final_total;
-
         if(round($received_cash, 2) >= round($total, 2))
         {
           $valid_payment = true;
         }
         
-        $round_off = $total_summary->round_off;
-        $balance = $received_cash - $total;
         $payment_type_text = "Cash";
+        $balance = $received_cash - $total;
       } 
       else
       {
@@ -605,18 +574,6 @@ class HomeController extends Controller
           $valid_payment = true;
         }
 
-        // if($payment_type == "e-wallet")
-        // {
-        //   $payment_type_text = "E-Wallet";
-        // }
-        // elseif($payment_type == "debit_card")
-        // {
-        //   $payment_type_text = "Debit Card";
-        // }
-        // elseif($payment_type == "credit_card")
-        // {
-        //   $payment_type_text = "Credit Card";
-        // }
         if($payment_type == "card")
         {
           $payment_type_text = "Card";
@@ -654,8 +611,19 @@ class HomeController extends Controller
       
       if($valid_payment)
       {
+        //Generate new invoice number
+
+        $seq = Invoice_sequence::first();
+        $now = now();
+        if(date("Y-m-d",strtotime($seq->updated_at)) == date("Y-m-d", strtotime($now))){
+          $transaction_no = $seq->branch_code.date("Ymd").$seq->next_seq;
+        }else{
+          $transaction_no = $seq->branch_code.date("Ymd", strtotime($now))."00001";
+        }
+
         transaction::where('id', $request->transaction_id)->update([
           'opening_id' => $opening_id,
+          'transaction_no' => $transaction_no,
           'reference_no' => $reference_no,
           'subtotal' => round($subtotal, 2),
           'total_discount' => round($total_discount, 2),
@@ -669,6 +637,25 @@ class HomeController extends Controller
           'completed_by' => $user->id,
           'transaction_date' => date('Y-m-d H:i:s', strtotime(now()))
         ]);
+
+        if(date("Y-m-d",strtotime($seq->updated_at)) == date('Y-m-d', strtotime($now))){
+          $next = $seq->next_seq;
+          $next = intval($next) + 1;
+          $i=5;
+          while($i>strlen($next)){
+            $next = "0".$next;
+          }
+          
+          Invoice_sequence::where('id',$seq->id)->update([
+            'current_seq' => $seq->next_seq,
+            'next_seq' => $next,
+          ]);
+        }else{
+          Invoice_sequence::where('id',$seq->id)->update([
+            'current_seq' => '00001',
+            'next_seq' => '00002',
+          ]);
+        }
 
         $completed_transaction = transaction::where('id', $request->transaction_id)->first();
 
@@ -800,9 +787,17 @@ class HomeController extends Controller
         ]);
       }
 
-      $transaction = transaction::where('id', $transaction_detail->transaction_id)->first();
-
-      $transaction_summary = $this->transaction_summary($transaction);
+      $transaction_detail_list = transaction_detail::where('transaction_id', $transaction_detail->transaction_id)->get();
+      $transaction_summary = null;
+      if(count($transaction_detail_list) == 0)
+      {
+        transaction::where('id', $transaction_detail->transaction_id)->delete();
+      }
+      else
+      {
+        $transaction = transaction::where('id', $transaction_detail->transaction_id)->first();
+        $transaction_summary = $this->transaction_summary($transaction);
+      }
 
       $response = new \stdClass();
       $response->error = 0;
@@ -1623,7 +1618,7 @@ class HomeController extends Controller
         $session = session::where('closed', 1)->orderBy('id', 'desc')->first();
       }
 
-      $all_ip = transaction::where('session_id', $session->id)->groupBy('ip')->pluck('ip')->toArray();
+      $all_ip = transaction::where('completed', 1)->where('session_id', $session->id)->groupBy('ip')->pluck('ip')->toArray();
       $pos_cashier = pos_cashier::whereIn('ip', $all_ip)->get();
 
       $payment_type_list = ['cash', 'card', 'boost', 'tng', 'maybank_qr', 'grab_pay'];
@@ -1635,7 +1630,7 @@ class HomeController extends Controller
         }
       }
 
-      $all_transaction = transaction::where('session_id', $session->id)->get();
+      $all_transaction = transaction::where('completed', 1)->where('session_id', $session->id)->get();
 
       $total_sales = 0;
       foreach($all_transaction as $all)
@@ -1661,7 +1656,7 @@ class HomeController extends Controller
         }
       }
 
-      $payment_type_report = transaction::where('session_id', $session->id)->select('*')->selectRaw('FORMAT(SUM(transaction.total), 2) as payment_type_total')->groupBy('payment_type')->get();
+      $payment_type_report = transaction::where('completed', 1)->where('session_id', $session->id)->select('*')->selectRaw('FORMAT(SUM(transaction.total), 2) as payment_type_total')->groupBy('payment_type')->get();
 
       $response = new \stdClass();
       $response->error = 0;
