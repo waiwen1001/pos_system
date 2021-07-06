@@ -47,11 +47,13 @@ class HomeController extends Controller
 
       $branch_name = null;
       $branch_address = null;
+      $contact_number = null;
       $profile = profile::first();
       if($profile)
       {
         $branch_name = $profile->branch_name;
         $branch_address = $profile->address;
+        $contact_number = $profile->contact_number;
       }
 
       $subtotal = 0;
@@ -193,7 +195,7 @@ class HomeController extends Controller
         $device_type = $device->type;
       }
 
-      return view('front.index', compact('user', 'user_management_list', 'pending_transaction', 'subtotal', 'discount', 'have_discount', 'total', 'real_total', 'round_off', 'payment', 'balance', 'transaction_id', 'completed_transaction', 'opening', 'voucher_name', 'session', 'shortcut_key', 'ip', 'device_type', 'branch_name', 'branch_address', 'total_quantity'));
+      return view('front.index', compact('user', 'user_management_list', 'pending_transaction', 'subtotal', 'discount', 'have_discount', 'total', 'real_total', 'round_off', 'payment', 'balance', 'transaction_id', 'completed_transaction', 'opening', 'voucher_name', 'session', 'shortcut_key', 'ip', 'device_type', 'branch_name', 'branch_address', 'total_quantity', 'contact_number'));
     }
 
     public function getSetupPage()
@@ -646,7 +648,7 @@ class HomeController extends Controller
 
         if($payment_type == "card")
         {
-          $payment_type_text = "Card";
+          $payment_type_text = "Kredit Kad";
         }
         elseif($payment_type == "tng")
         {
@@ -1484,8 +1486,13 @@ class HomeController extends Controller
       }
       elseif($resync == 1)
       {
-        $session = session::where('closed', 1)->orderBy('id', 'desc')->first();
-        $session_list = [$session->id];
+        $session_list = session::where('closed', 1)->where('synced', null)->pluck('id')->toArray();
+
+        if(count($session_list) == 0)
+        {
+          $session = session::where('closed', 1)->orderBy('id', 'desc')->first();
+          $session_list = [$session->id];
+        }
       }
       
       $branch_id = env('branch_id');

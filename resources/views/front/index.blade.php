@@ -217,10 +217,10 @@
                         Cash Float ( Out )
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showCashFloatOut()"></span>
                       </button>
-                      <button class="dropdown-item" id="refundBtn" {{ $opening == 1 ? '' : 'disabled' }}>
+                      <!-- <button class="dropdown-item" id="refundBtn" {{ $opening == 1 ? '' : 'disabled' }}>
                         Refund
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showRefund()"></span>
-                      </button>
+                      </button> -->
                     @endif
                     @if($user->user_type == 1)
                       <div class="dropdown-divider"></div>
@@ -279,7 +279,7 @@
                       Credit card
                       <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsCredit()"></span>
                     </button> -->
-                    <button class="dropdown-item cardPayment" payment_type="card" payment_type_text="Card" href="#">
+                    <button class="dropdown-item cardPayment" payment_type="card" payment_type_text="Kredit Kad" href="#">
                       Kredit Kad
                       <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsCard()"></span>
                     </button>
@@ -733,6 +733,7 @@
     <div>
       <div style="display: flex; flex-direction: column; text-align: center;">
         <label style="font-size: 11px;">HOME U(M) SDN BHD (125272-P)</label>
+        <label style="font-size: 11px;">{{ $contact_number }}</label>
         <label style="font-size: 11px;">{!! nl2br(e($branch_address)) !!}</label><br/>
         <!-- <label>RESIT</label> -->
       </div>
@@ -811,6 +812,7 @@
     <div style="padding: 30px;">
       <div style="display: flex; flex-direction: column; text-align: center;">
         <label>HOME U(M) SDN BHD (125272-P)</label>
+        <label>{{ $contact_number }}</label>
         <label>{!! nl2br(e($branch_address)) !!}</label><br/>
       </div>
       <div id="dailyReportContent">
@@ -2075,12 +2077,12 @@
         let transaction = result.transaction;
         let transaction_detail = result.transaction_detail;
         let items_html = "";
+        items_html += "<table style='font-size: 11px;width:100%;border-spacing:0px 1px;'>";
         for(var a = 0; a < transaction_detail.length; a++)
         {
-          items_html += "<div style='font-size: 11px;'>"+transaction_detail[a].product_name+"</div>";
-          items_html += "<div style='display: flex; font-size:11px;'>";
-          items_html += "<div style='flex: 1;'>"+transaction_detail[a].barcode+"</div>";
-          items_html += "<div style='width: 120px;'>";
+          items_html += "<tr>";
+          items_html += "<td style='vertical-align:top;'>"+transaction_detail[a].product_name+"<br>"+transaction_detail[a].barcode+"</td>";
+          items_html += "<td style='width: 120px;vertical-align:top;'>";
 
           if(transaction_detail[a].wholesale_quantity > 0)
           {
@@ -2092,17 +2094,25 @@
             items_html += transaction_detail[a].quantity+".00 X RM "+transaction_detail[a].price_text;
           }
 
-          items_html += "</div>";
-          items_html += "<div style='width:70px;text-align:right;'>RM "+transaction_detail[a].total_text+"</div>";
-          items_html += "</div>";
+          items_html += "</td>";
+          items_html += "<td style='width:70px;text-align:right;vertical-align:top;'>RM "+transaction_detail[a].total_text+"</td>";
+          items_html += "</tr>";
         }
+
+        items_html += "</table>";
         
         $("#receipt_items").html(items_html);
+
+        var payment_type_text = transaction.payment_type_text;
+        if(payment_type_text == "Card")
+        {
+          payment_type_text = "Kredit Kad";
+        }
 
         $("#receipt_total_quantity").html(transaction.total_quantity);
         $("#receipt_total_items").html(transaction.total_items);
         $("#receipt_total").html("RM "+transaction.total_text);
-        $("#receipt_payment_type").html(transaction.payment_type_text);
+        $("#receipt_payment_type").html(payment_type_text);
 
         $("#receipt_voucher").hide();
         $("#receipt_ori_payment").html("");
@@ -2112,7 +2122,7 @@
         if(transaction.payment_type != "cash")
         {
           $("#receipt_other_payment").show();
-          $("#receipt_other_payment").html("<div>"+transaction.payment_type_text+"</div><div>RM "+transaction.total_text+"</div>");
+          $("#receipt_other_payment").html("<div>"+payment_type_text+"</div><div>RM "+transaction.total_text+"</div>");
           $("#receipt_cash").hide();
         }
         else
