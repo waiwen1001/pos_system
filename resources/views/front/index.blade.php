@@ -52,11 +52,20 @@
                       <td>
                         <div class="quantity">
                           <i class="fa fa-minus" onclick="editQuantity(this, 'plus', '{{ $item->id }}')"></i>
-                          <label>{{ $item->quantity }}</label>
+                          <label>{{ $item->quantity + $item->wholesale_quantity }}</label>
                           <i class="fa fa-plus" onclick="editQuantity(this, 'minus', '{{ $item->id }}')"></i>
                         </div>
                       </td>
-                      <td class="subtotal">RM {{ number_format($item->subtotal, 2) }}</td>
+                      <td class="subtotal">
+                        @if($item->wholesale_quantity > 0)
+                          <span style="color:#9c27b0;">RM {{ number_format( ($item->wholesale_quantity * $item->wholesale_price), 2) }}</span>
+                          <br>
+                        @endif
+
+                        @if($item->quantity > 0)
+                          RM {{ number_format( ($item->quantity * $item->price ), 2) }}
+                        @endif
+                      </td>
                       <td>
                         <button class="btn btn-dark items-cancel" onclick="cancelItem('{{ $item->id }}')">Cancel</button>
                       </td>
@@ -69,6 +78,12 @@
           </div>
           <div class="items-summary">
             <input type="hidden" name="transaction_id" id="transaction_id" value="{{ $transaction_id }}" />
+
+            <div class="summary-detail" style="display: {{ $total_quantity == 0 ? 'none' : '' }};">
+              <label>Total Quantity</label>
+              <div class="summary_price" id="total_quantity">{{ $total_quantity }}</div>
+            </div>
+
             <div class="summary-detail">
               <label>Price</label>
               <div>RM</div>
@@ -144,6 +159,7 @@
               <thead>
                 <th>Barcode</th>
                 <th>Item name</th>
+                <th>UOM</th>
                 <th>Price</th>
               </thead>
               <tbody id="related_item">
@@ -264,7 +280,7 @@
                       <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsCredit()"></span>
                     </button> -->
                     <button class="dropdown-item cardPayment" payment_type="card" payment_type_text="Card" href="#">
-                      Card
+                      Kredit Kad
                       <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsCard()"></span>
                     </button>
                     <!-- <button class="dropdown-item cardPayment" payment_type="e-wallet" payment_type_text="E-wallet" href="#">
@@ -797,7 +813,6 @@
         <label>HOME U(M) SDN BHD (125272-P)</label>
         <label>{!! nl2br(e($branch_address)) !!}</label><br/>
       </div>
-      <div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>
       <div id="dailyReportContent">
       </div>
     </div>
@@ -960,8 +975,16 @@
           </button>
         </div>
         <div class="modal-body">
-          <input type="text" class="form-control" name="cash_float" autocomplete="off" />
-          <span class="invalid-feedback" role="alert"></span>
+          <div class="form-group">
+            <label>Amount</label>
+            <input type="text" class="form-control" name="cash_float" autocomplete="off" />
+            <span class="invalid-feedback" role="alert"></span>
+          </div>
+
+          <div class="form-group">
+            <label>Remarks</label>
+            <input type="text" class="form-control" name="cash_float_remarks" autocomplete="off" />
+          </div>
         </div>
         <div class="modal-footer">
           <input type="hidden" name="cash_float_type" />
@@ -1212,7 +1235,8 @@
 
     if(session == "")
     {
-      syncProductList(1);
+      $("#syncHQModal").modal('show');
+      syncHQ(2);
     }
 
     for(var a = 0; a < shortcut_key.length; a++)
@@ -1644,6 +1668,8 @@
 
         generateItemList(transaction_summary);
         $("input[name=barcode_manual]").iCheck('uncheck');
+
+        $("#items-table tbody tr:first-child").addClass("new_item");
       }
       $("#barcode").val('');
     }).fail(function(xhr){
@@ -1680,11 +1706,23 @@
       html += "<td>";
       html += "<div class='quantity'>";
       html += "<i class='fa fa-minus' onclick='editQuantity(this, \"plus\", \""+item_detail.id+"\")'></i>";
-      html += "<label>"+item_detail.quantity+"</label>";
+      html += "<label>"+(item_detail.quantity + item_detail.wholesale_quantity)+"</label>";
       html += "<i class='fa fa-plus' onclick='editQuantity(this, \"minus\", \""+item_detail.id+"\")'></i>";
       html += "</div>";
       html += "</td>";
-      html += "<td class='subtotal'>RM "+item_detail.subtotal_text+"</td>";
+      html += "<td class='subtotal'>";
+
+      if(item_detail.wholesale_quantity > 0)
+      {
+        html += "<span style='color:#9c27b0;'>RM "+item_detail.total_wholesale_price_text+"</span><br>";
+      }
+
+      if(item_detail.quantity > 0)
+      {
+        html += "RM "+item_detail.total_price_text;
+      }
+
+      html += "</td>";
       html += "<td>";
       html += "<button class='btn btn-dark items-cancel' onclick='cancelItem(\""+item_detail.id+"\")'>Cancel</button>";
       html += "</td>";
@@ -1694,6 +1732,7 @@
     $("#items-table tbody").html(html);
     $("#price").html(transaction_summary.subtotal);
     $("#total").html(transaction_summary.total);
+    $("#total_quantity").show().html(transaction_summary.total_quantity);
 
     if(transaction_summary.round_off == "0.00")
     {
@@ -1726,12 +1765,14 @@
           $("#total").html("0.00");
           $("#round_off_box").hide();
           $("#round_off").html("");
+          $("#total_quantity").hide().html("");
         }
         else
         {
           transaction_total = transaction_summary.real_total;
           $("#price").html(transaction_summary.subtotal);
           $("#total").html(transaction_summary.total);
+          $("#total_quantity").show().html(transaction_summary.total_quantity);
 
           if(transaction_summary.round_off == "0.00")
           {
@@ -1860,6 +1901,7 @@
             $("#discount_name").html("Discount");
             $("#round_off_box").hide();
             $("#remove_voucher").hide();
+            $("#total_quantity").hide().html("");
 
             $("#clearItemsModal").modal('hide');
           }
@@ -2038,8 +2080,20 @@
           items_html += "<div style='font-size: 11px;'>"+transaction_detail[a].product_name+"</div>";
           items_html += "<div style='display: flex; font-size:11px;'>";
           items_html += "<div style='flex: 1;'>"+transaction_detail[a].barcode+"</div>";
-          items_html += "<div style='flex: 1;'>"+transaction_detail[a].quantity+".00 X RM "+transaction_detail[a].price_text+"</div>";
-          items_html += "<div>RM "+transaction_detail[a].total_text+"</div>";
+          items_html += "<div style='width: 120px;'>";
+
+          if(transaction_detail[a].wholesale_quantity > 0)
+          {
+            items_html += transaction_detail[a].wholesale_quantity+".00 X RM "+transaction_detail[a].wholesale_price_text+"<br>";
+          }
+
+          if(transaction_detail[a].quantity > 0)
+          {
+            items_html += transaction_detail[a].quantity+".00 X RM "+transaction_detail[a].price_text;
+          }
+
+          items_html += "</div>";
+          items_html += "<div style='width:70px;text-align:right;'>RM "+transaction_detail[a].total_text+"</div>";
           items_html += "</div>";
         }
         
@@ -2240,7 +2294,19 @@
         if(result.quantity > 0)
         {
           $(_this).siblings("label").html(result.quantity);
-          $("#items-table tbody tr[item_id="+item_id+"] td.subtotal").html("RM "+result.subtotal);
+
+          var html = "";
+          if(result.wholesale_price > 0)
+          {
+            html += "<span style='color:#9c27b0;'>RM "+result.wholesale_price_text+"</span><br>";
+          }
+
+          if(result.price)
+          {
+            html += "RM "+result.price_text;
+          }
+
+          $("#items-table tbody tr[item_id="+item_id+"] td.subtotal").html(html);
         }
         else
         {
@@ -2253,6 +2319,7 @@
           transaction_total = 0;
           $("#price").html("0.00");
           $("#total").html("0.00");
+          $("#total_quantity").hide().html("");
           $("#round_off_box").hide();
           $("#round_off").html("");
         } 
@@ -2261,6 +2328,7 @@
           transaction_total = transaction_summary.real_total;
           $("#price").html(transaction_summary.subtotal);
           $("#total").html(transaction_summary.total);
+          $("#total_quantity").show().html(transaction_summary.total_quantity);
           if(transaction_summary.round_off == "0.00")
           {
             $("#round_off_box").hide();
@@ -2714,6 +2782,7 @@
         {
           $("#closingModal").modal('hide');
           logout();
+          // location.reload();
         }
       }).fail(function(xhr){
         if(xhr.status == 401)
@@ -2790,7 +2859,9 @@
 
         opening = 0;
 
-        syncHQ(0);
+        dailyReport();
+        logout();
+        // syncHQ(0);
       }
       else
       {
@@ -2826,6 +2897,7 @@
   function submitCashFloat()
   {
     let amount = $("input[name='cash_float']").val();
+    let remarks = $("input[name='cash_float_remarks']").val();
     let cash_float_type = $("input[name='cash_float_type']").val();
 
     if(!amount)
@@ -2834,7 +2906,7 @@
       return;
     }
 
-    $.post("{{ route('submitCashFloat') }}", {"_token" : "{{ csrf_token() }}", "amount" : amount, "type" : cash_float_type}, function(result){
+    $.post("{{ route('submitCashFloat') }}", {"_token" : "{{ csrf_token() }}", "amount" : amount, "type" : cash_float_type, "remarks" : remarks }, function(result){
       if(result.error == 1)
       {
         $("#error_content").html(result.message);
@@ -2884,7 +2956,13 @@
     $("#syncHQContent").html(html);
     $("#syncHQBtn").html("Syncing...").attr("disabled", true);
 
-    $.get("{{ route('branchSync') }}", { "resync" : 1 }, function(result){
+    var resync = 0;
+    if(manual == 1)
+    {
+      resync = 1;
+    }
+
+    $.get("{{ route('branchSync') }}", { "resync" : resync }, function(result){
       if(result.error == 0)
       {
         $("#syncHQContent").html("Sync completed.");
@@ -2894,10 +2972,8 @@
           $("#syncHQModal").modal('hide');
           if(manual == 0)
           {
-            dailyReport();
             logout();
-          }       
-          
+          }
         });
 
         window.onbeforeunload = function () {
@@ -2908,6 +2984,56 @@
         {
           enablePosSystem();
         }
+        else if(manual == 2)
+        {
+          $("#syncHQModal").modal('hide');
+          syncProductList(1);
+        }
+      }
+      else
+      {
+        // no session to sync
+        if(manual == 2 && result.error == 2)
+        {
+          setTimeout(function(){
+            $("#syncHQModal").modal('hide');
+          }, 500); 
+          syncProductList(1);
+        }
+        else if(result.error == 2)
+        {
+
+        }
+        else
+        {
+          $("#syncHQBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
+            syncHQ(manual);
+            $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
+          });
+
+          $("#syncHQContent").html("Sync failed, please sync again.");
+
+          Swal.fire({
+            title: result.message,
+            icon: 'error',
+            confirmButtonText: 'OK',
+          });
+        }
+      }
+    }).fail(function(){
+
+      if(xhr.status == 401)
+      {
+        Swal.fire({
+          title: 'Your account was logged out, please login again.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+        }).then((result) => {
+          /* Read more about isConfirmed, isDenied below */
+          if (result.isConfirmed) {
+            location.reload();
+          }
+        })
       }
       else
       {
@@ -2918,22 +3044,13 @@
 
         $("#syncHQContent").html("Sync failed, please sync again.");
 
-        alert("something wrong, click Re-sync to sync again.");
+        Swal.fire({
+          title: 'Something wrong, click Re-sync to sync again.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+        })
       }
       
-    }).fail(function(){
-      $("#syncHQBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
-        syncHQ(manual);
-        $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
-      });
-
-      $("#syncHQContent").html("Sync failed, please sync again.");
-
-      Swal.fire({
-        title: 'Something wrong, click Re-sync to sync again.',
-        icon: 'error',
-        confirmButtonText: 'OK',
-      })
     });
   }
 
@@ -2944,51 +3061,53 @@
       {
         // var category_report = result.category_report;
         // var department_report = result.department_report;
-        var payment_type_report = result.payment_type_report;
+        var payment_type_result = result.payment_type_result;
         var pos_cashier = result.pos_cashier;
         var session = result.session;
 
         var html = "";
-        html += "<h4 style='text-align:center;'>Daily Sales Report on "+session.opening_date_time+"</h4>";
-        html += '<div style="border: 2px dashed #999; height: 2px; margin: 10px 0;"></div>';
-
-        if(payment_type_report.length > 0)
-        {
-          html += "<table style='width: 100%;'>";
-          for(var a = 0; a < payment_type_report.length; a++)
-          {
-            let payment_type = payment_type_report[a].payment_type;
-            html += "<tr>";
-            html += "<td width='85%'>"+payment_type_report[a].payment_type_text+"</td>";
-            html += "<td>RM</td>";
-            html += "<td align='right'>"+payment_type_report[a].payment_type_total+"</td>";
-            html += "</tr>";
-
-            for(var b = 0; b < pos_cashier.length; b++)
-            {
-              if(pos_cashier[b][payment_type] != "0.00")
-              {
-                html += "<tr>";
-                html += "<td width='85%'>"+pos_cashier[b].cashier_name+"</td>";
-                html += "<td>RM</td>";
-                html += "<td align='right'>"+pos_cashier[b][payment_type]+"</td>";
-                html += "</tr>";
-              }
-            }
-
-            html += "<tr>";
-            html += "<td colspan='3'><div style='margin-top:20px;'></div></td>";
-            html += "</tr>";
-          }
-          html += "</table>";
-          html += '<div style="border: 2px dashed #999; height: 2px; margin: 10px 0 30px 0;"></div>';
-        }
-
-        html += "<div style='display:flex;'>";
-        html += "<div style='flex:1;'>Total Sales Today</div>";
-        html += "<div style='flex:1; text-align:right;'>RM "+ result.total_sales+"</div>";
+        html += "<div style='text-align:center;'>"
+        html += "<h4 style='margin:0px;'>Report Jualan Harian</h4>";
+        html += "<p style='margin:0px;'>Tarikh : "+session.opening_date_time+"</p>";
         html += "</div>";
 
+        html += "<table style='width:100%;border-spacing: 0px;'>";
+        html += "<tr>";
+        html += "<td style='border:1px solid #000;'></td>";
+        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;'>Kutipan Tunai</td>";
+        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;'>Kredit Kad</td>";
+        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;'>Touch & Go</td>";
+        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;'>Maybank QRPay</td>";
+        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;'>Grab Pay</td>";
+        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;'>Boost</td>";
+        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;'>Jumlah Jualan</td>";
+        html += "</tr>";
+        html += "<tr><td style='border:1px solid #000; height:22px;'></td><td style='border:1px solid #000;'></td><td style='border:1px solid #000;'></td><td style='border:1px solid #000;'></td><td style='border:1px solid #000;'></td><td style='border:1px solid #000;'></td><td style='border:1px solid #000;'></td></td><td style='border:1px solid #000;'></td></tr>";
+        
+        for(var a = 0; a < pos_cashier.length; a++)
+        {
+          html += "<tr>";
+          html += "<td style='border:1px solid #000;text-align:left;padding:0px 3px;'>"+pos_cashier[a].cashier_name+"</td>";
+          html += "<td style='border:1px solid #000;text-align:right;padding:0px 3px;'>"+pos_cashier[a].cash+"</td>";
+          html += "<td style='border:1px solid #000;text-align:right;padding:0px 3px;'>"+pos_cashier[a].card+"</td>";
+          html += "<td style='border:1px solid #000;text-align:right;padding:0px 3px;'>"+pos_cashier[a].tng+"</td>";
+          html += "<td style='border:1px solid #000;text-align:right;padding:0px 3px;'>"+pos_cashier[a].maybank_qr+"</td>";
+          html += "<td style='border:1px solid #000;text-align:right;padding:0px 3px;'>"+pos_cashier[a].grab_pay+"</td>";
+          html += "<td style='border:1px solid #000;text-align:right;padding:0px 3px;'>"+pos_cashier[a].boost+"</td>";
+          html += "<td style='border:1px solid #000;text-align:right;padding:0px 3px;'>"+pos_cashier[a].total+"</td>";
+          html += "</tr>";
+        }
+
+        html += "<tr>";
+        html += "<td style='border:1px solid #000;text-align:left;padding:0px 3px;'>Jumlah</td>";
+        for(var b = 0; b < payment_type_result.length; b++)
+        { 
+          html += "<td style='border:1px solid #000;text-align:right;padding:0px 3px;'>"+payment_type_result[b].total+"</td>";
+        }
+        html += "<td style='border:1px solid #000;text-align:right;padding:0px 3px;'>"+result.total_sales+"</td>";
+        html += "</tr>";
+        
+        html += "</table>";
         $("#dailyReportContent").html(html);
 
         var dailyReportPrint = document.getElementById('dailyReport');
@@ -3301,22 +3420,49 @@
 
         $("#syncHQProductListContent").html("Sync failed, please sync again.");
 
-        alert("something wrong, click Re-sync to sync again.");
+        var message = result.message;
+        if(!message)
+        {
+          message = "Something wrong, click Re-sync to sync again.";
+        }
+
+        Swal.fire({
+          title: result.message,
+          icon: 'error',
+          confirmButtonText: 'OK',
+        });
       }
       
     }).fail(function(){
-      $("#syncProductListBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
-        syncProductList(create_session);
-        $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
-      });
 
-      $("#syncHQProductListContent").html("Sync failed, please sync again.");
+      if(xhr.status == 401)
+      {
+        Swal.fire({
+          title: 'Your account was logged out, please login again.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+        }).then((result) => {
+          /* Read more about isConfirmed, isDenied below */
+          if (result.isConfirmed) {
+            location.reload();
+          }
+        })
+      }
+      else
+      {
+        $("#syncProductListBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
+          syncProductList(create_session);
+          $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
+        });
 
-      Swal.fire({
-        title: 'Something wrong, click Re-sync to sync again.',
-        icon: 'error',
-        confirmButtonText: 'OK',
-      })
+        $("#syncHQProductListContent").html("Sync failed, please sync again.");
+
+        Swal.fire({
+          title: 'Something wrong, click Re-sync to sync again.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+        })
+      }
     });
   }
 
@@ -3395,9 +3541,15 @@
           var html = "";
           for(var a = 0; a < related_item.length; a++)
           {
+            let uom = "";
+            if(related_item[a].uom)
+            {
+              uom = related_item[a].uom;
+            }
             html += "<tr class='"+(a == 0 ? "selected" : "" )+"' barcode='"+related_item[a].barcode+"'>";
             html += "<td>"+related_item[a].barcode+"</td>";
             html += "<td>"+related_item[a].product_name+"</td>";
+            html += "<td>"+uom+"</td>";
             html += "<td>RM <span style='float: right;'>"+related_item[a].price_text+"</span></td>";
             html += "</tr>";
           }

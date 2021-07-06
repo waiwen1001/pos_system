@@ -1,0 +1,44 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class AddWholesalesToProductTable extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::table('product', function (Blueprint $table) {
+            $table->double('wholesale_price', 12, 2)->after('promotion_price')->nullable();
+            $table->integer('wholesale_quantity')->after('wholesale_price')->nullable();
+            $table->dateTime('wholesale_start_date')->after('wholesale_quantity')->nullable();
+            $table->dateTime('wholesale_end_date')->after('wholesale_start_date')->nullable();
+        });
+
+        Schema::table('transaction_detail', function (Blueprint $table) {
+            $table->double('wholesale_price', 12, 2)->after('price')->nullable();
+            $table->integer('wholesale_quantity')->after('wholesale_price')->nullable();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::table('product', function (Blueprint $table) {
+            $table->dropColumn(['wholesale_price', 'wholesale_quantity', 'wholesale_start_date', 'wholesale_end_date']);
+        });
+
+        Schema::table('transaction_detail', function (Blueprint $table) {
+            $table->dropColumn(['wholesale_price', 'wholesale_quantity']);
+        });
+    }
+}

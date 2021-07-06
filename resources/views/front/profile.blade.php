@@ -50,8 +50,8 @@
           </div>
 
           <div class="form-group">
-            <label>Branch Name</label>
-            <input type="text" class="form-control" name="branch_name" value="{{ $branch_name }}" />
+            <label>Contact Number</label>
+            <input type="text" class="form-control" name="contact_number" value="{{ $contact_number }}" />
           </div>
 
           <div class="form-group">

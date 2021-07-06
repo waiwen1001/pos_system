@@ -64,6 +64,7 @@ class HomeController extends Controller
       $round_off = 0;
       $transaction_id = null;
       $voucher_name = null;
+      $total_quantity = 0;
 
       $session = session::where('closed', null)->orderBy('id', 'desc')->first();
 
@@ -88,6 +89,7 @@ class HomeController extends Controller
         $discount = $transaction_summary->total_discount;
         $real_total = $transaction_summary->real_total;
         $round_off = $transaction_summary->round_off;
+        $total_quantity = $transaction_summary->total_quantity;
 
         $payment = $pending_transaction->payment;
         $balance = $pending_transaction->balance;
@@ -191,7 +193,7 @@ class HomeController extends Controller
         $device_type = $device->type;
       }
 
-      return view('front.index', compact('user', 'user_management_list', 'pending_transaction', 'subtotal', 'discount', 'have_discount', 'total', 'real_total', 'round_off', 'payment', 'balance', 'transaction_id', 'completed_transaction', 'opening', 'voucher_name', 'session', 'shortcut_key', 'ip', 'device_type', 'branch_name', 'branch_address'));
+      return view('front.index', compact('user', 'user_management_list', 'pending_transaction', 'subtotal', 'discount', 'have_discount', 'total', 'real_total', 'round_off', 'payment', 'balance', 'transaction_id', 'completed_transaction', 'opening', 'voucher_name', 'session', 'shortcut_key', 'ip', 'device_type', 'branch_name', 'branch_address', 'total_quantity'));
     }
 
     public function getSetupPage()
@@ -319,6 +321,27 @@ class HomeController extends Controller
           }
         }
 
+        $transaction_wholesale_price = 0;
+        $transaction_wholesale_quantity = 0;
+        $quantity = 1;
+        $subtotal = round($product->price, 2);
+        $total = round($product->price, 2);
+
+        if($product->wholesale_price && $product->wholesale_start_date && $product->wholesale_end_date)
+        {
+          if($product->wholesale_start_date <= $now && $product->wholesale_end_date >= $now)
+          {
+            if($product->wholesale_quantity == 1)
+            {
+              $transaction_wholesale_price = $product->wholesale_price;
+              $transaction_wholesale_quantity = 1;
+              $quantity = 0;
+              $subtotal = round($product->wholesale_price, 2);
+              $total = round($product->wholesale_price, 2);
+            }
+          }
+        }
+
         $user = Auth::user();
         $transaction = transaction::where('completed', null)->where('ip', $this->ip)->first();
 
@@ -354,10 +377,12 @@ class HomeController extends Controller
             'barcode' => $product->barcode,
             'product_name' => $product->product_name,
             'price' => round($product->price, 2),
-            'quantity' => 1,
+            'quantity' => $quantity,
+            'wholesale_price' => $transaction_wholesale_price,
+            'wholesale_quantity' => $transaction_wholesale_quantity,
             'discount' => 0,
-            'subtotal' => round($product->price, 2),
-            'total' => round($product->price, 2)
+            'subtotal' => $subtotal,
+            'total' => $total
           ]);
         }
         else
@@ -366,11 +391,36 @@ class HomeController extends Controller
 
           if($transaction_detail)
           {
+            $quantity = $transaction_detail->quantity + 1;
+            $transaction_wholesale_quantity = $transaction_detail->wholesale_quantity;
+            $transaction_wholesale_price = $transaction_detail->wholesale_price;
+            $subtotal = round( ($transaction_detail->quantity + 1) * $product->price, 2);
+            $total = round( ($transaction_detail->quantity + 1) * $product->price, 2);
+
+            $check_wholesale = false;
+            if($product->wholesale_quantity)
+            {
+              $check_wholesale = $quantity % $product->wholesale_quantity;
+            }
+
+            if($check_wholesale == 0 || $product->wholesale_quantity == 1)
+            {
+              $quantity = $quantity - $product->wholesale_quantity;
+              $transaction_wholesale_quantity = $transaction_wholesale_quantity + $product->wholesale_quantity;
+
+              $transaction_wholesale_price = $product->wholesale_price;
+            }
+
+            $subtotal = ( $product->price * $quantity ) + ( $transaction_wholesale_quantity * $transaction_wholesale_price );
+            $total = ( $product->price * $quantity ) + ( $transaction_wholesale_quantity * $transaction_wholesale_price );
+
             transaction_detail::where('id', $transaction_detail->id)->update([
               'price' => round($product->price, 2),
-              'quantity' => $transaction_detail->quantity + 1,
-              'subtotal' => round( ($transaction_detail->quantity + 1) * $product->price, 2),
-              'total' => round( ($transaction_detail->quantity + 1) * $product->price, 2)
+              'quantity' => $quantity,
+              'wholesale_quantity' => $transaction_wholesale_quantity,
+              'wholesale_price' => $transaction_wholesale_price,
+              'subtotal' => $subtotal,
+              'total' => $total
             ]);
           }
           else
@@ -383,10 +433,12 @@ class HomeController extends Controller
               'barcode' => $product->barcode,
               'product_name' => $product->product_name,
               'price' => round($product->price, 2),
-              'quantity' => 1,
+              'quantity' => $quantity,
+              'wholesale_price' => $transaction_wholesale_price,
+              'wholesale_quantity' => $transaction_wholesale_quantity,
               'discount' => 0,
-              'subtotal' => round($product->price, 2),
-              'total' => round($product->price, 2)
+              'subtotal' => $subtotal,
+              'total' => $total
             ]);
           }
         }
@@ -437,21 +489,38 @@ class HomeController extends Controller
     public function transaction_summary($transaction)
     {
       $subtotal = 0;
-      $total = 0;
+      $total = 0;  
       $round_off = 0;
 
       $discount = $transaction->total_discount;
       $round_off = $transaction->round_off;
+      $total_quantity = 0;
 
-      $items_list = transaction_detail::where('transaction_id', $transaction->id)->where('void', null)->get();
+      $items_list = transaction_detail::where('transaction_id', $transaction->id)->where('void', null)->orderBy('updated_at', 'desc')->get();
       if(count($items_list) > 0)
       {
         foreach($items_list as $item)
         {
+          $total_quantity += ($item->quantity + $item->wholesale_quantity);
+          $transaction_price = 0;
+          $transaction_wholesale_price = 0;
+
+          if($item->quantity > 0)
+          {
+            $transaction_price = $item->quantity * $item->price;
+          }
+
+          if($item->wholesale_quantity > 0)
+          {
+            $transaction_wholesale_price = $item->wholesale_quantity * $item->wholesale_price;
+          }
+
           $item->subtotal_text = number_format($item->subtotal, 2);
 
           $subtotal = $subtotal + $item->subtotal;
           $total = $total + $item->total;
+          $item->total_price_text = number_format($transaction_price, 2);
+          $item->total_wholesale_price_text = number_format($transaction_wholesale_price, 2);
         }
       }
 
@@ -480,6 +549,7 @@ class HomeController extends Controller
       $transaction_summary->payment = number_format($transaction->payment, 2);
       $transaction_summary->balance = number_format($transaction->balance, 2);
       $transaction_summary->transaction_id = $transaction->id;
+      $transaction_summary->total_quantity = $total_quantity;
 
       return $transaction_summary;
     }
@@ -759,29 +829,68 @@ class HomeController extends Controller
 
     public function editQuantity(Request $request)
     {
+      $now = date('Y-m-d H:i:s', strtotime(now()));
       $transaction_detail = transaction_detail::where('id', $request->item_id)->first();
 
-      $quantity = $transaction_detail->quantity;
+      $product = product::where('id', $transaction_detail->product_id)->first();
+      if($product->promotion_start && $product->promotion_end && $product->promotion_price)
+      {
+        if($product->promotion_start <= $now && $product->promotion_end >= $now)
+        {
+          $product->price = $product->promotion_price;
+        }
+      }
+
+      $transaction_detail->price = $product->price;
+
+      $total_quantity = $transaction_detail->quantity + $transaction_detail->wholesale_quantity;
       if($request->type == "plus")
       {
-        $quantity--;
+        $total_quantity--;
       }
       elseif($request->type == "minus")
       {
-        $quantity++;
+        $total_quantity++;
       }
 
-      $subtotal = $transaction_detail->price * $quantity;
-      $total = $transaction_detail->price * $quantity;
+      if($product->wholesale_price && $product->wholesale_start_date && $product->wholesale_end_date)
+      {
+        if($product->wholesale_start_date <= $now && $product->wholesale_end_date >= $now)
+        {
+          if($total_quantity >= $product->wholesale_quantity)
+          {
+            $mod_quantity = $total_quantity % $product->wholesale_quantity;
+            $transaction_detail->quantity = $mod_quantity;
+            $transaction_detail->wholesale_quantity = ($total_quantity - $mod_quantity);
 
-      if($quantity == 0)
+            $transaction_detail->wholesale_price = $product->wholesale_price;
+          }
+          elseif($total_quantity < $product->wholesale_quantity)
+          {
+            $transaction_detail->quantity = $total_quantity;
+            $transaction_detail->wholesale_quantity = 0;
+          }
+        }
+      }
+      else
+      {
+        $transaction_detail->quantity = $total_quantity;
+      }
+
+      $subtotal = ($transaction_detail->price * $transaction_detail->quantity) + ($transaction_detail->wholesale_price * $transaction_detail->wholesale_quantity);
+      $total = ($transaction_detail->price * $transaction_detail->quantity) + ($transaction_detail->wholesale_price * $transaction_detail->wholesale_quantity);
+
+      if($total_quantity == 0)
       {
         transaction_detail::where('id', $request->item_id)->delete();
       }
       else
       {
         transaction_detail::where('id', $request->item_id)->update([
-          'quantity' => $quantity,
+          'price' => $product->price,
+          'quantity' => $transaction_detail->quantity,
+          'wholesale_quantity' => $transaction_detail->wholesale_quantity,
+          'wholesale_price' => $transaction_detail->wholesale_price,
           'subtotal' => round($subtotal, 2),
           'total' => round($total, 2)
         ]);
@@ -799,10 +908,18 @@ class HomeController extends Controller
         $transaction_summary = $this->transaction_summary($transaction);
       }
 
+      $transaction_price = $transaction_detail->price * $transaction_detail->quantity;
+      $transaction_wholesale_price = $transaction_detail->wholesale_price * $transaction_detail->wholesale_quantity;
+
+
       $response = new \stdClass();
       $response->error = 0;
       $response->message = "Success";
-      $response->quantity = $quantity;
+      $response->quantity = $total_quantity;
+      $response->price = $transaction_price;
+      $response->price_text = number_format($transaction_price, 2);
+      $response->wholesale_price = $transaction_wholesale_price;
+      $response->wholesale_price_text = number_format($transaction_wholesale_price, 2);
       $response->transaction_summary = $transaction_summary;
       $response->subtotal = number_format($subtotal, 2);
       $response->total = number_format($total, 2);
@@ -1181,7 +1298,8 @@ class HomeController extends Controller
         }
 
         session::where('closed', null)->update([
-          'closed' => 1
+          'closed' => 1,
+          'synced' => null
         ]);
 
         $response = $this->branchSync();
@@ -1308,6 +1426,7 @@ class HomeController extends Controller
       foreach($transaction_detail_list as $transaction_detail)
       {
         $transaction_detail->price_text = number_format($transaction_detail->price, 2);
+        $transaction_detail->wholesale_price_text = number_format($transaction_detail->wholesale_price, 2);
         $transaction_detail->total_text = number_format($transaction_detail->total, 2);
 
         $total_quantity += $transaction_detail->quantity;
@@ -1352,7 +1471,23 @@ class HomeController extends Controller
     public function branchSync()
     {
       // last session
-      $session = session::where('closed', 1)->orderBy('id', 'desc')->first();
+      $resync = 0;
+
+      if(isset($_GET['resync']))
+      {
+        $resync = $_GET['resync'];
+      }
+
+      if($resync == 0)
+      {
+        $session_list = session::where('closed', 1)->where('synced', null)->pluck('id')->toArray();
+      }
+      elseif($resync == 1)
+      {
+        $session = session::where('closed', 1)->orderBy('id', 'desc')->first();
+        $session_list = [$session->id];
+      }
+      
       $branch_id = env('branch_id');
 
       if(!$branch_id)
@@ -1364,32 +1499,49 @@ class HomeController extends Controller
         return response()->json($response);
       }
 
-      if(!$session)
+      if(count($session_list) == 0)
       {
         $response = new \stdClass();
-        $response->error = 1;
+        $response->error = 2;
         $response->message = "Session not found.";
 
         return response()->json($response);
       }
 
-      $transaction = transaction::where('session_id', $session->id)->get();
-      $transaction_detail = transaction_detail::leftJoin('transaction', 'transaction.id', '=', 'transaction_detail.transaction_id')->where('transaction.session_id', $session->id)->select('transaction_detail.*')->get();
+      $transaction = transaction::whereIn('session_id', $session_list)->get();
+      $transaction_detail = transaction_detail::leftJoin('transaction', 'transaction.id', '=', 'transaction_detail.transaction_id')->whereIn('transaction.session_id', $session_list)->select('transaction_detail.*', 'transaction.session_id')->get();
 
       $branchSyncURL = env('branchSyncURL');
 
       if($branchSyncURL)
       {
         $response = Http::post($branchSyncURL, [
-          'session_id' => $session->id,
+          'session_list' => $session_list,
           'branch_id' => $branch_id,
           'transaction' => $transaction,
           'transaction_detail' => $transaction_detail
         ]);
 
-        $response = $this->syncHQProductList($response['product_list']);
+        if($response['error'] == 0)
+        {
+          session::whereIn('id', $session_list)->update([
+            'synced' => 1
+          ]);
 
-        return response()->json($response);
+          $response = $this->syncHQProductList($response['product_list']);
+          return response()->json($response);
+        }
+        else
+        {
+          $response = new \stdClass();
+          $response->error = 1;
+          $response->message = "HQ Sycn API error.";
+
+          return response()->json($response);
+        }
+        
+
+        
       }
       else
       {
@@ -1410,6 +1562,7 @@ class HomeController extends Controller
 
       $barcode_array = array();
       $total_product_list = count($product_list);
+
       foreach($product_list as $key => $product)
       {
         \Log::info("Updating product list on ".$key." / ".$total_product_list);
@@ -1499,8 +1652,12 @@ class HomeController extends Controller
           'branch_id' => $branch_id,
         ]);
 
-        if($response['error'] == 1)
+        if($response['error'] == 1 || $response->getStatusCode() == "500")
         {
+          $response = new \stdClass();
+          $response->error = 1;
+          $response->message = "HQ server is not found or URL incorrect.";
+
           return response()->json($response);
         }
 
@@ -1522,6 +1679,7 @@ class HomeController extends Controller
               'barcode' => $product['barcode'],
               'product_name' => $product['product_name'],
               'price' => $product['price'],
+              'uom' => $product['uom'],
               'promotion_start' => $product['promotion_start'],
               'promotion_end' => $product['promotion_end'],
               'promotion_price' => $product['promotion_price'],
@@ -1621,13 +1779,15 @@ class HomeController extends Controller
       $all_ip = transaction::where('completed', 1)->where('session_id', $session->id)->groupBy('ip')->pluck('ip')->toArray();
       $pos_cashier = pos_cashier::whereIn('ip', $all_ip)->get();
 
-      $payment_type_list = ['cash', 'card', 'boost', 'tng', 'maybank_qr', 'grab_pay'];
+      $payment_type_list = ['cash', 'card', 'tng', 'maybank_qr', 'grab_pay', 'boost'];
       foreach($pos_cashier as $pos)
       {
         foreach($payment_type_list as $payment_type)
         {
           $pos[$payment_type] = 0;
         }
+
+        $pos->total = 0;
       }
 
       $all_transaction = transaction::where('completed', 1)->where('session_id', $session->id)->get();
@@ -1642,6 +1802,7 @@ class HomeController extends Controller
           if($pos->ip == $all->ip)
           {
             $pos[$payment_type] += $all->total;
+            $pos->total += $all->total;
             break;
           }
           
@@ -1652,17 +1813,76 @@ class HomeController extends Controller
       {
         foreach($payment_type_list as $payment_type)
         {
-          $pos[$payment_type] = number_format($pos[$payment_type], 2);
+          if($pos[$payment_type] == 0)
+          {
+            $pos[$payment_type] = "-";
+          }
+          else
+          {
+            $pos[$payment_type] = number_format($pos[$payment_type], 2);
+          }
+          
+        }
+
+        if($pos->total == 0)
+        {
+          $pos->total = "-";
+        }
+        else
+        {
+          $pos->total = number_format($pos->total, 2); 
+        }
+        
+      }
+
+      $payment_type_result = array();
+
+      foreach($payment_type_list as $payment_type)
+      {
+        $payment_type_detail = new \stdClass();
+        $payment_type_detail->type = $payment_type;
+        $payment_type_detail->total = 0;
+
+        array_push($payment_type_result, $payment_type_detail);
+      }
+
+      $payment_type_report = transaction::where('completed', 1)->where('session_id', $session->id)->select('*')->selectRaw('SUM(transaction.total) as payment_type_total')->groupBy('payment_type')->get();
+
+      foreach($payment_type_report as $report_detail)
+      {
+        foreach($payment_type_result as $result)
+        {
+          if($report_detail->payment_type == "debit_card" || $report_detail->payment_type == "credit_card" || $report_detail->payment_type == "card")
+          {
+            $report_detail->payment_type = "card";
+          }
+
+          if($result->type == $report_detail->payment_type)
+          {
+            $result->total += $report_detail->payment_type_total;
+            break;
+          }
         }
       }
 
-      $payment_type_report = transaction::where('completed', 1)->where('session_id', $session->id)->select('*')->selectRaw('FORMAT(SUM(transaction.total), 2) as payment_type_total')->groupBy('payment_type')->get();
+      foreach($payment_type_result as $result)
+      {
+        if($result->total == 0)
+        {
+          $result->total = "-";
+        }
+        else
+        {
+          $result->total = number_format($result->total, 2);
+        }
+        
+      }
 
       $response = new \stdClass();
       $response->error = 0;
       $response->message = "Success";
-      $response->payment_type_report = $payment_type_report;
-      $response->total_sales = number_format($total_sales, 2);
+      $response->payment_type_result = $payment_type_result;
+      $response->total_sales = $total_sales == 0 ? "-" : number_format($total_sales, 2);
       $response->pos_cashier = $pos_cashier;
       $response->session = $session;
 
@@ -2060,8 +2280,8 @@ class HomeController extends Controller
       $profile = profile::first();
 
       $branch_code = null;
-      $branch_name = null;
       $branch_address = null;
+      $contact_number = null;
 
       if($invoice_sequence)
       {
@@ -2070,11 +2290,11 @@ class HomeController extends Controller
 
       if($profile)
       {
-        $branch_name = $profile->branch_name;
         $branch_address = $profile->address;
+        $contact_number = $profile->contact_number;
       }
 
-      return view('front.profile', compact('branch_code', 'branch_name', 'branch_address'));
+      return view('front.profile', compact('branch_code', 'branch_address', 'contact_number'));
     }
 
     public function updateProfile(Request $request)
@@ -2102,15 +2322,15 @@ class HomeController extends Controller
       if($profile)
       {
         profile::where('id', $profile->id)->update([
-          'branch_name' => $request->branch_name,
           'address' => $request->branch_address,
+          'contact_number' => $request->contact_number
         ]);
       }
       else
       {
         profile::create([
-          'branch_name' => $request->branch_name,
           'address' => $request->branch_address,
+          'contact_number' => $request->contact_number
         ]);
       }
 

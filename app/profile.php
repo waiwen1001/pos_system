@@ -9,6 +9,7 @@ class profile extends Model
     protected $table = 'profile';
     protected $fillable = [
       'branch_name',
-      'address'
+      'address',
+      'contact_number'
     ];
 }

@@ -12,6 +12,7 @@ class session extends Model
       'ip',
       'opening_date_time',
       'closing_date_time',
-      'closed'
+      'closed',
+      'synced'
     ];
 }
