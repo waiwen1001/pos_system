@@ -66,7 +66,7 @@ class HomeController extends Controller
       $round_off = 0;
       $transaction_id = null;
       $voucher_name = null;
-      $total_quantity = 0;
+      $item_quantity = 0;
 
       $session = session::where('closed', null)->orderBy('id', 'desc')->first();
 
@@ -91,7 +91,6 @@ class HomeController extends Controller
         $discount = $transaction_summary->total_discount;
         $real_total = $transaction_summary->real_total;
         $round_off = $transaction_summary->round_off;
-        $total_quantity = $transaction_summary->total_quantity;
 
         $payment = $pending_transaction->payment;
         $balance = $pending_transaction->balance;
@@ -106,6 +105,8 @@ class HomeController extends Controller
             $voucher_name = $voucher_detail->name;
           }
         }
+
+        $item_quantity = transaction_detail::where('transaction_id', $pending_transaction->id)->count();
       }
 
       $completed_transaction = [];
@@ -195,7 +196,7 @@ class HomeController extends Controller
         $device_type = $device->type;
       }
 
-      return view('front.index', compact('user', 'user_management_list', 'pending_transaction', 'subtotal', 'discount', 'have_discount', 'total', 'real_total', 'round_off', 'payment', 'balance', 'transaction_id', 'completed_transaction', 'opening', 'voucher_name', 'session', 'shortcut_key', 'ip', 'device_type', 'branch_name', 'branch_address', 'total_quantity', 'contact_number'));
+      return view('front.index', compact('user', 'user_management_list', 'pending_transaction', 'subtotal', 'discount', 'have_discount', 'total', 'real_total', 'round_off', 'payment', 'balance', 'transaction_id', 'completed_transaction', 'opening', 'voucher_name', 'session', 'shortcut_key', 'ip', 'device_type', 'branch_name', 'branch_address', 'item_quantity', 'contact_number'));
     }
 
     public function getSetupPage()
@@ -347,6 +348,7 @@ class HomeController extends Controller
         $user = Auth::user();
         $transaction = transaction::where('completed', null)->where('ip', $this->ip)->first();
 
+        $item_count = 0;
         if(!$transaction)
         {
           $cashier_name = null;
@@ -386,6 +388,8 @@ class HomeController extends Controller
             'subtotal' => $subtotal,
             'total' => $total
           ]);
+
+          $item_count = 1;
         }
         else
         {
@@ -443,6 +447,8 @@ class HomeController extends Controller
               'total' => $total
             ]);
           }
+
+          $item_count = transaction_detail::where('transaction_id', $transaction->id)->count();
         }
 
         $transaction_summary = $this->transaction_summary($transaction);
@@ -452,6 +458,7 @@ class HomeController extends Controller
         $response->message = "Success";
         $response->transaction_summary = $transaction_summary;
         $response->product = $product;
+        $response->item_count = $item_count;
 
         return response()->json($response);
       }
@@ -562,6 +569,7 @@ class HomeController extends Controller
 
       $transaction_detail = transaction_detail::where('transaction_id', $request->transaction_id)->get();
 
+      $item_quantity = count($transaction_detail);
       $transaction_summary = null;
       if(count($transaction_detail) == 0)
       {
@@ -577,6 +585,7 @@ class HomeController extends Controller
       $response->error = 0;
       $response->message = "Success";
       $response->transaction_summary = $transaction_summary;
+      $response->item_quantity = $item_quantity;
 
       return response()->json($response);
     }
@@ -899,6 +908,7 @@ class HomeController extends Controller
       }
 
       $transaction_detail_list = transaction_detail::where('transaction_id', $transaction_detail->transaction_id)->get();
+      $item_quantity = count($transaction_detail_list);
       $transaction_summary = null;
       if(count($transaction_detail_list) == 0)
       {
@@ -925,6 +935,7 @@ class HomeController extends Controller
       $response->transaction_summary = $transaction_summary;
       $response->subtotal = number_format($subtotal, 2);
       $response->total = number_format($total, 2);
+      $response->item_quantity = $item_quantity;
 
       return response()->json($response);
     }
@@ -1159,6 +1170,61 @@ class HomeController extends Controller
           ]);
         }
 
+        $user_name = "";
+        $cashier_name = "";
+        $opening_by = User::where('id', $cashier->opening_by)->first();
+        if($opening_by)
+        {
+          $user_name = $opening_by->name;
+        }
+
+        $cash_float_list = cash_float::where('session_id', $session->id)->where('ip', $cashier->ip)->where('opening_id', $cashier->id)->get();
+
+        $total_cash_float = 0;
+        foreach($cash_float_list as $cash_float)
+        {
+          $cash_float->created_time_text = date('h:i:s A', strtotime($cash_float->created_at));
+          $cash_float->amount_text = number_format($cash_float->amount, 2);
+
+          if($cash_float->type == "in")
+          {
+            $total_cash_float += $cash_float->amount;
+          }
+          elseif($cash_float->type == "out")
+          {
+            $total_cash_float -= $cash_float->amount;
+          }
+        }
+
+        $pos_cashier = pos_cashier::where('ip', $cashier->ip)->first();
+        if($pos_cashier)
+        {
+          $cashier_name = $pos_cashier->cashier_name;
+        }
+
+        $total_cash_sales = transaction::where('session_id', $session->id)->where('ip', $cashier->ip)->where('opening_id', $cashier->id)->where('payment_type', 'cash')->get();
+
+        $total_cash = 0;
+        foreach($total_cash_sales as $cash_sales)
+        {
+          $total_cash += $cash_sales->total;
+        }
+
+        $cash_flow = $cashier->opening_amount + $total_cash + $total_cash_float;
+
+        $closing_report = new \stdClass();
+        $closing_report->opening_by = $user_name;
+        $closing_report->cashier_name = $cashier_name;
+        $closing_report->now = date('j - M - Y h:i:s A');
+        $closing_report->opening = number_format($cashier->opening_amount, 2);
+        $closing_report->opening_time = date('h:i:s A', strtotime($cashier->opening_date_time));
+        $closing_report->closing = number_format($request->closing_amount, 2);
+        $closing_report->closing_time = date('h:i:s A', strtotime($now));
+        $closing_report->diff = number_format( ($request->closing_amount - $request->calculated_amount), 2);
+        $closing_report->cash_float = $cash_float_list;
+        $closing_report->cash_sales = number_format($total_cash, 2);
+        $closing_report->cash_flow = number_format($cash_flow, 2);
+
         cashier::where('id', $cashier->id)->update([
           'closing' => 1,
           'closing_amount' => $request->closing_amount,
@@ -1172,6 +1238,7 @@ class HomeController extends Controller
       $response = new \stdClass();
       $response->error = 0;
       $response->message = "Success";
+      $response->closing_report = $closing_report;
 
       return response()->json($response);
     }
@@ -1343,6 +1410,13 @@ class HomeController extends Controller
         return response()->json($response);
       }
 
+      $cashier_name = "Not available";
+      $pos_cashier = pos_cashier::where('ip', $this->ip)->first();
+      if($pos_cashier)
+      {
+        $cashier_name = $pos_cashier->cashier_name;
+      }
+
       cash_float::create([
         'user_id' => $user->id,
         'ip' => $this->ip,
@@ -1355,7 +1429,11 @@ class HomeController extends Controller
 
       $response = new \stdClass();
       $response->error = 0;
-      $response->message = "Cash float ".$request->type." RM ".$request->amount;;
+      $response->message = "Cash Float ".ucfirst($request->type)." : RM ".$request->amount;
+      $response->cashier_name = $cashier_name;
+      $response->remarks = $request->remarks;
+      $response->datetime = date('Y-M-d h:i:s A');
+      $response->user_name = $user->name;
 
       return response()->json($response);
     }
@@ -1460,6 +1538,18 @@ class HomeController extends Controller
 
       $transaction->total_discount_text = number_format($transaction->total_discount, 2);
       $transaction->subtotal_text = number_format($transaction->subtotal, 2);
+
+      $user_name = "";
+      if($transaction->completed_by)
+      {
+        $user_detail = User::where('id', $transaction->completed_by)->first();
+        if($user_detail)
+        {
+          $user_name = $user_detail->name;
+        }
+      }
+
+      $transaction->user_name = $user_name;
 
       $response = new \stdClass();
       $response->error = 0;
@@ -1574,6 +1664,8 @@ class HomeController extends Controller
       {
         \Log::info("Updating product list on ".$key." / ".$total_product_list);
 
+        dd($product);
+
         product::updateOrCreate([
           'barcode' => $product['barcode']
         ],[
@@ -1584,7 +1676,8 @@ class HomeController extends Controller
           'price' => $product['price'],
           'promotion_start' => $product['promotion_start'],
           'promotion_end' => $product['promotion_end'],
-          'promotion_price' => $product['promotion_price']
+          'promotion_price' => $product['promotion_price'],
+          'deleted_at' => $product['deleted_at']
         ]);
 
         if(!in_array($product['barcode'], $barcode_array))
@@ -1678,7 +1771,7 @@ class HomeController extends Controller
           {
             \Log::info("Updating product list on ".$key." / ".$total_product_list);
 
-            product::updateOrCreate([
+            product::withTrashed()->updateOrCreate([
               'barcode' => $product['barcode']
             ],[
               'department_id' => $product['department_id'],
@@ -1690,6 +1783,7 @@ class HomeController extends Controller
               'promotion_start' => $product['promotion_start'],
               'promotion_end' => $product['promotion_end'],
               'promotion_price' => $product['promotion_price'],
+              'deleted_at' => $product['deleted_at']
             ]);
 
             if(!in_array($product['barcode'], $barcode_array))

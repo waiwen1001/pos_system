@@ -79,9 +79,9 @@
           <div class="items-summary">
             <input type="hidden" name="transaction_id" id="transaction_id" value="{{ $transaction_id }}" />
 
-            <div class="summary-detail" style="display: {{ $total_quantity == 0 ? 'none' : '' }};">
+            <div class="summary-detail" style="display: {{ $item_quantity == 0 ? 'none' : '' }};">
               <label>Total Quantity</label>
-              <div class="summary_price" id="total_quantity">{{ $total_quantity }}</div>
+              <div class="summary_price" id="total_quantity">{{ $item_quantity }}</div>
             </div>
 
             <div class="summary-detail">
@@ -784,8 +784,10 @@
 
         <div style="font-size: 11px;">
           <div style="display: inline-block;" id="receipt_date"></div>
-          <div style="display: inline-block; float: right;" id="receipt_time"></div>
+          <div style="display: inline-block; float: right;" id="receipt_time"></div> 
         </div>
+
+        <div style="display: block;font-size: 11px;" id="receipt_by"></div>
 
         <div style="font-size: 8px; text-align: center;">
           <div style="display: inline-block;">INVOIS : <label id="receipt_transaction_no"></label></div>
@@ -1480,18 +1482,23 @@
     });
 
     $(".numpad_btn.submit").click(function(){
-      if($("input[name='received_payment']").val() == "0" || $("input[name='received_payment']").val() == "")
+      if($(this).attr("disabled") != "disabled")
       {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Cash amount cannot be 0 or empty.',
-        });
+        if($("input[name='received_payment']").val() == "0" || $("input[name='received_payment']").val() == "")
+        {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Cash amount cannot be 0 or empty.',
+          });
 
-        return;
+          return;
+        }
+
+        $(".numpad_btn.submit").attr("disabled", true);
+        submitCashPayment();
       }
-
-      submitCashPayment();
+      
     });
 
     $(".close_full_page").click(function(){
@@ -1605,6 +1612,7 @@
 
     $("#floatInBtn, #floatOutBtn, #refundBtn").click(function(){
       $("input[name='cash_float']").val("");
+      $("input[name='cash_float_remarks']").val("");
       if($(this).attr("id") == "floatInBtn")
       {
         $("input[name='cash_float_type']").val('in');
@@ -1662,6 +1670,10 @@
 
         transaction_total = transaction_summary.real_total;
         $("#transaction_id").val(transaction_summary.transaction_id);
+
+        $("#total_quantity").parent(".summary-detail").show();
+        $("#total_quantity").html(result.item_count);
+
 
         $("#added_item_title").html(result.title);
         $("#added_item_content").html("Product "+product.product_name+" is successfully added");
@@ -1734,7 +1746,6 @@
     $("#items-table tbody").html(html);
     $("#price").html(transaction_summary.subtotal);
     $("#total").html(transaction_summary.total);
-    $("#total_quantity").show().html(transaction_summary.total_quantity);
 
     if(transaction_summary.round_off == "0.00")
     {
@@ -1774,7 +1785,7 @@
           transaction_total = transaction_summary.real_total;
           $("#price").html(transaction_summary.subtotal);
           $("#total").html(transaction_summary.total);
-          $("#total_quantity").show().html(transaction_summary.total_quantity);
+          $("#total_quantity").show().html(result.item_quantity);
 
           if(transaction_summary.round_off == "0.00")
           {
@@ -1826,6 +1837,8 @@
     {
       $("input[name='received_payment']").addClass("is-invalid");
       $("input[name='received_payment']").siblings(".invalid-feedback").html("<strong>Cannot submit as RM 0.00</strong>");
+
+      $(".numpad_btn.submit").attr("disabled", false);
       return;
     }
 
@@ -1833,6 +1846,8 @@
     {
       $("input[name='received_payment']").addClass("is-invalid");
       $("input[name='received_payment']").siblings(".invalid-feedback").html("<strong>Transaction total is RM 0.00</strong>");
+
+      $(".numpad_btn.submit").attr("disabled", false);
       return;
     }
 
@@ -1840,6 +1855,8 @@
     {
       $("input[name='received_payment']").addClass("is-invalid");
       $("input[name='received_payment']").siblings(".invalid-feedback").html("<strong>Received cash is lesser than transaction price</strong>");
+
+      $(".numpad_btn.submit").attr("disabled", false);
       return;
     }
 
@@ -1847,8 +1864,13 @@
 
     $.post("{{ route('submitTransaction') }}", {"_token" : "{{ csrf_token() }}", "received_cash" : received_cash, "transaction_id" : transaction_id, "payment_type" : "cash" }, function(result){
 
+      
       if(result.error == 0)
       {
+        setTimeout(function(){
+          $(".numpad_btn.submit").attr("disabled", false);
+        }, 500);
+
         $("#numpadModal").modal('hide');
 
         $("#completedTransactionModal").modal('show');
@@ -1862,6 +1884,7 @@
       }
       else
       {
+        $(".numpad_btn.submit").attr("disabled", false);
         alert("Error");
       }
     }).fail(function(xhr){
@@ -1878,6 +1901,8 @@
           }
         })
       }
+
+      $(".numpad_btn.submit").attr("disabled", false);
     });
   }
 
@@ -2067,6 +2092,9 @@
     {
       $("#completed_balance").hide();
     }
+
+    $("#total_quantity").html("");
+    $("#total_quantity").parent(".summary-detail").hide();
   }
 
   function printReceipt(transaction_id, reprint)
@@ -2143,6 +2171,7 @@
 
         $("#receipt_date").html(transaction.receipt_date);
         $("#receipt_time").html("Time : "+transaction.receipt_time);
+        $("#receipt_by").html("Juruwang counter : "+transaction.cashier_name+"<br>Juruwang : "+transaction.user_name);
 
         $("#receipt_completed_by, #receipt_completed_by_2").html(transaction.completed_by_name);
         $("#receipt_transaction_no").html(transaction.transaction_no);
@@ -2338,7 +2367,7 @@
           transaction_total = transaction_summary.real_total;
           $("#price").html(transaction_summary.subtotal);
           $("#total").html(transaction_summary.total);
-          $("#total_quantity").show().html(transaction_summary.total_quantity);
+          $("#total_quantity").show().html(result.item_quantity);
           if(transaction_summary.round_off == "0.00")
           {
             $("#round_off_box").hide();
@@ -2791,6 +2820,7 @@
         if(result.error == 0)
         {
           $("#closingModal").modal('hide');
+          closingReport(result.closing_report);
           logout();
           // location.reload();
         }
@@ -2931,7 +2961,12 @@
         $("#success_content").html("Cash float submitted");
         $("#success_toast").toast('show');
 
-        openDrawer(result.message);
+        var html = result.message;
+        html += "<br>Counter : "+result.cashier_name+"<br>Float By : "+result.user_name;
+        html += "<br>Remarks : "+result.remarks;
+        html += "<br>Date time : "+result.datetime;
+
+        openDrawer(html);
       }
     }).fail(function(xhr){
       if(xhr.status == 401)
@@ -3599,6 +3634,93 @@
     total_related = 0;
     selecting_related = 1;
     $("#related_item").html("");
+  }
+
+  function closingReport(closing_report)
+  {
+    var newWin = window.open('','Print-Window');
+
+    var html = "";
+    html += "<style>tr td{ border:1px solid #000; }</style>";
+    html += "<table style='width:100%;font-size:11px;border-collapse:collapse;'>";
+    html += "<tr>";
+    html += "<td colspan='4' style='text-align:center;font-weight:bold;vertical-align:top;border:none;'>Counter : "+closing_report.cashier_name+"</td>";
+    html += "</tr>";
+    html += "<tr>";
+    html += "<td colspan='4' style='text-align:center;font-weight:bold;vertical-align:top;border:none;'>Opening by : "+closing_report.opening_by+"</td>";
+    html += "</tr>";
+    html += "<tr>";
+    html += "<td colspan='4' style='text-align:center;font-weight:bold;vertical-align:top;border:none;'>"+closing_report.now+"</td>";
+    html += "</tr>";
+    html += "<tr>";
+    html += "<td></td>";
+    html += "<td style='vertical-align:top;'>Amount</td>";
+    html += "<td style='vertical-align:top;'>Time</td>";
+    html += "<td style='vertical-align:top;'>Remarks</td>";
+    html += "</tr>";
+    html += "<tr>";
+    html += "<td style='vertical-align:top;'>Opening</td>";
+    html += "<td style='vertical-align:top;text-align:right;'>"+closing_report.opening+"</td>";
+    html += "<td style='vertical-align:top;'>"+closing_report.opening_time+"</td>";
+    html += "<td></td>";
+    html += "</tr>";
+    for(var a = 0; a < closing_report.cash_float.length; a++)
+    {
+      var cash_float = closing_report.cash_float[a];
+      html += "<tr>";
+      html += "<td style='vertical-align:top;'>";
+      if(cash_float.type == "in")
+      {
+        html += "Float in";
+      }
+      else if(cash_float.type == "out")
+      {
+        html += "Float out";
+      }
+      html += "</td>";
+      
+      html += "<td style='vertical-align:top;text-align:right;'>"+cash_float.amount_text+"</td>";
+      html += "<td style='vertical-align:top;'>"+cash_float.created_time_text+"</td>";
+      html += "<td style='vertical-align:top;'>"+cash_float.remarks+"</td>";
+      html += "</tr>";
+    }
+
+    html += "<tr>";
+    html += "<td style='vertical-align:top;'>Total cash sales</td>";
+    html += "<td style='vertical-align:top;text-align:right;'>"+closing_report.cash_sales+"</td>";
+    html += "<td></td>";
+    html += "<td></td>";
+    html += "</tr>";
+
+    html += "<tr><td style='height:14px;'></td><td></td><td></td><td></td></tr>";
+
+    html += "<tr>";
+    html += "<td style='vertical-align:top;'>Total cash flow</td>";
+    html += "<td style='vertical-align:top;text-align:right;'>"+closing_report.cash_flow+"</td>";
+    html += "<td></td>";
+    html += "<td></td>";
+    html += "</tr>";
+
+    html += "<tr>";
+    html += "<td style='vertical-align:top;'>Closing amount</td>";
+    html += "<td style='vertical-align:top;text-align:right;'>"+closing_report.closing+"</td>";
+    html += "<td style='vertical-align:top;'>"+closing_report.closing_time+"</td>";
+    html += "<td></td>";
+    html += "</tr>";
+
+    html += "<tr>";
+    html += "<td style='vertical-align:top;'>Different</td>";
+    html += "<td style='vertical-align:top;text-align:right;'>"+closing_report.diff+"</td>";
+    html += "<td></td>";
+    html += "<td></td>";
+    html += "</tr>";
+
+    html += "</table>";
+
+    newWin.document.open();
+    newWin.document.write('<html><body onload="window.print()" style="text-align:center;">'+html+'</body></html>');
+    newWin.document.close();
+    setTimeout(function(){newWin.close();},10);
   }
 
 </script>
