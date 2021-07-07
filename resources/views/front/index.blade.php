@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="{{ asset('assets/iCheck/all.css') }}">
 <link rel="stylesheet" href="{{ asset('assets/iCheck/square/blue.css') }}">
 <link rel="stylesheet" href="{{ asset('assets/sweetAlert2/sweetalert2.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/boostrap-toggle/bootstrap-toggle.min.css') }}" rel="stylesheet">
 
 <!-- Fontawesome -->
 <script src="https://kit.fontawesome.com/e5dc55166e.js" crossorigin="anonymous"></script>
@@ -29,6 +30,7 @@
 <script src="{{ asset('assets/iCheck/icheck.min.js') }}"></script>
 <!-- sweet alert 2 -->
 <script src="{{ asset('assets/sweetAlert2/sweetalert2.js') }}"></script>
+<script src="{{ asset('assets/boostrap-toggle/bootstrap-toggle.min.js') }}"></script>
 
 <body>
   
@@ -189,7 +191,14 @@
                   <span class="shortcut_func_key" style="display: none; left: -15px; top: -10px;" func_name="showOtherMenu()"></span>
 
                   <div class="dropdown-menu" aria-labelledby="otherDropDownBtn">
+
                     @if($device_type == 2)
+                      <div id="barcode_toggle" class="dropdown-item">
+                        <label style="width: 100%; white-space: pre-wrap;">Barcode prompt toggle</label>
+                        <input id="barcode_toggle_checkbox" type="checkbox" data-toggle="toggle" data-onstyle="success" data-height="40">
+                      </div>
+                      <div class="dropdown-divider"></div>
+
                       <button class="dropdown-item" id="openingBtn" {{ $opening == 0 ? '' : 'disabled' }}>
                         Opening
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showOpening()"></span>
@@ -227,6 +236,10 @@
                       <button class="dropdown-item" onclick="dailyReport()">
                         Closing Report
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showClosingReport()"></span>
+                      </button>
+                      <button class="dropdown-item" onclick="serverCashFloatReport()">
+                        Cash float Report
+                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showServerCashFloatReport()"></span>
                       </button>
                       @if($device_type == 1)
                         <div class="dropdown-divider"></div>
@@ -1209,6 +1222,7 @@
   var selecting_related = 1;
   var total_related = 0;
   var device_type = "{{ $device_type }}";
+  var barcode_toggle = false;
 
   var transaction_total = "{{ $real_total }}";
   var opening = "{{ $opening }}";
@@ -1227,6 +1241,10 @@
     scrollCollapse: true,
     // responsive: true,
     order: [[ 0, "desc" ]]
+  });
+
+  $(document).on('click', '#barcode_toggle', function (e) {
+    e.stopPropagation();
   });
 
   $(document).ready(function(){
@@ -1637,7 +1655,11 @@
 
     $("#submitCashFloat").click(function(){
       submitCashFloat();
-    });  
+    });
+
+    $("#barcode_toggle_checkbox").change(function(){
+      barcode_toggle = $(this).is(":checked");
+    });
 
     let date = new Date();
     $("#time").text(`${date.toLocaleTimeString()}`);
@@ -1658,10 +1680,21 @@
     $.post("{{ route('searchAndAddItem') }}", { "_token" : "{{ csrf_token() }}", "barcode" : barcode }, function(result){
       if(result.error == 1)
       {
-        $("#search_error_title").html(result.title);
-        $("#search_error_content").html(result.message);
+        if(barcode_toggle == false)
+        {
+          $("#search_error_title").html(result.title);
+          $("#search_error_content").html(result.message);
 
-        $("#search_error_toast").toast('show');
+          $("#search_error_toast").toast('show');
+        }
+        else if(barcode_toggle == true)
+        {
+          Swal.fire({
+            title: 'Barcode not found, please scan again.',
+            icon: 'error',
+            confirmButtonText: 'OK',
+          });
+        }
       }
       else if(result.error == 0)
       {
@@ -1689,16 +1722,7 @@
     }).fail(function(xhr){
       if(xhr.status == 401)
       {
-        Swal.fire({
-          title: 'Your account was logged out, please login again.',
-          icon: 'error',
-          confirmButtonText: 'OK',
-        }).then((result) => {
-          /* Read more about isConfirmed, isDenied below */
-          if (result.isConfirmed) {
-            location.reload();
-          }
-        })
+        loggedOutAlert();
       }
     });
   }
@@ -1806,16 +1830,7 @@
     }).fail(function(xhr){
       if(xhr.status == 401)
       {
-        Swal.fire({
-          title: 'Your account was logged out, please login again.',
-          icon: 'error',
-          confirmButtonText: 'OK',
-        }).then((result) => {
-          /* Read more about isConfirmed, isDenied below */
-          if (result.isConfirmed) {
-            location.reload();
-          }
-        })
+        loggedOutAlert();
       }
     });
   }
@@ -1890,16 +1905,7 @@
     }).fail(function(xhr){
       if(xhr.status == 401)
       {
-        Swal.fire({
-          title: 'Your account was logged out, please login again.',
-          icon: 'error',
-          confirmButtonText: 'OK',
-        }).then((result) => {
-          /* Read more about isConfirmed, isDenied below */
-          if (result.isConfirmed) {
-            location.reload();
-          }
-        })
+        loggedOutAlert();
       }
 
       $(".numpad_btn.submit").attr("disabled", false);
@@ -1935,16 +1941,7 @@
         }).fail(function(xhr){
           if(xhr.status == 401)
           {
-            Swal.fire({
-              title: 'Your account was logged out, please login again.',
-              icon: 'error',
-              confirmButtonText: 'OK',
-            }).then((result) => {
-              /* Read more about isConfirmed, isDenied below */
-              if (result.isConfirmed) {
-                location.reload();
-              }
-            })
+            loggedOutAlert();
           }
         });
       }
@@ -2029,16 +2026,7 @@
     }).fail(function(xhr){
       if(xhr.status == 401)
       {
-        Swal.fire({
-          title: 'Your account was logged out, please login again.',
-          icon: 'error',
-          confirmButtonText: 'OK',
-        }).then((result) => {
-          /* Read more about isConfirmed, isDenied below */
-          if (result.isConfirmed) {
-            location.reload();
-          }
-        })
+        loggedOutAlert();
       }
     });
   }
@@ -2057,16 +2045,7 @@
     }).fail(function(xhr){
       if(xhr.status == 401)
       {
-        Swal.fire({
-          title: 'Your account was logged out, please login again.',
-          icon: 'error',
-          confirmButtonText: 'OK',
-        }).then((result) => {
-          /* Read more about isConfirmed, isDenied below */
-          if (result.isConfirmed) {
-            location.reload();
-          }
-        })
+        loggedOutAlert();
       }
     });
   }
@@ -2216,16 +2195,7 @@
     }).fail(function(xhr){
       if(xhr.status == 401)
       {
-        Swal.fire({
-          title: 'Your account was logged out, please login again.',
-          icon: 'error',
-          confirmButtonText: 'OK',
-        }).then((result) => {
-          /* Read more about isConfirmed, isDenied below */
-          if (result.isConfirmed) {
-            location.reload();
-          }
-        })
+        loggedOutAlert();
       }
     });
   }
@@ -2274,16 +2244,7 @@
     }).fail(function(xhr){
       if(xhr.status == 401)
       {
-        Swal.fire({
-          title: 'Your account was logged out, please login again.',
-          icon: 'error',
-          confirmButtonText: 'OK',
-        }).then((result) => {
-          /* Read more about isConfirmed, isDenied below */
-          if (result.isConfirmed) {
-            location.reload();
-          }
-        })
+        loggedOutAlert();
       }
     });
   }
@@ -2311,16 +2272,7 @@
     }).fail(function(xhr){
       if(xhr.status == 401)
       {
-        Swal.fire({
-          title: 'Your account was logged out, please login again.',
-          icon: 'error',
-          confirmButtonText: 'OK',
-        }).then((result) => {
-          /* Read more about isConfirmed, isDenied below */
-          if (result.isConfirmed) {
-            location.reload();
-          }
-        })
+        loggedOutAlert();
       }
     });
   }
@@ -2382,16 +2334,7 @@
     }).fail(function(xhr){
       if(xhr.status == 401)
       {
-        Swal.fire({
-          title: 'Your account was logged out, please login again.',
-          icon: 'error',
-          confirmButtonText: 'OK',
-        }).then((result) => {
-          /* Read more about isConfirmed, isDenied below */
-          if (result.isConfirmed) {
-            location.reload();
-          }
-        })
+        loggedOutAlert();
       }
     });
   }
@@ -2472,6 +2415,14 @@
     if(user.user_type == 1)
     {
       dailyReport();
+    }
+  }
+
+  function showServerCashFloatReport()
+  {
+    if(user.user_type == 1)
+    {
+      serverCashFloatReport();
     }
   }
 
@@ -2664,16 +2615,7 @@
     }).fail(function(xhr){
       if(xhr.status == 401)
       {
-        Swal.fire({
-          title: 'Your account was logged out, please login again.',
-          icon: 'error',
-          confirmButtonText: 'OK',
-        }).then((result) => {
-          /* Read more about isConfirmed, isDenied below */
-          if (result.isConfirmed) {
-            location.reload();
-          }
-        })
+        loggedOutAlert();
       }
     });
   }
@@ -2710,16 +2652,7 @@
     }).fail(function(xhr){
       if(xhr.status == 401)
       {
-        Swal.fire({
-          title: 'Your account was logged out, please login again.',
-          icon: 'error',
-          confirmButtonText: 'OK',
-        }).then((result) => {
-          /* Read more about isConfirmed, isDenied below */
-          if (result.isConfirmed) {
-            location.reload();
-          }
-        })
+        loggedOutAlert();
       }
     });
   }
@@ -2755,16 +2688,7 @@
       }).fail(function(xhr){
         if(xhr.status == 401)
         {
-          Swal.fire({
-            title: 'Your account was logged out, please login again.',
-            icon: 'error',
-            confirmButtonText: 'OK',
-          }).then((result) => {
-            /* Read more about isConfirmed, isDenied below */
-            if (result.isConfirmed) {
-              location.reload();
-            }
-          })
+          loggedOutAlert();
         }
       });
     }
@@ -2794,16 +2718,7 @@
       }).fail(function(xhr){
         if(xhr.status == 401)
         {
-          Swal.fire({
-            title: 'Your account was logged out, please login again.',
-            icon: 'error',
-            confirmButtonText: 'OK',
-          }).then((result) => {
-            /* Read more about isConfirmed, isDenied below */
-            if (result.isConfirmed) {
-              location.reload();
-            }
-          })
+          loggedOutAlert();
         }
       });
     }
@@ -2827,16 +2742,7 @@
       }).fail(function(xhr){
         if(xhr.status == 401)
         {
-          Swal.fire({
-            title: 'Your account was logged out, please login again.',
-            icon: 'error',
-            confirmButtonText: 'OK',
-          }).then((result) => {
-            /* Read more about isConfirmed, isDenied below */
-            if (result.isConfirmed) {
-              location.reload();
-            }
-          })
+          loggedOutAlert();
         }
       });
     }
@@ -2911,16 +2817,7 @@
     }).fail(function(xhr){
       if(xhr.status == 401)
       {
-        Swal.fire({
-          title: 'Your account was logged out, please login again.',
-          icon: 'error',
-          confirmButtonText: 'OK',
-        }).then((result) => {
-          /* Read more about isConfirmed, isDenied below */
-          if (result.isConfirmed) {
-            location.reload();
-          }
-        })
+        loggedOutAlert();
       }
       else
       {
@@ -2971,16 +2868,7 @@
     }).fail(function(xhr){
       if(xhr.status == 401)
       {
-        Swal.fire({
-          title: 'Your account was logged out, please login again.',
-          icon: 'error',
-          confirmButtonText: 'OK',
-        }).then((result) => {
-          /* Read more about isConfirmed, isDenied below */
-          if (result.isConfirmed) {
-            location.reload();
-          }
-        })
+        loggedOutAlert();
       }
     });
   }
@@ -3069,16 +2957,7 @@
 
       if(xhr.status == 401)
       {
-        Swal.fire({
-          title: 'Your account was logged out, please login again.',
-          icon: 'error',
-          confirmButtonText: 'OK',
-        }).then((result) => {
-          /* Read more about isConfirmed, isDenied below */
-          if (result.isConfirmed) {
-            location.reload();
-          }
-        })
+        loggedOutAlert();
       }
       else
       {
@@ -3171,16 +3050,7 @@
     }).fail(function(xhr){
       if(xhr.status == 401)
       {
-        Swal.fire({
-          title: 'Your account was logged out, please login again.',
-          icon: 'error',
-          confirmButtonText: 'OK',
-        }).then((result) => {
-          /* Read more about isConfirmed, isDenied below */
-          if (result.isConfirmed) {
-            location.reload();
-          }
-        })
+        loggedOutAlert();
       }
     });
   }
@@ -3317,16 +3187,7 @@
         $(_this).html("Add").attr("disabled", false);
         if(xhr.status == 401)
         {
-          Swal.fire({
-            title: 'Your account was logged out, please login again.',
-            icon: 'error',
-            confirmButtonText: 'OK',
-          }).then((result) => {
-            /* Read more about isConfirmed, isDenied below */
-            if (result.isConfirmed) {
-              location.reload();
-            }
-          })
+          loggedOutAlert();
         }
       });
     }
@@ -3398,16 +3259,7 @@
       }).fail(function(xhr){
         if(xhr.status == 401)
         {
-          Swal.fire({
-            title: 'Your account was logged out, please login again.',
-            icon: 'error',
-            confirmButtonText: 'OK',
-          }).then((result) => {
-            /* Read more about isConfirmed, isDenied below */
-            if (result.isConfirmed) {
-              location.reload();
-            }
-          })
+          loggedOutAlert();
         }
       });
     }
@@ -3479,19 +3331,9 @@
       }
       
     }).fail(function(){
-
       if(xhr.status == 401)
       {
-        Swal.fire({
-          title: 'Your account was logged out, please login again.',
-          icon: 'error',
-          confirmButtonText: 'OK',
-        }).then((result) => {
-          /* Read more about isConfirmed, isDenied below */
-          if (result.isConfirmed) {
-            location.reload();
-          }
-        })
+        loggedOutAlert();
       }
       else
       {
@@ -3604,16 +3446,7 @@
       }).fail(function(xhr){
         if(xhr.status == 401)
         {
-          Swal.fire({
-            title: 'Your account was logged out, please login again.',
-            icon: 'error',
-            confirmButtonText: 'OK',
-          }).then((result) => {
-            /* Read more about isConfirmed, isDenied below */
-            if (result.isConfirmed) {
-              location.reload();
-            }
-          })
+          loggedOutAlert();
         }
       });
     }
@@ -3721,6 +3554,28 @@
     newWin.document.write('<html><body onload="window.print()" style="text-align:center;">'+html+'</body></html>');
     newWin.document.close();
     setTimeout(function(){newWin.close();},10);
+  }
+
+  function serverCashFloatReport()
+  {
+    window.open(
+      '{{ route("serverCashFloatReport") }}',
+      '_blank'
+    );
+  }
+
+  function loggedOutAlert()
+  {
+    Swal.fire({
+      title: 'Your account was logged out, please login again.',
+      icon: 'error',
+      confirmButtonText: 'OK',
+    }).then((result) => {
+      /* Read more about isConfirmed, isDenied below */
+      if (result.isConfirmed) {
+        location.reload();
+      }
+    })
   }
 
 </script>

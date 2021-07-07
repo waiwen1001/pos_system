@@ -1202,12 +1202,12 @@ class HomeController extends Controller
           $cashier_name = $pos_cashier->cashier_name;
         }
 
-        $total_cash_sales = transaction::where('session_id', $session->id)->where('ip', $cashier->ip)->where('opening_id', $cashier->id)->where('payment_type', 'cash')->get();
+        $total_cash_sales = transaction::where('session_id', $session->id)->where('ip', $cashier->ip)->where('payment_type', 'cash')->select('*')->selectRaw('SUM(transaction.total) as total_cash_sales')->groupBy('session_id')->get();
 
         $total_cash = 0;
         foreach($total_cash_sales as $cash_sales)
         {
-          $total_cash += $cash_sales->total;
+          $total_cash += $cash_sales->total_cash_sales;
         }
 
         $cash_flow = $cashier->opening_amount + $total_cash + $total_cash_float;
@@ -2262,6 +2262,12 @@ class HomeController extends Controller
           'character' => null
         ],
         [
+          'function' => "showServerCashFloatReport()",
+          'function_name' => "Show cash float report",
+          'code' => null,
+          'character' => null
+        ],
+        [
           'function' => "showUserManagement()",
           'function_name' => "Show user management",
           'code' => null,
@@ -2436,6 +2442,124 @@ class HomeController extends Controller
       }
 
       return redirect(route('getBranchProfile'));
+    }
+
+    public function serverCashFloatReport()
+    {
+      $session = session::where('closed', null)->orderBy('id', 'desc')->first();
+      if(!$session)
+      {
+        $session = session::create([
+          'ip' => $this->ip,
+          'opening_date_time' => $now
+        ]);
+      }
+
+      $cashier_list = cashier::where('cashier.session_id', $session->id)->leftJoin('users as u1', 'u1.id', '=', 'cashier.opening_by')->leftJoin('users as u2', 'u2.id', '=', 'cashier.closing_by')->select('cashier.*', 'u1.name as opening_name', 'u2.name as closing_name')->get();
+
+      $pos_cashier_list = array();
+      $ip_array = array();
+      foreach($cashier_list as $cashier)
+      {
+        if(!in_array($cashier->ip, $ip_array))
+        {
+          $pos_cashier = pos_cashier::where('ip', $cashier->ip)->first();
+
+          $cashier_name = $cashier->ip;
+          if($pos_cashier)
+          {
+            $cashier_name = $pos_cashier->cashier_name;
+          }
+          $cashier_detail = new \stdClass();
+          $cashier_detail->name = $cashier_name;
+          $cashier_detail->ip = $cashier->ip;
+          $cashier_detail->report = array();
+
+          array_push($ip_array, $cashier->ip);
+          array_push($pos_cashier_list, $cashier_detail);
+        }
+      }
+
+      foreach($pos_cashier_list as $pos_cashier)
+      {
+        foreach($cashier_list as $cashier)
+        {
+          if($cashier->ip == $pos_cashier->ip)
+          {
+            $cashier->opening_amount_text = "";
+            $cashier->closing_amount_text = "";
+            $cashier->opening_time = "";
+            $cashier->closing_time = "";
+            $cashier->diff_amount_text = "";
+
+            if($cashier->opening_amount !== null)
+            {
+              $cashier->opening_amount_text = number_format($cashier->opening_amount, 2);
+            }
+
+            if($cashier->closing_amount !== null)
+            {
+              $cashier->closing_amount_text = number_format($cashier->closing_amount, 2);
+            }
+
+            if($cashier->opening_date_time)
+            {
+              $cashier->opening_time = date('h:i:s A', strtotime($cashier->opening_date_time));
+            }
+
+            if($cashier->closing_date_time)
+            {
+              $cashier->closing_time = date('h:i:s A', strtotime($cashier->closing_date_time));
+            }
+
+            if($cashier->diff !== null)
+            {
+              $cashier->diff_amount_text = number_format($cashier->diff, 2);
+            }
+
+            $cash_float_list = cash_float::where('session_id', $session->id)->where('opening_id', $cashier->id)->get();
+
+            $total_cash_float = 0;
+            foreach($cash_float_list as $cash_float)
+            {
+              $cash_float->created_time_text = date('h:i:s A', strtotime($cash_float->created_at));
+              $cash_float->amount_text = number_format($cash_float->amount, 2);
+
+              if($cash_float->type == "in")
+              {
+                $total_cash_float += $cash_float->amount;
+              }
+              elseif($cash_float->type == "out")
+              {
+                $total_cash_float -= $cash_float->amount;
+              }
+            }
+
+            $cashier->cash_float = $cash_float_list;
+
+            $total_cash_sales = transaction::where('session_id', $session->id)->where('opening_id', $cashier->id)->where('payment_type', 'cash')->get();
+
+            $total_cash = 0;
+            foreach($total_cash_sales as $cash_sales)
+            {
+              $total_cash += $cash_sales->total;
+            }
+
+            $cash_flow = $cashier->opening_amount + $total_cash + $total_cash_float;
+
+            $cashier->total_cash = number_format($total_cash, 2);
+            $cashier->cash_flow = number_format($cash_flow, 2);
+
+            array_push($pos_cashier->report, $cashier);
+          }
+          
+        }
+      }
+
+      // dd($pos_cashier_list);
+
+      $now = date('Y-M-d h:i:s A');
+      return view('front.server_cash_float_report', compact('now', 'pos_cashier_list'));
     }
 }
 
