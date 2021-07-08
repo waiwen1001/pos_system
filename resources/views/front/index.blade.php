@@ -3530,7 +3530,17 @@
       }
       html += "</td>";
       
-      html += "<td style='vertical-align:top;text-align:right;'>"+cash_float.amount_text+"</td>";
+      html += "<td style='vertical-align:top;text-align:right;'>"
+      if(cash_float.type == "in")
+      {
+        html += cash_float.amount_text;
+      }
+      else if(cash_float.type == "out")
+      {
+        html += "( "+cash_float.amount_text+" )";
+      }
+      html += "</td>";
+      
       html += "<td style='vertical-align:top;'>"+cash_float.created_time_text+"</td>";
       html += "<td style='vertical-align:top;'>"+cash_float.remarks+"</td>";
       html += "</tr>";
