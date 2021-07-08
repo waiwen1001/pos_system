@@ -241,10 +241,10 @@
                         Closing Report
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showClosingReport()"></span>
                       </button>
-                      <button class="dropdown-item" onclick="serverCashFloatReport()">
+                      <!-- <button class="dropdown-item" onclick="serverCashFloatReport()">
                         Cash float Report
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showServerCashFloatReport()"></span>
-                      </button>
+                      </button> -->
                       @if($device_type == 1)
                         <div class="dropdown-divider"></div>
                         <!-- <button class="dropdown-item" onclick="showBranchProfile()">
@@ -3013,16 +3013,16 @@
         html += "<p style='margin:0px;'>Tarikh : "+session.opening_date_time+"</p>";
         html += "</div>";
 
-        html += "<table style='width:100%;border-spacing: 0px;'>";
+        html += "<table style='width:100%;border-spacing: 0px;margin:auto;'>";
         html += "<tr>";
         html += "<td style='border:1px solid #000;'></td>";
-        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;'>Kutipan Tunai</td>";
-        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;'>Kredit Kad</td>";
-        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;'>Touch & Go</td>";
-        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;'>Maybank QRPay</td>";
-        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;'>Grab Pay</td>";
-        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;'>Boost</td>";
-        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;'>Jumlah Jualan</td>";
+        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;width:12%;'>Kutipan Tunai</td>";
+        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;width:12%;'>Kredit Kad</td>";
+        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;width:12%;'>Touch & Go</td>";
+        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;width:12%;'>Maybank QRPay</td>";
+        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;width:12%;'>Grab Pay</td>";
+        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;width:12%;'>Boost</td>";
+        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;width:12%;'>Jumlah Jualan</td>";
         html += "</tr>";
         html += "<tr><td style='border:1px solid #000; height:22px;'></td><td style='border:1px solid #000;'></td><td style='border:1px solid #000;'></td><td style='border:1px solid #000;'></td><td style='border:1px solid #000;'></td><td style='border:1px solid #000;'></td><td style='border:1px solid #000;'></td></td><td style='border:1px solid #000;'></td></tr>";
         
