@@ -1194,6 +1194,11 @@ class HomeController extends Controller
           {
             $total_cash_float -= $cash_float->amount;
           }
+
+          if($cash_float->remarks)
+          {
+            $cash_float->remarks = "";
+          }
         }
 
         $pos_cashier = pos_cashier::where('ip', $cashier->ip)->first();
@@ -1792,6 +1797,10 @@ class HomeController extends Controller
               'barcode' => $product['barcode'],
               'product_name' => $product['product_name'],
               'price' => $product['price'],
+              'wholesale_price' => $product['wholesale_price'],
+              'wholesale_quantity' => $product['wholesale_quantity'],
+              'wholesale_start_date' => $product['wholesale_start_date'],
+              'wholesale_end_date' => $product['wholesale_end_date'],
               'uom' => $product['uom'],
               'promotion_start' => $product['promotion_start'],
               'promotion_end' => $product['promotion_end'],

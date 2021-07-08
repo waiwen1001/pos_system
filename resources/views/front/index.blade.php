@@ -3506,11 +3506,11 @@
     html += "<tr>";
     html += "<td></td>";
     html += "<td style='vertical-align:top;'>Amount</td>";
-    html += "<td style='vertical-align:top;'>Time</td>";
+    html += "<td style='vertical-align:top;'>Masa</td>";
     html += "<td style='vertical-align:top;'>Remarks</td>";
     html += "</tr>";
     html += "<tr>";
-    html += "<td style='vertical-align:top;'>Opening</td>";
+    html += "<td style='vertical-align:top;'>Modal</td>";
     html += "<td style='vertical-align:top;text-align:right;'>"+closing_report.opening+"</td>";
     html += "<td style='vertical-align:top;'>"+closing_report.opening_time+"</td>";
     html += "<td></td>";
@@ -3522,11 +3522,11 @@
       html += "<td style='vertical-align:top;'>";
       if(cash_float.type == "in")
       {
-        html += "Float in";
+        html += "Duit masuk";
       }
       else if(cash_float.type == "out")
       {
-        html += "Float out";
+        html += "Duit keluar";
       }
       html += "</td>";
       
@@ -3537,7 +3537,7 @@
     }
 
     html += "<tr>";
-    html += "<td style='vertical-align:top;'>Total cash sales</td>";
+    html += "<td style='vertical-align:top;'>Jumlah jualan tunai</td>";
     html += "<td style='vertical-align:top;text-align:right;'>"+closing_report.cash_sales+"</td>";
     html += "<td></td>";
     html += "<td></td>";
@@ -3546,21 +3546,21 @@
     html += "<tr><td style='height:14px;'></td><td></td><td></td><td></td></tr>";
 
     html += "<tr>";
-    html += "<td style='vertical-align:top;'>Total cash flow</td>";
+    html += "<td style='vertical-align:top;'>Jumlah tunai di drawer</td>";
     html += "<td style='vertical-align:top;text-align:right;'>"+closing_report.cash_flow+"</td>";
     html += "<td></td>";
     html += "<td></td>";
     html += "</tr>";
 
     html += "<tr>";
-    html += "<td style='vertical-align:top;'>Closing amount</td>";
+    html += "<td style='vertical-align:top;'>Jumlah penutupan</td>";
     html += "<td style='vertical-align:top;text-align:right;'>"+closing_report.closing+"</td>";
     html += "<td style='vertical-align:top;'>"+closing_report.closing_time+"</td>";
     html += "<td></td>";
     html += "</tr>";
 
     html += "<tr>";
-    html += "<td style='vertical-align:top;'>Different</td>";
+    html += "<td style='vertical-align:top;'>Perbezaan</td>";
     html += "<td style='vertical-align:top;text-align:right;'>"+closing_report.diff+"</td>";
     html += "<td></td>";
     html += "<td></td>";
