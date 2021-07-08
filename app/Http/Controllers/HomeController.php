@@ -1195,7 +1195,7 @@ class HomeController extends Controller
             $total_cash_float -= $cash_float->amount;
           }
 
-          if($cash_float->remarks)
+          if(!$cash_float->remarks)
           {
             $cash_float->remarks = "";
           }
