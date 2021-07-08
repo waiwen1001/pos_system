@@ -3059,7 +3059,7 @@
         newWin.document.write('<html><body onload="window.print()">'+dailyReportPrint.innerHTML+'</body></html>');
         newWin.document.close();
 
-        // setTimeout(function(){newWin.close();},10);
+        setTimeout(function(){newWin.close();},10);
       }
       else
       {
