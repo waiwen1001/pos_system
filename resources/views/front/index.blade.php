@@ -194,8 +194,8 @@
 
                     @if($device_type == 2)
                       <div id="barcode_toggle" class="dropdown-item">
-                        <label style="width: 100%; white-space: pre-wrap;">Barcode prompt toggle</label>
-                        <input id="barcode_toggle_checkbox" type="checkbox" data-toggle="toggle" data-onstyle="success" data-height="40">
+                        <label style="white-space: pre-wrap; display: inline-block;">Barcode alert</label>
+                        <input id="barcode_toggle_checkbox" type="checkbox" data-toggle="toggle" data-onstyle="success" data-height="20" style="display: inline-block;">
                       </div>
                       <div class="dropdown-divider"></div>
 
@@ -225,6 +225,10 @@
                       <button class="dropdown-item" id="floatOutBtn" {{ $opening == 1 ? '' : 'disabled' }}>
                         Cash Float ( Out )
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showCashFloatOut()"></span>
+                      </button>
+                      <button class="dropdown-item" id="bagiKeKetuaBtn" {{ $opening == 1 ? '' : 'disabled' }}>
+                        Bagi Ke Ketua
+                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showBagiKeKetua()"></span>
                       </button>
                       <!-- <button class="dropdown-item" id="refundBtn" {{ $opening == 1 ? '' : 'disabled' }}>
                         Refund
@@ -1628,7 +1632,7 @@
       closing();
     });
 
-    $("#floatInBtn, #floatOutBtn, #refundBtn").click(function(){
+    $("#floatInBtn, #floatOutBtn, #refundBtn, #bagiKeKetuaBtn").click(function(){
       $("input[name='cash_float']").val("");
       $("input[name='cash_float_remarks']").val("");
       if($(this).attr("id") == "floatInBtn")
@@ -1645,6 +1649,11 @@
       {
         $("input[name='cash_float_type']").val('refund');
         $("#cash_float_title").html("Refund");
+      }
+      else if($(this).attr("id") == "bagiKeKetuaBtn")
+      {
+        $("input[name='cash_float_type']").val('boss');
+        $("#cash_float_title").html("Bagi Ke Ketua");
       }
 
       $("#cashFloatModal").modal('show');
@@ -1690,6 +1699,7 @@
         else if(barcode_toggle == true)
         {
           Swal.fire({
+            allowOutsideClick: false,
             title: 'Barcode not found, please scan again.',
             icon: 'error',
             confirmButtonText: 'OK',
@@ -2410,6 +2420,14 @@
     }
   }
 
+  function showBagiKeKetua()
+  {
+    if($("#bagiKeKetuaBtn").attr("disabled") != "disabled")
+    {
+      $("#bagiKeKetuaBtn").click();
+    }
+  }
+
   function showClosingReport()
   {
     if(user.user_type == 1)
@@ -2682,7 +2700,7 @@
           opening = 1;
 
           $("#openingBtn").attr("disabled", true);
-          $("#closingBtn, #floatInBtn, #floatOutBtn").attr("disabled", false);
+          $("#closingBtn, #floatInBtn, #floatOutBtn, #bagiKeKetuaBtn").attr("disabled", false);
 
         }
       }).fail(function(xhr){
@@ -2798,7 +2816,7 @@
         disablePosSystem();
 
         $("#openingBtn").attr("disabled", false);
-        $("#closingBtn, #floatInBtn, #floatOutBtn").attr("disabled", true);
+        $("#closingBtn, #floatInBtn, #floatOutBtn, #bagiKeKetuaBtn").attr("disabled", true);
 
         $("#daily_closing_content").html("This cashier are now closed.");
         $("#daily_closing_toast").toast('show');

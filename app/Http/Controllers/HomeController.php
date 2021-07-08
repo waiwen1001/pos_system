@@ -1427,9 +1427,15 @@ class HomeController extends Controller
         'remarks' => $request->remarks
       ]);
 
+      $message = "Cash Float ".ucfirst($request->type)." : RM ".$request->amount;
+      if($request->type == "boss")
+      {
+        $message = "Bagi Ke Ketua : RM ".$request->amount;
+      }
+
       $response = new \stdClass();
       $response->error = 0;
-      $response->message = "Cash Float ".ucfirst($request->type)." : RM ".$request->amount;
+      $response->message = $message;
       $response->cashier_name = $cashier_name;
       $response->remarks = $request->remarks;
       $response->datetime = date('Y-M-d h:i:s A');
@@ -2246,6 +2252,12 @@ class HomeController extends Controller
         [
           'function' => "showCashFloatOut()",
           'function_name' => "Show cash float out",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "showBagiKeKetua()",
+          'function_name' => "Show bagi ke ketua",
           'code' => null,
           'character' => null
         ],
