@@ -1516,6 +1516,7 @@ class HomeController extends Controller
         $transaction_detail->total_text = number_format($transaction_detail->total, 2);
 
         $total_quantity += $transaction_detail->quantity;
+        $total_quantity += $transaction_detail->wholesale_quantity;
       }
 
       $transaction->total_quantity = $total_quantity;

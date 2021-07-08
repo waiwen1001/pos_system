@@ -759,8 +759,8 @@
         
       </div>
       <div style="display: flex; margin-top: 10px; font-size: 11px;">
-        <div style="flex: 1;">Kuantiti: <label id="receipt_total_quantity"></label></div>
         <div style="flex: 1;">Barang: <label id="receipt_total_items"></label></div>
+        <div style="flex: 1;">Kuantiti: <label id="receipt_total_quantity"></label></div>
       </div>
       <div style="border: 1px dashed #000; margin: 5px 0;"></div>
       <div style="margin-bottom: 10px;">
