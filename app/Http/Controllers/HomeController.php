@@ -1433,11 +1433,17 @@ class HomeController extends Controller
         $message = "Bagi Ke Ketua : RM ".$request->amount;
       }
 
+      $remarks = "";
+      if($request->remarks)
+      {
+        $remarks = $request->remarks;
+      }
+
       $response = new \stdClass();
       $response->error = 0;
       $response->message = $message;
       $response->cashier_name = $cashier_name;
-      $response->remarks = $request->remarks;
+      $response->remarks = $remarks;
       $response->datetime = date('Y-M-d h:i:s A');
       $response->user_name = $user->name;
 
