@@ -3570,7 +3570,7 @@
     html += "</tr>";
 
     html += "<tr>";
-    html += "<td style='vertical-align:top;'>Perbezaan</td>";
+    html += "<td style='vertical-align:top;'>Baki</td>";
     html += "<td style='vertical-align:top;text-align:right;'>"+closing_report.diff+"</td>";
     html += "<td></td>";
     html += "<td></td>";
