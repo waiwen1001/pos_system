@@ -226,10 +226,10 @@
                         Cash Float ( Out )
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showCashFloatOut()"></span>
                       </button>
-                      <button class="dropdown-item" id="bagiKeKetuaBtn" {{ $opening == 1 ? '' : 'disabled' }}>
+<!--                       <button class="dropdown-item" id="bagiKeKetuaBtn" {{ $opening == 1 ? '' : 'disabled' }}>
                         Bagi Ke Ketua
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showBagiKeKetua()"></span>
-                      </button>
+                      </button> -->
                       <!-- <button class="dropdown-item" id="refundBtn" {{ $opening == 1 ? '' : 'disabled' }}>
                         Refund
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showRefund()"></span>
