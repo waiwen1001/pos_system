@@ -54,6 +54,6 @@ Route::post('/saveShortcutKey', 'HomeController@saveShortcutKey')->name('saveSho
 
 Route::get('/testing', 'HomeController@testing')->name('testing');
 Route::get('/myIP', 'HomeController@myIP')->name('myIP');
-Route::get('/logout', 'HomeController@getlogout')->name('getlogout');
+Route::get('/getlogout', 'HomeController@getlogout')->name('getlogout');
 
 
