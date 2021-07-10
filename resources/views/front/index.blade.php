@@ -741,8 +741,7 @@
     </div>
   </div>
 
-  <form id="logout_form" method="POST" action="{{ route('logout') }}">
-    @csrf
+  <form id="logout_form" method="GET" action="{{ route('getlogout') }}">
   </form>
 
   <!-- print receipt -->

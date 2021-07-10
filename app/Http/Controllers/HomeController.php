@@ -1121,7 +1121,7 @@ class HomeController extends Controller
           'ip' => $this->ip,
           'session_id' => $session->id,
           'opening' => 1,
-          'opening_amount' => $request->opening_amount,
+          'opening_amount' => round($request->opening_amount, 2),
           'opening_by' => $user->id,
           'opening_date_time' => $now
         ]);
@@ -1130,7 +1130,7 @@ class HomeController extends Controller
       {
         cashier::where('id', $cashier->id)->update([
           'opening' => 1,
-          'opening_amount' => $request->opening_amount,
+          'opening_amount' => round($request->opening_amount, 2),
           'opening_by' => $user->id,
           'opening_date_time' => $now
         ]);
@@ -1232,9 +1232,9 @@ class HomeController extends Controller
 
         cashier::where('id', $cashier->id)->update([
           'closing' => 1,
-          'closing_amount' => $request->closing_amount,
+          'closing_amount' => round($request->closing_amount, 2),
           'calculated_amount' => $request->calculated_amount,
-          'diff' => $request->closing_amount - $request->calculated_amount,
+          'diff' => round($request->closing_amount, 2) - $request->calculated_amount,
           'closing_by' => $user->id,
           'closing_date_time' => $now
         ]);
@@ -1347,8 +1347,6 @@ class HomeController extends Controller
       if (Auth::validate($credentials))
       {
         $manager = User::where('username', $request->username)->first();
-        $now = date('Y-m-d H:i:s', strtotime(now()));
-
         // $cashier = cashier::where('session_id', $session_id)->where('ip', $this->ip)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
 
         // if($cashier)
@@ -1362,19 +1360,6 @@ class HomeController extends Controller
         //     'closing_date_time' => $now
         //   ]);
         // }
-        
-        if($session)
-        {
-          session::where('id', $session_id)->update([
-            'closing_date_time' => $now,
-            'closed' => 1,
-          ]);
-        }
-
-        session::where('closed', null)->update([
-          'closed' => 1,
-          'synced' => null
-        ]);
 
         $response = $this->branchSync();
         return $response;
@@ -1582,6 +1567,7 @@ class HomeController extends Controller
     {
       // last session
       $resync = 0;
+      $now = date('Y-m-d H:i:s', strtotime(now()));
 
       if(isset($_GET['resync']))
       {
@@ -1640,6 +1626,8 @@ class HomeController extends Controller
         if($response['error'] == 0)
         {
           session::whereIn('id', $session_list)->update([
+            'closing_date_time' => $now,
+            'closed' => 1,
             'synced' => 1
           ]);
 
@@ -1650,13 +1638,10 @@ class HomeController extends Controller
         {
           $response = new \stdClass();
           $response->error = 1;
-          $response->message = "HQ Sycn API error.";
+          $response->message = "HQ sync API error.";
 
           return response()->json($response);
         }
-        
-
-        
       }
       else
       {
@@ -1681,8 +1666,6 @@ class HomeController extends Controller
       foreach($product_list as $key => $product)
       {
         \Log::info("Updating product list on ".$key." / ".$total_product_list);
-
-        dd($product);
 
         product::updateOrCreate([
           'barcode' => $product['barcode']
@@ -2588,6 +2571,13 @@ class HomeController extends Controller
 
       $now = date('Y-M-d h:i:s A');
       return view('front.server_cash_float_report', compact('now', 'pos_cashier_list'));
+    }
+
+    public function getlogout()
+    {
+      Auth::logout();
+
+      return redirect(route('home'));
     }
 }
 
