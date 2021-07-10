@@ -226,10 +226,10 @@
                         Cash Float ( Out )
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showCashFloatOut()"></span>
                       </button>
-<!--                       <button class="dropdown-item" id="bagiKeKetuaBtn" {{ $opening == 1 ? '' : 'disabled' }}>
+                      <button class="dropdown-item" id="bagiKeKetuaBtn" {{ $opening == 1 ? '' : 'disabled' }}>
                         Bagi Ke Ketua
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showBagiKeKetua()"></span>
-                      </button> -->
+                      </button>
                       <!-- <button class="dropdown-item" id="refundBtn" {{ $opening == 1 ? '' : 'disabled' }}>
                         Refund
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showRefund()"></span>
@@ -741,7 +741,8 @@
     </div>
   </div>
 
-  <form id="logout_form" method="GET" action="{{ route('getlogout') }}">
+  <form id="logout_form" method="POST" action="{{ route('logout') }}">
+    @csrf
   </form>
 
   <!-- print receipt -->
@@ -1667,13 +1668,6 @@
 
     $("#barcode_toggle_checkbox").change(function(){
       barcode_toggle = $(this).is(":checked");
-
-      if($(this).is(":checked")){
-        localStorage.setItem('barcode_alert',1);
-      }else{
-        localStorage.removeItem('barcode_alert');
-      }
-
     });
 
     let date = new Date();
@@ -1683,12 +1677,6 @@
       let date = new Date();
       $("#time").text(`${date.toLocaleTimeString()}`);
     },1000);
-
-    if(localStorage.getItem('barcode_alert') == 1){
-      $(".toggle-group").click();
-    }
-
-
   });
 
   function searchAndAddItem()
@@ -2079,6 +2067,7 @@
 
   function logout()
   {
+    console.log("logged out");
     $("#logout_form").submit();
   }
 
@@ -3582,7 +3571,7 @@
     html += "</tr>";
 
     html += "<tr>";
-    html += "<td style='vertical-align:top;'>Baki</td>";
+    html += "<td style='vertical-align:top;'>Perbezaan</td>";
     html += "<td style='vertical-align:top;text-align:right;'>"+closing_report.diff+"</td>";
     html += "<td></td>";
     html += "<td></td>";
