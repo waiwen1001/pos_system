@@ -1668,6 +1668,13 @@
 
     $("#barcode_toggle_checkbox").change(function(){
       barcode_toggle = $(this).is(":checked");
+
+      if($(this).is(":checked")){
+        localStorage.setItem('barcode_alert',1);
+      }else{
+        localStorage.removeItem('barcode_alert');
+      }
+
     });
 
     let date = new Date();
@@ -1677,6 +1684,12 @@
       let date = new Date();
       $("#time").text(`${date.toLocaleTimeString()}`);
     },1000);
+
+    if(localStorage.getItem('barcode_alert') == 1){
+      $(".toggle-group").click();
+    }
+
+
   });
 
   function searchAndAddItem()
