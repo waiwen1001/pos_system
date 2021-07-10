@@ -32,7 +32,7 @@ class HomeController extends Controller
     public function __construct()
     {
         $this->ip = $_SERVER['REMOTE_ADDR'];
-        $this->middleware('auth', ['except' => ['syncHQProductList', 'testing', 'branchSync']]);
+        $this->middleware('auth', ['except' => ['testing']]);
     }
 
     /**
