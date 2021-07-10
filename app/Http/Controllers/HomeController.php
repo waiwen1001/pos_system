@@ -1576,11 +1576,11 @@ class HomeController extends Controller
 
       if($resync == 0)
       {
-        $session_list = session::where('closed', 1)->where('synced', null)->pluck('id')->toArray();
+        $session_list = session::where('synced', null)->pluck('id')->toArray();
       }
       elseif($resync == 1)
       {
-        $session_list = session::where('closed', 1)->where('synced', null)->pluck('id')->toArray();
+        $session_list = session::where('synced', null)->pluck('id')->toArray();
 
         if(count($session_list) == 0)
         {
