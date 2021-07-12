@@ -2103,7 +2103,7 @@
           items_html += "</tr>";
           items_html += "<tr>";
           items_html += "<td style='vertical-align:top;'>"+transaction_detail[a].barcode+"</td>";
-          items_html += "<td style='width: 120px;vertical-align:top;'>";
+          items_html += "<td style='width: 120px;vertical-align:top;text-align:right;'>";
 
           if(transaction_detail[a].wholesale_quantity > 0)
           {
@@ -2204,7 +2204,7 @@
         newWin.document.write('<html><body onload="window.print()">'+receiptPrint.innerHTML+'</body></html>');
         newWin.document.close();
 
-        // setTimeout(function(){newWin.close();},10);
+        setTimeout(function(){newWin.close();},10);
       }
     }).fail(function(xhr){
       if(xhr.status == 401)
