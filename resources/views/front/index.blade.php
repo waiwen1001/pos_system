@@ -2103,7 +2103,7 @@
           items_html += "</tr>";
           items_html += "<tr>";
           items_html += "<td style='vertical-align:top;'>"+transaction_detail[a].barcode+"</td>";
-          items_html += "<td style='width: 120px;vertical-align:top;text-align:right;'>";
+          items_html += "<td style='width: 120px;vertical-align:top;text-align:center;'>";
 
           if(transaction_detail[a].wholesale_quantity > 0)
           {
