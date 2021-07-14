@@ -54,17 +54,14 @@
     <tbody>
       <tr>
         <td></td>
-        <td rowspan="2">Kutipan Tunai</td>
-        <td rowspan="2">Credit / debit Kad</td>
-        <td rowspan="2">Touch & Go</td>
-        <td rowspan="2">Maybank QR code</td>
-        <td rowspan="2">Grab Pay</td>
-        <td rowspan="2">Boost</td>
-        <td rowspan="2">Cek / Lain lain</td>
-        <td rowspan="2">Jumlah Jualan</td>
-      </tr>
-      <tr>
-        <td></td>
+        <td>Kutipan Tunai</td>
+        <td>Credit / debit Kad</td>
+        <td>Touch & Go</td>
+        <td>Maybank QR code</td>
+        <td>Grab Pay</td>
+        <td>Boost</td>
+        <td>Cek / Lain lain</td>
+        <td>Jumlah Jualan</td>
       </tr>
       @foreach($pos_cashier as $cashier)
         <tr>
@@ -123,7 +120,7 @@
       </tr>
 
       <tr class="no_border">
-        <td colspan="2">Jualan Tunai :</td>
+        <td colspan="2">Jumlah Tunai :</td>
         <td></td>
         <td class='align_right'>{{ $cash_float_result->total_cash }}</td>
         <td class="no_border"></td>
@@ -200,7 +197,7 @@
               <td class='align_right'>{{ number_format($shift->remain, 2) }}</td>
               <td></td>
             </tr>
-            @if($shift->diff > 0)
+            @if($shift->diff != 0)
               <tr>
                 <td class='align_right' colspan="2">Tutup Kounter :</td>
                 <td class='align_right'>{{ number_format($shift->closing_amount, 2) }}</td>
@@ -239,9 +236,11 @@
               <tr>
                 <td class='align_right'>
                   @if($cash_float->type == 'in')
-                    Float In ( by : {{ $cash_float->created_by }} )
+                    Float In <br>( by : {{ $cash_float->created_by }} )
                   @elseif($cash_float->type == 'out')
-                    Float Out ( by : {{ $cash_float->created_by }} )
+                    Float Out <br>( by : {{ $cash_float->created_by }} )
+                  @elseif($cash_float->type == 'boss')
+                    Bagi Ke Ketua <br>( by : {{ $cash_float->created_by }} )
                   @endif
                 </td>
                 <td class='align_right'>{{ $cash_float->remarks }}</td>
@@ -261,8 +260,9 @@
 <script>
   
   $(document).ready(function(){
-    window.print();
-    window.close();
+    setTimeout(function(){
+      window.print();
+    }, 1000);
   });
 
 </script>

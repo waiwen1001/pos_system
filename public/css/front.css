@@ -43,10 +43,12 @@ body { font-family: arial; }
 .numpad_btn.red { background: #ff5a6b; }
 .numpad_btn.red:hover { background: #a53b46; }
 .numpad_func_btn { display: flex; }
+
 .numpad_btn.clear { flex: 2; background: #17a2b8; }
 .numpad_btn.clear:hover { background: #146a77; }
 .numpad_btn.decrease { flex: 2; background: #fd7e14; }
 .numpad_btn.decrease:hover { background: #dc7118; }
+.numpad_btn.exact { background: #333; }
 
 .transaction_completed_icon { width: 100%; text-align: center; font-size: 50px; color: green; }
 .full_page { position: fixed; display: none; top: 0%; left: 0%; width: 100%; height: 100%; background: #eee; }

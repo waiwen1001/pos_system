@@ -1233,7 +1233,7 @@ class HomeController extends Controller
           $cashier_name = $pos_cashier->cashier_name;
         }
 
-        $total_cash_sales = transaction::where('session_id', $session->id)->where('ip', $cashier->ip)->where('payment_type', 'cash')->select('*')->selectRaw('SUM(transaction.total) as total_cash_sales')->groupBy('session_id')->get();
+        $total_cash_sales = transaction::where('session_id', $session->id)->where('ip', $cashier->ip)->where('opening_id', $cashier->id)->where('payment_type', 'cash')->select('*')->selectRaw('SUM(transaction.total) as total_cash_sales')->groupBy('session_id')->get();
 
         $total_cash = 0;
         foreach($total_cash_sales as $cash_sales)
@@ -1714,7 +1714,6 @@ class HomeController extends Controller
         $response = new \stdClass();
         $response->error = 1;
         $response->message = "Branch sync URL not found.";
-
         return response()->json($response);
       }
     }
@@ -1995,9 +1994,15 @@ class HomeController extends Controller
       $all_transaction = transaction::where('completed', 1)->where('session_id', $session->id)->get();
 
       $total_sales = 0;
+      $only_cash_sales = 0;
       foreach($all_transaction as $all)
       {
         $total_sales += $all->total;
+        if($all->payment_type == "cash")
+        {
+          $only_cash_sales += $all->total;
+        }
+
         $payment_type = $all->payment_type;
         foreach($pos_cashier as $pos)
         {
@@ -2086,6 +2091,7 @@ class HomeController extends Controller
       }
 
       $total_sales_text = $total_sales == 0 ? "-" : number_format($total_sales, 2);
+      $only_cash_sales_text = $only_cash_sales == 0 ? "-" : number_format($only_cash_sales, 2);
 
       $total_opening = 0;
       $total_float_in = 0;
@@ -2128,13 +2134,13 @@ class HomeController extends Controller
         }
       }
 
-      $total_cash = $total_opening + $total_float_in + $total_sales;
+      $total_cash = $total_opening + $total_float_in + $only_cash_sales;
       $total_deduct = $total_float_out + $total_closing;
 
       $cash_float_result = new \stdClass();
       $cash_float_result->opening = number_format($total_opening, 2);
       $cash_float_result->float_in = number_format($total_float_in, 2);
-      $cash_float_result->cash_sales = $total_sales_text;
+      $cash_float_result->cash_sales = $only_cash_sales_text;
       $cash_float_result->float_out = number_format($total_float_out, 2);
       $cash_float_result->closing = number_format($total_closing, 2);
       $cash_float_result->total_cash = number_format($total_cash, 2);
@@ -2144,7 +2150,6 @@ class HomeController extends Controller
       // end daily report
 
       // cash float report
-
       $ip_array = array();
       $cashier_list = cashier::where('session_id', $session->id)->get();
 
@@ -2189,7 +2194,6 @@ class HomeController extends Controller
         }
 
         $shift_list = cashier::where('session_id', $session->id)->where('ip', $cashier_detail->ip)->get();
-
         $final_remain = 0;
         foreach($shift_list as $s_key => $shift)
         {
@@ -2258,16 +2262,23 @@ class HomeController extends Controller
           $shift->boss_cash = $total_boss_cash;
           $shift->remain = $drawer_cash - $total_boss_cash;
 
-          $final_remain = $drawer_cash - $total_boss_cash;
+          if($shift->diff != 0)
+          {
+            $final_remain = $shift->closing_amount;
+          }
+          else
+          {
+            $final_remain = $drawer_cash - $total_boss_cash;
+          }
         }
 
         $cashier_detail->shift = $shift_list;
         $cashier_detail->final_remain = $final_remain;
-        $cashier_detail->cash_float = cash_float::where('cash_float.session_id', $session->id)->where('cash_float.ip', $cashier_detail->ip)->whereIn('cash_float.type', ['in', 'out'])->leftJoin('users', 'users.id', '=', 'cash_float.user_id')->select('cash_float.*', 'users.name as created_by')->get();
+        $cashier_detail->cash_float = cash_float::where('cash_float.session_id', $session->id)->where('cash_float.ip', $cashier_detail->ip)->leftJoin('users', 'users.id', '=', 'cash_float.user_id')->select('cash_float.*', 'users.name as created_by')->get();
       }
       // 
 
-      return view('front.closing_report', compact('now', 'pos_cashier', 'payment_type_result', 'total_sales_text', 'cash_float_result', 'pos_cashier_list'));
+      return view('front.closing_report', compact('now', 'pos_cashier', 'payment_type_result', 'total_sales_text', 'only_cash_sales_text', 'cash_float_result', 'pos_cashier_list'));
     }
 
     public function deleteUser(Request $request)
@@ -2421,7 +2432,7 @@ class HomeController extends Controller
 
     public function testing()
     {
-      dd(env('branch_id'), $this->branch_id);
+      dd(env('branch_id'), $this->branch_id, env('branchSyncURL'));
       dd($this->getDailyReport());
       $now = date('Y-m-d H:i:s', strtotime(now()));
       $started_id = 34;

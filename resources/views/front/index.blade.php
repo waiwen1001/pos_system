@@ -54,7 +54,7 @@
                       <td>
                         <div class="quantity">
                           <i class="fa fa-minus" onclick="editQuantity(event, this, 'plus', '{{ $item->id }}')"></i>
-                          <input type='number' class='quantity_input' value='{{ $item->quantity + $item->wholesale_quantity }}' item_id='{{ $item->id }}' onkeyup="editQuantity(event, this, 'number', '{{ $item->id }}')" />
+                          <input type='text' class='quantity_input' value='{{ $item->quantity + $item->wholesale_quantity }}' item_id='{{ $item->id }}' onkeyup="editQuantity(event, this, 'number', '{{ $item->id }}')" />
                           <i class="fa fa-plus" onclick="editQuantity(event, this, 'minus', '{{ $item->id }}')"></i>
                         </div>
                       </td>
@@ -1723,7 +1723,7 @@
         transaction_total = transaction_summary.real_total;
         $("#transaction_id").val(transaction_summary.transaction_id);
 
-        $("#total_quantity").parent(".summary-detail").show();
+        $("#total_quantity").show();
         $("#total_quantity").html(result.item_count);
 
 
@@ -1763,7 +1763,7 @@
       html += "<td>";
       html += "<div class='quantity'>";
       html += "<i class='fa fa-minus' onclick='editQuantity(event, this, \"plus\", \""+item_detail.id+"\")'></i>";
-      html += "<input type='number' class='quantity_input' item_id='"+item_detail.id+"' value='"+( item_detail.quantity + item_detail.wholesale_quantity )+"' onkeyup='editQuantity(event, this, \"number\", \""+item_detail.id+"\")' />"
+      html += "<input type='text' class='quantity_input' item_id='"+item_detail.id+"' value='"+( item_detail.quantity + item_detail.wholesale_quantity )+"' onkeyup='editQuantity(event, this, \"number\", \""+item_detail.id+"\")' />"
       html += "<i class='fa fa-plus' onclick='editQuantity(event, this, \"minus\", \""+item_detail.id+"\")'></i>";
       html += "</div>";
       html += "</td>";
@@ -2093,7 +2093,7 @@
     }
 
     $("#total_quantity").html("");
-    $("#total_quantity").parent(".summary-detail").hide();
+    $("#total_quantity").hide();
   }
 
   function printReceipt(transaction_id, reprint)
@@ -2305,7 +2305,15 @@
     var quantity_number = 0;
     if(type == "number")
     {
-      if( (isNaN(event.key) == false && event.key != ".") || event.key == "Backspace")
+      quantity_number = $(_this).val();
+      if(isNaN(event.key) && event.key != "ArrowLeft" && event.key != "ArrowRight")
+      {
+        quantity_number = quantity_number.replace(event.key, "");
+        $(_this).val("");
+        $(_this).val(quantity_number);
+      }
+
+      if(isNaN(event.key) == false || event.key == "Backspace")
       {
         quantity_number = $(_this).val();
         if(quantity_number == "")
@@ -3592,7 +3600,7 @@
     html += "</tr>";
 
     html += "<tr>";
-    html += "<td style='vertical-align:top;'>Perbezaan</td>";
+    html += "<td style='vertical-align:top;'>Baki</td>";
     html += "<td style='vertical-align:top;text-align:right;'>"+closing_report.diff+"</td>";
     html += "<td></td>";
     html += "<td></td>";
