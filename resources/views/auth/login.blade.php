@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login Homeu</title>
 
+    <!-- jQuery -->
+    <script src="{{ asset('assets/jquery/jquery-3.5.1.min.js') }}"></script>
+
     <style>
       @use postcss-preset-env;
 
@@ -272,4 +275,12 @@
       </form>
     </div>
   </body>
+
+  <script>
+    
+    $(document).ready(function(){
+      $("input[name='username']").focus();
+    });
+
+  </script>
 </html>

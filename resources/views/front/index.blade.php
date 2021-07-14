@@ -42,8 +42,8 @@
             <table id="items-table">
               <thead>
                 <th>Product Name</th>
-                <th width="100px">Quantity</th>
-                <th width="200px">Amount</th>
+                <th width="120px">Quantity</th>
+                <th width="150px">Amount</th>
                 <th width="50px;"></th>
               </thead>
               <tbody>
@@ -53,9 +53,9 @@
                       <td>{{ $item->product_name }}</td>
                       <td>
                         <div class="quantity">
-                          <i class="fa fa-minus" onclick="editQuantity(this, 'plus', '{{ $item->id }}')"></i>
-                          <label>{{ $item->quantity + $item->wholesale_quantity }}</label>
-                          <i class="fa fa-plus" onclick="editQuantity(this, 'minus', '{{ $item->id }}')"></i>
+                          <i class="fa fa-minus" onclick="editQuantity(event, this, 'plus', '{{ $item->id }}')"></i>
+                          <input type='number' class='quantity_input' value='{{ $item->quantity + $item->wholesale_quantity }}' item_id='{{ $item->id }}' onkeyup="editQuantity(event, this, 'number', '{{ $item->id }}')" />
+                          <i class="fa fa-plus" onclick="editQuantity(event, this, 'minus', '{{ $item->id }}')"></i>
                         </div>
                       </td>
                       <td class="subtotal">
@@ -226,10 +226,10 @@
                         Cash Float ( Out )
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showCashFloatOut()"></span>
                       </button>
-                      <!-- <button class="dropdown-item" id="bagiKeKetuaBtn" {{ $opening == 1 ? '' : 'disabled' }}>
+                      <button class="dropdown-item" id="bagiKeKetuaBtn" {{ $opening == 1 ? '' : 'disabled' }}>
                         Bagi Ke Ketua
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showBagiKeKetua()"></span>
-                      </button> -->
+                      </button>
                       <!-- <button class="dropdown-item" id="refundBtn" {{ $opening == 1 ? '' : 'disabled' }}>
                         Refund
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showRefund()"></span>
@@ -241,10 +241,6 @@
                         Closing Report
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showClosingReport()"></span>
                       </button>
-                      <!-- <button class="dropdown-item" onclick="serverCashFloatReport()">
-                        Cash float Report
-                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showServerCashFloatReport()"></span>
-                      </button> -->
                       @if($device_type == 1)
                         <div class="dropdown-divider"></div>
                         <!-- <button class="dropdown-item" onclick="showBranchProfile()">
@@ -489,6 +485,9 @@
             <div class="numpad_func_btn">
               <div class="numpad_btn clear">Clear</div>
               <div class="numpad_btn decrease"><</div>
+            </div>
+            <div style="display: inline-block; width: 100%;">
+              <div class="numpad_btn exact" style="width: calc(50% - 10px); float: right;">Exact</div>
             </div>
             <div class="numpad_enter">
               <div class="numpad_number">
@@ -998,7 +997,7 @@
         <div class="modal-body">
           <div class="form-group">
             <label>Amount</label>
-            <input type="text" class="form-control" name="cash_float" autocomplete="off" />
+            <input type="number" class="form-control" name="cash_float" autocomplete="off" />
             <span class="invalid-feedback" role="alert"></span>
           </div>
 
@@ -1020,9 +1019,9 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="syncHQModalLabel">Syncing HQ</h5>
-          <!-- <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
-          </button> -->
+          </button>
         </div>
         <div class="modal-body" id="syncHQContent" style="text-align: center;"> 
           <div style="display: block; font-size: 50px; color: #007bff;">
@@ -1223,6 +1222,19 @@
   var session = "{{ $session }}";
   var shortcut_key = @json($shortcut_key);
   var user = @json($user);
+  var pos_cashier = @json($pos_cashier);
+  var cashier_name = "";
+  var new_session = "{{ $new_session }}";
+
+  if(pos_cashier)
+  {
+    cashier_name = pos_cashier.cashier_name;
+  }
+  else
+  {
+    cashier_name = "{{ $ip }}";
+  }
+
   var selecting_related = 1;
   var total_related = 0;
   var device_type = "{{ $device_type }}";
@@ -1259,7 +1271,7 @@
       increaseArea: '20%' /* optional */
     });
 
-    if(session == "")
+    if(new_session == 1)
     {
       $("#syncHQModal").modal('show');
       syncHQ(2);
@@ -1503,6 +1515,10 @@
       $("input[name='received_payment']").focus();
     });
 
+    $(".numpad_btn.exact").click(function(){
+      $("input[name='received_payment']").val(transaction_total).focus();
+    });
+
     $(".numpad_btn.submit").click(function(){
       if($(this).attr("disabled") != "disabled")
       {
@@ -1573,13 +1589,7 @@
 
     if(opening == 0 && session != "" && device_type == 2)
     {
-      $("input[name='cashier_opening_amount']").val("");
-      $("#openingModal").modal('show');
-
-      setTimeout(function(){
-        $("input[name='cashier_opening_amount']").focus();
-      }, 500);
-
+      openingNow();
       disablePosSystem();
     }
 
@@ -1589,15 +1599,14 @@
     }
 
     $("#openingBtn").click(function(){
-      $("input[name='cashier_opening_amount']").val("");
-      $("#openingModal").modal('show');
-
-      setTimeout(function(){
-        $("input[name='cashier_opening_amount']").focus();
-      }, 500);
+      openingNow(); 
     });
 
     $("#dailyClosingBtn").click(function(){
+
+      $("input[name='manager_username']").val("");
+      $("input[name='manager_password']").val("");
+      $("#submitDailyClosing").html("Submit").attr("disabled", false);
 
       $("#dailyClosingModal").modal('show');
       setTimeout(function(){
@@ -1753,9 +1762,9 @@
       html += "<td>"+item_detail.product_name+"</td>";
       html += "<td>";
       html += "<div class='quantity'>";
-      html += "<i class='fa fa-minus' onclick='editQuantity(this, \"plus\", \""+item_detail.id+"\")'></i>";
-      html += "<label>"+(item_detail.quantity + item_detail.wholesale_quantity)+"</label>";
-      html += "<i class='fa fa-plus' onclick='editQuantity(this, \"minus\", \""+item_detail.id+"\")'></i>";
+      html += "<i class='fa fa-minus' onclick='editQuantity(event, this, \"plus\", \""+item_detail.id+"\")'></i>";
+      html += "<input type='number' class='quantity_input' item_id='"+item_detail.id+"' value='"+( item_detail.quantity + item_detail.wholesale_quantity )+"' onkeyup='editQuantity(event, this, \"number\", \""+item_detail.id+"\")' />"
+      html += "<i class='fa fa-plus' onclick='editQuantity(event, this, \"minus\", \""+item_detail.id+"\")'></i>";
       html += "</div>";
       html += "</td>";
       html += "<td class='subtotal'>";
@@ -2103,7 +2112,7 @@
           items_html += "</tr>";
           items_html += "<tr>";
           items_html += "<td style='vertical-align:top;'>"+transaction_detail[a].barcode+"</td>";
-          items_html += "<td style='width: 120px;vertical-align:top;text-align:center;'>";
+          items_html += "<td style='width: 120px;vertical-align:top;text-align:right;'>";
 
           if(transaction_detail[a].wholesale_quantity > 0)
           {
@@ -2291,14 +2300,38 @@
     });
   }
 
-  function editQuantity(_this, type, item_id)
+  function editQuantity(event, _this, type, item_id)
   {
-    $.post("{{ route('editQuantity') }}", { "_token" : "{{ csrf_token() }}", "type" : type, "item_id" : item_id}, function(result){
+    var quantity_number = 0;
+    if(type == "number")
+    {
+      if( (isNaN(event.key) == false && event.key != ".") || event.key == "Backspace")
+      {
+        quantity_number = $(_this).val();
+        if(quantity_number == "")
+        {
+          return;
+        }
+      }
+      else
+      {
+        return;
+      }
+    }
+
+    $.post("{{ route('editQuantity') }}", { "_token" : "{{ csrf_token() }}", "type" : type, "item_id" : item_id, "quantity" : quantity_number }, function(result){
       if(result.error == 0)
       {
         if(result.quantity > 0)
         {
-          $(_this).siblings("label").html(result.quantity);
+          if(type == "number")
+          {
+            $(_this).val(result.quantity);
+          }
+          else
+          {
+            $(_this).siblings("input").val(result.quantity);
+          }
 
           var html = "";
           if(result.wholesale_price > 0)
@@ -2437,14 +2470,6 @@
     if(user.user_type == 1)
     {
       dailyReport();
-    }
-  }
-
-  function showServerCashFloatReport()
-  {
-    if(user.user_type == 1)
-    {
-      serverCashFloatReport();
     }
   }
 
@@ -2720,6 +2745,24 @@
     }
   }
 
+  function openingNow()
+  {
+    var html = "";
+    html += "<p>Counter name : "+cashier_name+"</p>";
+    html += "<p>Cashier name : "+user.name+"</p>";
+    html += "<p>Date time : {{ date('Y M d h:i:s A', strtotime(now())) }}</p>";
+
+    console.log(html);
+    openDrawer(html);
+
+    $("input[name='cashier_opening_amount']").val("");
+    $("#openingModal").modal('show');
+
+    setTimeout(function(){
+      $("input[name='cashier_opening_amount']").focus();
+    }, 500);
+  }
+
   function closing()
   {
     if(opening == 0)
@@ -2828,8 +2871,7 @@
         opening = 0;
 
         dailyReport();
-        logout();
-        // syncHQ(0);
+        syncHQ(3);
       }
       else
       {
@@ -2918,6 +2960,11 @@
     }
 
     $.get("{{ route('branchSync') }}", { "resync" : resync }, function(result){
+
+      window.onbeforeunload = function () {
+        // blank function do nothing
+      }
+
       if(result.error == 0)
       {
         $("#syncHQContent").html("Sync completed.");
@@ -2929,11 +2976,11 @@
           {
             logout();
           }
+          else
+          {
+            location.reload();
+          }
         });
-
-        window.onbeforeunload = function () {
-          // blank function do nothing
-        }
 
         if(manual == 1 && opening == 1 && device_type == 2)
         {
@@ -2944,11 +2991,34 @@
           $("#syncHQModal").modal('hide');
           syncProductList(1);
         }
+        else if(manual == 3)
+        {
+          logout();
+        }
+      }
+      else if(result.error == 1)
+      {
+        $("#syncHQBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
+          syncHQ(manual);
+          $(this).html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
+        });
+
+        $("#syncHQContent").html("Sync failed, please sync again.");
+
+        Swal.fire({
+          title: result.message,
+          icon: 'error',
+          confirmButtonText: 'OK',
+        });
       }
       else
       {
         // no session to sync
-        if(manual == 2 && result.error == 2)
+        if(manual == 3)
+        {
+          logout();
+        }
+        else if(manual == 2 && result.error == 2)
         {
           setTimeout(function(){
             $("#syncHQModal").modal('hide');
@@ -2957,8 +3027,13 @@
         }
         else if(result.error == 2)
         {
-
-        }
+          $("#syncHQContent").html("Sync completed.");
+          $("#submitDailyClosing").html("Submit").attr("disabled", false);
+          $("#syncHQBtn").html("Sync completed").attr("disabled", false).off('click').click(function(){
+            $("#syncHQModal").modal('hide');
+            location.reload();
+          });
+        } 
         else
         {
           $("#syncHQBtn").html("Re-sync").attr("disabled", false).off('click').click(function(){
@@ -2975,7 +3050,7 @@
           });
         }
       }
-    }).fail(function(){
+    }).fail(function(xhr){
 
       if(xhr.status == 401)
       {
@@ -3002,79 +3077,7 @@
 
   function dailyReport()
   {
-    $.get("{{ route('getDailyReport') }}", function(result){
-      if(result.error == 0)
-      {
-        // var category_report = result.category_report;
-        // var department_report = result.department_report;
-        var payment_type_result = result.payment_type_result;
-        var pos_cashier = result.pos_cashier;
-        var session = result.session;
-
-        var html = "";
-        html += "<div style='text-align:center;'>"
-        html += "<h4 style='margin:0px;'>Report Jualan Harian</h4>";
-        html += "<p style='margin:0px;'>Tarikh : "+session.opening_date_time+"</p>";
-        html += "</div>";
-
-        html += "<table style='width:100%;border-spacing: 0px;margin:auto;'>";
-        html += "<tr>";
-        html += "<td style='border:1px solid #000;'></td>";
-        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;width:12%;'>Kutipan Tunai</td>";
-        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;width:12%;'>Kredit Kad</td>";
-        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;width:12%;'>Touch & Go</td>";
-        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;width:12%;'>Maybank QRPay</td>";
-        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;width:12%;'>Grab Pay</td>";
-        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;width:12%;'>Boost</td>";
-        html += "<td style='border:1px solid #000;text-align:center;padding:0px 3px;width:12%;'>Jumlah Jualan</td>";
-        html += "</tr>";
-        html += "<tr><td style='border:1px solid #000; height:22px;'></td><td style='border:1px solid #000;'></td><td style='border:1px solid #000;'></td><td style='border:1px solid #000;'></td><td style='border:1px solid #000;'></td><td style='border:1px solid #000;'></td><td style='border:1px solid #000;'></td></td><td style='border:1px solid #000;'></td></tr>";
-        
-        for(var a = 0; a < pos_cashier.length; a++)
-        {
-          html += "<tr>";
-          html += "<td style='border:1px solid #000;text-align:left;padding:0px 3px;'>"+pos_cashier[a].cashier_name+"</td>";
-          html += "<td style='border:1px solid #000;text-align:right;padding:0px 3px;'>"+pos_cashier[a].cash+"</td>";
-          html += "<td style='border:1px solid #000;text-align:right;padding:0px 3px;'>"+pos_cashier[a].card+"</td>";
-          html += "<td style='border:1px solid #000;text-align:right;padding:0px 3px;'>"+pos_cashier[a].tng+"</td>";
-          html += "<td style='border:1px solid #000;text-align:right;padding:0px 3px;'>"+pos_cashier[a].maybank_qr+"</td>";
-          html += "<td style='border:1px solid #000;text-align:right;padding:0px 3px;'>"+pos_cashier[a].grab_pay+"</td>";
-          html += "<td style='border:1px solid #000;text-align:right;padding:0px 3px;'>"+pos_cashier[a].boost+"</td>";
-          html += "<td style='border:1px solid #000;text-align:right;padding:0px 3px;'>"+pos_cashier[a].total+"</td>";
-          html += "</tr>";
-        }
-
-        html += "<tr>";
-        html += "<td style='border:1px solid #000;text-align:left;padding:0px 3px;'>Jumlah</td>";
-        for(var b = 0; b < payment_type_result.length; b++)
-        { 
-          html += "<td style='border:1px solid #000;text-align:right;padding:0px 3px;'>"+payment_type_result[b].total+"</td>";
-        }
-        html += "<td style='border:1px solid #000;text-align:right;padding:0px 3px;'>"+result.total_sales+"</td>";
-        html += "</tr>";
-        
-        html += "</table>";
-        $("#dailyReportContent").html(html);
-
-        var dailyReportPrint = document.getElementById('dailyReport');
-        var newWin = window.open('','Print-Window');
-
-        newWin.document.open();
-        newWin.document.write('<html><body onload="window.print()">'+dailyReportPrint.innerHTML+'</body></html>');
-        newWin.document.close();
-
-        setTimeout(function(){newWin.close();},10);
-      }
-      else
-      {
-        alert(result.message);
-      }
-    }).fail(function(xhr){
-      if(xhr.status == 401)
-      {
-        loggedOutAlert();
-      }
-    });
+    window.open("{{ route('getDailyReport') }}");
   }
 
   function userManagement()
@@ -3352,7 +3355,7 @@
         });
       }
       
-    }).fail(function(){
+    }).fail(function(xhr){
       if(xhr.status == 401)
       {
         loggedOutAlert();
@@ -3384,7 +3387,7 @@
       combined_barcode = "";
     }
 
-    if($("#voucherModal").css("display") != "none" || $("#user_management").css("display") != "none" || $("#dailyClosingModal").css("display") != "none" || $("#numpadModal").css("display") != "none" || $("#openingModal").css("display") != "none" || $("#previous_receipt").css("display") != "none" || $("#cardCheckoutModal").css("display") != "none" || $("#cashFloatModal").css("display") != "none" || $("#openingModal").css("display") != "none" || $("#closingModal").css("display") != "none")
+    if($("#voucherModal").css("display") != "none" || $("#user_management").css("display") != "none" || $("#dailyClosingModal").css("display") != "none" || $("#numpadModal").css("display") != "none" || $("#openingModal").css("display") != "none" || $("#previous_receipt").css("display") != "none" || $("#cardCheckoutModal").css("display") != "none" || $("#cashFloatModal").css("display") != "none" || $("#openingModal").css("display") != "none" || $("#closingModal").css("display") != "none" || $(".quantity_input").is(":focus"))
     {
       run = false;
       combined_barcode = "";
@@ -3476,6 +3479,17 @@
 
   function selectRelated()
   {
+    let row_height = 26;
+    let div_height = $(".memo-content").height();
+    let div_scroll = $(".memo-content").scrollTop();
+
+    let current_height = (row_height * selecting_related) + row_height;
+
+    if(current_height >= div_height)
+    {
+      $(".memo-content").scrollTop( (current_height - div_height) );
+    }
+
     $("#related_item tr").removeClass("selected");
     $("#related_item tr:nth-child("+selecting_related+")").addClass("selected");
   }
@@ -3532,6 +3546,10 @@
       {
         html += "Duit keluar";
       }
+      else if(cash_float.type == "boss")
+      {
+        html += "Bagi ke ketua";
+      }
       html += "</td>";
       
       html += "<td style='vertical-align:top;text-align:right;'>"
@@ -3539,7 +3557,7 @@
       {
         html += cash_float.amount_text;
       }
-      else if(cash_float.type == "out")
+      else if(cash_float.type == "out" || cash_float.type == "boss")
       {
         html += "( "+cash_float.amount_text+" )";
       }
@@ -3586,14 +3604,6 @@
     newWin.document.write('<html><body onload="window.print()" style="text-align:center;">'+html+'</body></html>');
     newWin.document.close();
     setTimeout(function(){newWin.close();},10);
-  }
-
-  function serverCashFloatReport()
-  {
-    window.open(
-      '{{ route("serverCashFloatReport") }}',
-      '_blank'
-    );
   }
 
   function loggedOutAlert()

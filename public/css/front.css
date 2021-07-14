@@ -63,6 +63,7 @@ body { font-family: arial; }
 
 .quantity i { padding: 3px 6px; border-radius: 3px; background: #ccc; cursor: pointer; }
 .quantity label { margin: 0 5px; }
+.quantity input { width: 30px; height: 30px; text-align: center; margin: 0 5px; display: inline-block; }
 
 .remove_voucher { padding: 3px; color: #a91927; cursor: pointer; }
 .dropdown-menu { width: 100% !important; }
@@ -93,5 +94,17 @@ body::-webkit-scrollbar-track { -webkit-box-shadow: inset 0 0 6px rgb(0 0 0 / 30
 
 .toggle.btn { margin: 0px !important; display: inline-block !important; }
 .toggle-group label { padding: 3px; }
+
+/* Chrome, Safari, Edge, Opera */
+.quantity_input::-webkit-outer-spin-button,
+.quantity_input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+.quantity_input[type=number] {
+  -moz-appearance: textfield;
+}
 
 

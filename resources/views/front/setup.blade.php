@@ -285,13 +285,13 @@
     parent.find("td:nth-child(3) p").addClass("hide");
     parent.find("td:nth-child(4) p").addClass("hide");
     parent.find("td:nth-child(5) button[func_type='edit']").addClass("hide");
-    parent.find("td:nth-child(6) button[func_type='delete']").addClass("hide");
+    parent.find("td:nth-child(5) button[func_type='delete']").addClass("hide");
 
     parent.find("td:nth-child(2) select").removeClass("hide");
     parent.find("td:nth-child(3) input").removeClass("hide");
     parent.find("td:nth-child(4) input").removeClass("hide");
     parent.find("td:nth-child(5) button[func_type='save']").removeClass("hide");
-    parent.find("td:nth-child(6) button[func_type='cancel']").removeClass("hide");
+    parent.find("td:nth-child(5) button[func_type='cancel']").removeClass("hide");
   }
 
   function cancelCashier(_this)
@@ -302,13 +302,13 @@
     parent.find("td:nth-child(3) p").removeClass("hide");
     parent.find("td:nth-child(4) p").removeClass("hide");
     parent.find("td:nth-child(5) button[func_type='edit']").removeClass("hide");
-    parent.find("td:nth-child(6) button[func_type='delete']").removeClass("hide");
+    parent.find("td:nth-child(5) button[func_type='delete']").removeClass("hide");
 
     parent.find("td:nth-child(2) select").addClass("hide");
     parent.find("td:nth-child(3) input").addClass("hide");
     parent.find("td:nth-child(4) input").addClass("hide");
     parent.find("td:nth-child(5) button[func_type='save']").addClass("hide");
-    parent.find("td:nth-child(6) button[func_type='cancel']").addClass("hide");
+    parent.find("td:nth-child(5) button[func_type='cancel']").addClass("hide");
   }
 
   function saveCashier(_this, id)
@@ -371,13 +371,13 @@
         parent.find("td:nth-child(3) p").removeClass("hide").html(pos_cashier.ip);
         parent.find("td:nth-child(4) p").removeClass("hide").html(pos_cashier.cashier_name);
         parent.find("td:nth-child(5) button[func_type='edit']").removeClass("hide");
-        parent.find("td:nth-child(6) button[func_type='delete']").removeClass("hide");
+        parent.find("td:nth-child(5) button[func_type='delete']").removeClass("hide");
 
         parent.find("td:nth-child(2) select").addClass("hide").val(pos_cashier.type);
         parent.find("td:nth-child(3) input").addClass("hide").val(pos_cashier.ip);
         parent.find("td:nth-child(4) input").addClass("hide").val(pos_cashier.cashier_name);
         parent.find("td:nth-child(5) button[func_type='save']").addClass("hide");
-        parent.find("td:nth-child(6) button[func_type='cancel']").addClass("hide");
+        parent.find("td:nth-child(5) button[func_type='cancel']").addClass("hide");
 
         Swal.fire({
           icon: 'success',
