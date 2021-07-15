@@ -1663,6 +1663,23 @@
       {
         $("input[name='cash_float_type']").val('boss');
         $("#cash_float_title").html("Bagi Ke Ketua");
+
+        $.get("{{ route('calculateClosingAmount') }}", function(result){
+          console.log(result.closing_amount);
+
+          var html = "";
+          html += "<p>Counter name : "+cashier_name+"</p>";
+          html += "<p>Cashier name : "+user.name+"</p>";
+          html += "<p>Date time : {{ date('Y M d h:i:s A', strtotime(now())) }}</p>";
+          html += "<p>Cash in drawer : "+result.closing_amount_text+"</p>"
+
+          openDrawer(html);
+        }).fail(function(xhr){
+          if(xhr.status == 401)
+          {
+            loggedOutAlert();
+          }
+        });
       }
 
       $("#cashFloatModal").modal('show');
@@ -3442,7 +3459,15 @@
     newWin.document.open();
     newWin.document.write('<html><body onload="window.print()" style="text-align:center;">'+message+'</body></html>');
     newWin.document.close();
-    setTimeout(function(){newWin.close();},10);
+    setTimeout(function(){
+      newWin.close();
+      setTimeout(function(){
+        if($("#cashFloatModal").css("display") != "none")
+        {
+          $("input[name='cash_float']").focus();
+        }
+      }, 500);
+    },10);
   }
 
   function searchRelatedItem()
