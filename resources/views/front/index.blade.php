@@ -1434,10 +1434,33 @@
       {
         $(".numpad_btn.submit").click();
       }
-      else if(isNaN(e.key) && e.key.length == 1 && e.key != ".")
+      else
       {
-        var received_payment = $("input[name='received_payment']").val().slice(0, -1);
-        $("input[name='received_payment']").val(received_payment);
+        var enter_key = e.key;
+        var function_found = false;
+        for(var a = 0; a < shortcut_key.length; a++)
+        {
+          if(shortcut_key[a].character && shortcut_key[a].function == "clickExactButton()")
+          {
+            if(shortcut_key[a].character.toLowerCase() == enter_key.toLowerCase())
+            {
+              var func_name = shortcut_key[a].function;
+              func_name = func_name.replace('()','');
+              window[func_name]();
+
+              function_found = true;
+            }
+          }
+        }
+
+        if(!function_found)
+        {
+          if(isNaN(e.key) && e.key.length == 1 && e.key != ".")
+          {
+            var received_payment = $("input[name='received_payment']").val().slice(0, -1);
+            $("input[name='received_payment']").val(received_payment);
+          }
+        }
       }
     });
 
@@ -1516,7 +1539,7 @@
     });
 
     $(".numpad_btn.exact").click(function(){
-      $("input[name='received_payment']").val(transaction_total).focus();
+      clickExactButton();
     });
 
     $(".numpad_btn.submit").click(function(){
@@ -3651,6 +3674,11 @@
         location.reload();
       }
     })
+  }
+
+  function clickExactButton()
+  {
+    $("input[name='received_payment']").val(transaction_total).focus();
   }
 
 </script>

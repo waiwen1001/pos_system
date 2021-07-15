@@ -260,9 +260,7 @@
 <script>
   
   $(document).ready(function(){
-    setTimeout(function(){
-      window.print();
-    }, 1000);
+    window.print();
   });
 
 </script>

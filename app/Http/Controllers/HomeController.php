@@ -24,7 +24,6 @@ use Illuminate\Support\Collection;
 
 class HomeController extends Controller
 {
-    private $ip;
     /**
      * Create a new controller instance.
      *
@@ -2667,6 +2666,12 @@ class HomeController extends Controller
         [
           'function' => "clickManualKeyin()",
           'function_name' => "Manual keyin barcode",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "clickExactButton()",
+          'function_name' => "Exact button at cash checkout",
           'code' => null,
           'character' => null
         ],
