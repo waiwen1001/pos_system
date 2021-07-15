@@ -2984,7 +2984,7 @@
       resync = 1;
     }
 
-    $.get("{{ route('branchSync') }}", { "resync" : resync }, function(result){
+    $.get("{{ route('branchSync') }}", { "resync" : resync, "branchSyncURL" : "{{ $branchSyncURL }}", "branch_id" : "{{ $branch_id }}", "branchProductSyncURL" : "{{ $branchProductSyncURL }}" }, function(result){
 
       window.onbeforeunload = function () {
         // blank function do nothing

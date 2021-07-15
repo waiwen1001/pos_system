@@ -34,6 +34,11 @@ class HomeController extends Controller
     {
         $this->ip = $_SERVER['REMOTE_ADDR'];
         $this->branch_id = env('branch_id');
+        $this->branchSyncURL = env('branchSyncURL');
+        $this->branchProductSyncURL = env('branchProductSyncURL');
+        $this->hqProductSyncURL = env('hqProductSyncURL');
+        $this->hqProductSyncCompletedURL = env('hqProductSyncCompletedURL');
+
         $this->middleware('auth', ['except' => ['testing']]);
     }
 
@@ -211,7 +216,11 @@ class HomeController extends Controller
 
       $pos_cashier = pos_cashier::where('ip', $this->ip)->first();
 
-      return view('front.index', compact('user', 'user_management_list', 'pending_transaction', 'subtotal', 'discount', 'have_discount', 'total', 'real_total', 'round_off', 'payment', 'balance', 'transaction_id', 'completed_transaction', 'opening', 'voucher_name', 'session', 'shortcut_key', 'ip', 'device_type', 'branch_name', 'branch_address', 'item_quantity', 'contact_number', 'pos_cashier', 'new_session'));
+      $branchSyncURL = $this->branchSyncURL;
+      $branch_id = $this->branch_id;
+      $branchProductSyncURL = $this->branchProductSyncURL;
+
+      return view('front.index', compact('user', 'user_management_list', 'pending_transaction', 'subtotal', 'discount', 'have_discount', 'total', 'real_total', 'round_off', 'payment', 'balance', 'transaction_id', 'completed_transaction', 'opening', 'voucher_name', 'session', 'shortcut_key', 'ip', 'device_type', 'branch_name', 'branch_address', 'item_quantity', 'contact_number', 'pos_cashier', 'new_session', 'branch_id', 'branchSyncURL', 'branchProductSyncURL'));
     }
 
     public function getSetupPage()
@@ -1647,7 +1656,11 @@ class HomeController extends Controller
         }
       }
 
-      if(!$this->branch_id)
+      $branch_id = $_GET['branch_id'];
+      $branchSyncURL = $_GET['branchSyncURL'];
+      $branchProductSyncURL = $_GET['branchProductSyncURL'];
+
+      if(!$branch_id)
       {
         $response = new \stdClass();
         $response->error = 1;
@@ -1667,8 +1680,6 @@ class HomeController extends Controller
 
       $transaction = transaction::whereIn('session_id', $session_list)->get();
       $transaction_detail = transaction_detail::leftJoin('transaction', 'transaction.id', '=', 'transaction_detail.transaction_id')->whereIn('transaction.session_id', $session_list)->select('transaction_detail.*', 'transaction.session_id')->get();
-
-      $branchSyncURL = env('branchSyncURL');
 
       if($branchSyncURL)
       {
@@ -1695,7 +1706,7 @@ class HomeController extends Controller
               'synced' => 1
             ]);
 
-            $response = $this->syncHQProductList($response['product_list']);
+            $response = $this->syncHQProductList($response['product_list'], $branchProductSyncURL);
           }
           
           return response()->json($response);
@@ -1718,7 +1729,7 @@ class HomeController extends Controller
       }
     }
 
-    public function syncHQProductList($product_list = [])
+    public function syncHQProductList($product_list = [], $branchProductSyncURL)
     {
       if(!$product_list)
       {
@@ -1751,8 +1762,6 @@ class HomeController extends Controller
           array_push($barcode_array, $product['barcode']);
         }
       }
-
-      $branchProductSyncURL = env('branchProductSyncURL');
 
       if($branchProductSyncURL)
       {
@@ -1808,7 +1817,7 @@ class HomeController extends Controller
         return response()->json($response);
       }
 
-      $syncURL = env('hqProductSyncURL');
+      $syncURL = $this->hqProductSyncURL;
 
       if($syncURL)
       {
@@ -1878,7 +1887,7 @@ class HomeController extends Controller
           }
         }
 
-        $syncCompletedURL = env('hqProductSyncCompletedURL');
+        $syncCompletedURL = $this->hqProductSyncCompletedURL;
         if($syncCompletedURL)
         {
           $response = Http::post($syncCompletedURL, [
