@@ -149,7 +149,7 @@
 
       @if($cash_float_result->total_boss > 0)
         <tr class="no_border" style="font-weight: bold;">
-          <td class="no_border" colspan="5" style="text-align: right;">Jumlah bagi ke ketua : </td>
+          <td class="no_border" colspan="5" style="text-align: right;">Jumlah telah bagi ke ketua : </td>
           <td class="no_border" style="text-align: right;">{{ $cash_float_result->total_boss_text }}</td>
           <td class="no_border" colspan="3"></td>
         </tr>

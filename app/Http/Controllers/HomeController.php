@@ -185,15 +185,6 @@ class HomeController extends Controller
           $opening = 1;
         }
       }
-      else
-      {
-        $session = session::create([
-          'ip' => $this->ip,
-          'opening_date_time' => $now,
-          'synced' => null,
-          'closed' => null
-        ]);
-      }
 
       if($user->user_type == 1)
       {
@@ -1165,7 +1156,9 @@ class HomeController extends Controller
       {
         $session = session::create([
           'ip' => $this->ip,
-          'opening_date_time' => $now
+          'opening_date_time' => $now,
+          'synced' => null,
+          'closed' => null
         ]);
       }
 
@@ -1222,7 +1215,9 @@ class HomeController extends Controller
         {
           $session = session::create([
             'ip' => $this->ip,
-            'opening_date_time' => $now
+            'opening_date_time' => $now,
+            'synced' => null,
+            'closed' => null
           ]);
         }
 
@@ -1442,6 +1437,7 @@ class HomeController extends Controller
         // $response = $this->branchSync();
 
         session::where('id', $session->id)->update([
+          'closing_date_time' => date('Y-m-d H:i:s'),
           'closed' => 1
         ]);
 
@@ -1675,11 +1671,17 @@ class HomeController extends Controller
     {
       // last session
       $resync = 0;
+      $manual = null;
       $now = date('Y-m-d H:i:s', strtotime(now()));
 
       if(isset($_GET['resync']))
       {
         $resync = $_GET['resync'];
+      }
+
+      if(isset($_GET['manual']))
+      {
+        $manual = $_GET['manual'];
       }
 
       if($resync == 0)
@@ -1688,13 +1690,17 @@ class HomeController extends Controller
       }
       elseif($resync == 1)
       {
-        $session_list = session::where('synced', null)->pluck('id')->toArray();
+        $session_list = session::where('synced', null)->where('closed', 1)->pluck('id')->toArray();
+      }
 
-        if(count($session_list) == 0)
-        {
-          $session = session::where('closed', 1)->orderBy('id', 'desc')->first();
-          $session_list = [$session->id];
-        }
+      if($manual == 2)
+      {
+        $session = session::create([
+          'ip' => $this->ip,
+          'opening_date_time' => $now,
+          'synced' => null,
+          'closed' => null
+        ]);
       }
 
       $branch_id = $_GET['branch_id'];
@@ -1733,6 +1739,10 @@ class HomeController extends Controller
 
         if($response['error'] == 0)
         {
+          session::whereIn('id', $session_list)->update([
+            'synced' => 1
+          ]);
+
           if($resync == 1)
           {
             $response = new \stdClass();
@@ -1741,12 +1751,6 @@ class HomeController extends Controller
           }
           elseif($resync == 0)
           {
-            session::whereIn('id', $session_list)->update([
-              'closing_date_time' => $now,
-              'closed' => 1,
-              'synced' => 1
-            ]);
-
             $response = $this->syncHQProductList($response['product_list'], $branchProductSyncURL);
           }
           
@@ -1948,7 +1952,9 @@ class HomeController extends Controller
           {
             $session = session::create([
               'ip' => $cashier_ip,
-              'opening_date_time' => $now
+              'opening_date_time' => $now,
+              'synced' => null,
+              'closed' => null
             ]);
           }
           
@@ -2925,7 +2931,7 @@ class HomeController extends Controller
         $updated_refund = refund::where('id', $refund->id)->first();
         $refund_detail = refund_detail::where('refund_id', $refund->id)->get();
 
-        $updated_refund->total_item = count($product_id);
+        $updated_refund->total_items = count($product_id);
         $updated_refund->total_quantity = $total_quantity;
         $updated_refund->total_text = number_format($updated_refund->total, 2);
         $updated_refund->date = date('l, d-m-Y', strtotime($updated_refund->created_at));

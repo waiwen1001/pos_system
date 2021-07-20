@@ -750,8 +750,10 @@
       <div style="display: flex; flex-direction: column; text-align: center;">
         <label style="font-size: 11px;">HOME U(M) SDN BHD (125272-P)</label>
         <label style="font-size: 11px;">{{ $contact_number }}</label>
-        <label style="font-size: 11px;">{!! nl2br(e($branch_address)) !!}</label><br/>
+        <label style="font-size: 11px;">{!! nl2br(e($branch_address)) !!}</label>
         <!-- <label>RESIT</label> -->
+        <label id="refund_title" style="display: none;">( Refund )</label>
+        <br/>
       </div>
       <div style="border: 2px dashed #000; height: 2px;"></div>
       <div id="receipt_items">
@@ -1041,9 +1043,9 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="syncProductListModalLabel">Syncing HQ Product List</h5>
-          <!-- <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
-          </button> -->
+          </button>
         </div>
         <div class="modal-body" id="syncHQProductListContent" style="text-align: center;"> 
           <div style="display: block; font-size: 50px; color: #007bff;">
@@ -1173,7 +1175,7 @@
     </div>
   </div>
 
-  <div class="modal fade" id="refundModal" tabindex="-1" role="dialog" aria-labelledby="refundModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+  <div class="modal fade" id="refundModal" tabindex="-1" role="dialog" aria-labelledby="refundModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false" style="background: rgba(0, 0, 0, 0.7);">
     <div class="modal-dialog" role="document" style="min-width: 750px;">
       <div class="modal-content">
         <div class="modal-header">
@@ -2041,7 +2043,7 @@
           html += "<td class='refund_price'>";
           html += "<span>RM "+numberFormat(product_detail.price_text)+"</span><input type='hidden' class='refund_item_price' name='price_"+product_detail.id+"' value='"+product_detail.price+"' />"
           html += "</td>";
-          html += "<td><button class='btn btn-dark items-cancel' onclick='removeRefundItem(this)'>Cancel</button></td>";
+          html += "<td><button class='btn btn-dark items-cancel' onclick='removeRefundItem(event, this)'>Cancel</button></td>";
           html += "</tr>";
 
           $(".refund_item_list table tbody").prepend(html);
@@ -2463,6 +2465,7 @@
         $("#receipt_total_items").html(transaction.total_items);
         $("#receipt_total").html("RM "+transaction.total_text);
         $("#receipt_payment_type").html(payment_type_text);
+        $("#refund_title").hide();
 
         $("#receipt_voucher").hide();
         $("#receipt_ori_payment").html("");
@@ -3295,7 +3298,7 @@
       resync = 1;
     }
 
-    $.get("{{ route('branchSync') }}", { "resync" : resync, "branchSyncURL" : "{{ $branchSyncURL }}", "branch_id" : "{{ $branch_id }}", "branchProductSyncURL" : "{{ $branchProductSyncURL }}" }, function(result){
+    $.get("{{ route('branchSync') }}", { "resync" : resync, "manual" : manual, "branchSyncURL" : "{{ $branchSyncURL }}", "branch_id" : "{{ $branch_id }}", "branchProductSyncURL" : "{{ $branchProductSyncURL }}" }, function(result){
 
       window.onbeforeunload = function () {
         // blank function do nothing
@@ -3325,7 +3328,7 @@
         else if(manual == 2)
         {
           $("#syncHQModal").modal('hide');
-          syncProductList(1);
+          syncProductList(0);
         }
         else if(manual == 3)
         {
@@ -3359,7 +3362,7 @@
           setTimeout(function(){
             $("#syncHQModal").modal('hide');
           }, 500); 
-          syncProductList(1);
+          syncProductList(0);
         }
         else if(result.error == 2)
         {
@@ -4039,6 +4042,7 @@
     newWin.document.open();
     newWin.document.write('<html><body onload="window.print()" style="text-align:center;">'+html+'</body></html>');
     newWin.document.close();
+
     setTimeout(function(){newWin.close();},10);
   }
 
@@ -4109,7 +4113,7 @@
     }
 
     var new_total = solid_num+"."+last_2+last;
-    var round_off = (parseFloat(new_number) - parseFloat(new_total)).toFixed(2);
+    var round_off = (parseFloat(new_total) - parseFloat(new_number)).toFixed(2);
 
     var total_obj = new Object();
     total_obj['round_off'] = round_off;
@@ -4118,7 +4122,7 @@
     return total_obj;
   }
 
-  function removeRefundItem(_this)
+  function removeRefundItem(e, _this)
   {
     var r = confirm("Are you sure you want to remove this item?");
     if (r == true) {
@@ -4137,6 +4141,11 @@
       $("#refund_total").html( numberFormat(refund_obj['final_total']));
 
       $(_this).parent().parent().remove();
+    }
+    else
+    {
+      e.preventDefault();
+      console.log("do nothing");
     }
   }
 
@@ -4255,6 +4264,7 @@
         $("#receipt_total_items").html(refund.total_items);
         $("#receipt_total").html("RM "+refund.total_text);
         $("#receipt_payment_type").html("Cash ( Refund )");
+        $("#refund_title").show();
 
         $("#receipt_voucher").hide();
         $("#receipt_ori_payment").html("");
