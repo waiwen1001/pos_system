@@ -218,6 +218,10 @@
 
                     @if($device_type == 2)
                       <div class="dropdown-divider"></div>
+                      <button class="dropdown-item" id="refundBtn" {{ $opening == 1 ? '' : 'disabled' }}>
+                        Refund
+                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showRefund()"></span>
+                      </button>
                       <button class="dropdown-item" id="floatInBtn" {{ $opening == 1 ? '' : 'disabled' }}>
                         Cash Float ( In )
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showCashFloatIn()"></span>
@@ -230,10 +234,6 @@
                         Bagi Ke Ketua
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showBagiKeKetua()"></span>
                       </button>
-                      <!-- <button class="dropdown-item" id="refundBtn" {{ $opening == 1 ? '' : 'disabled' }}>
-                        Refund
-                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showRefund()"></span>
-                      </button> -->
                     @endif
                     @if($user->user_type == 1)
                       <div class="dropdown-divider"></div>
@@ -1173,6 +1173,89 @@
     </div>
   </div>
 
+  <div class="modal fade" id="refundModal" tabindex="-1" role="dialog" aria-labelledby="refundModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog" role="document" style="min-width: 750px;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Refund</h5>
+          <button type="button" class="close" id="closeRefundModalIcon">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" style="background: #eee;">
+          <label>Enter barcode or product name</label>
+          <div class="refund_input">
+            <input type="text" class="form-control" name="refund_barcode" disabled />
+
+            <div class="checkbox icheck" style="display: inline-block; margin-left: 10px;">
+              <label>
+                <input class="form-check-input" type="checkbox" name="refund_barcode_manual" value="1" id="refund_barcode_manual" /> Manual keyin
+              </label>
+            </div>
+          </div>
+          <div class="refund_related_item_box">
+            <div class="refund_related_item">
+              <table id="refund_related_item_table">
+                <thead>
+                  <th>Barcode</th>
+                  <th>Item name</th>
+                  <th>UOM</th>
+                  <th>Price</th>
+                </thead>
+                <tbody>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="refund_summary">
+            <form id="refund_form">
+              @csrf
+              <div class="refund_item_list">
+                <table>
+                  <thead>
+                    <th>Product name</th>
+                    <th width="120px">Quantity</th>
+                    <th width="150px">Amount</th>
+                    <th width="50px"></th>
+                  </thead>
+                  <tbody>
+                  </tbody>
+                </table>
+              </div>
+            </form>
+            <div class="refund_total">
+              <table>
+                <tr>
+                  <td>Price</td>
+                  <td>RM</td>
+                  <td id="refund_price">0.00</td>
+                </tr>
+                <tr>
+                  <td>Round off</td>
+                  <td>RM</td>
+                  <td id="refund_round_off">0.00</td>
+                </tr>
+                <tr>
+                  <td class="total">Total</td>
+                  <td>RM</td>
+                  <td id="refund_total">0.00</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="refund_submit">
+            <button type="button" class="btn btn-success" id="refundNowBtn">Refund now</button>
+          </div>
+          <div class="refund_cancel">
+            <button id="closeRefundModalBtn" type="button" class="btn btn-secondary">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- <div class="modal fade" id="cashierLoginModal" tabindex="-1" role="dialog" aria-labelledby="cashierLoginModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -1217,14 +1300,17 @@
   var numpad_using_type = "numpad";
   var numpad_prefill = 0;
   var searchFunc;
+  var refundSearchFunc;
   var voucherFunc;
   var related_timeout;
+  var refund_related_timeout;
   var session = "{{ $session }}";
   var shortcut_key = @json($shortcut_key);
   var user = @json($user);
   var pos_cashier = @json($pos_cashier);
   var cashier_name = "";
   var new_session = "{{ $new_session }}";
+  var total_refund = 0;
 
   if(pos_cashier)
   {
@@ -1237,6 +1323,9 @@
 
   var selecting_related = 1;
   var total_related = 0;
+  var refund_selecting_related = 1;
+  var refund_total_related = 0;
+
   var device_type = "{{ $device_type }}";
   var barcode_toggle = false;
 
@@ -1296,7 +1385,37 @@
           $("#numpadModal").modal('hide');
         }
 
+        if($("#refundModal").css("display") != "none")
+        {
+          if($("#refund_barcode_manual").is(":checked"))
+          {
+            $("#refund_barcode_manual").iCheck('uncheck');
+          }
+          else
+          {
+            if($(".swal2-container").length == 0)
+            {
+              var r = confirm("Are you sure you want to close the refund page? Once closed item will not be recoved.");
+              if (r == true) {
+                total_refund = 0;
+                refund_selecting_related = 1;
+                refund_total_related = 0;
+
+                $("#refund_related_item_table tbody").html('');
+                $(".refund_item_list table tbody").html('');
+                $("#refund_price").html("0.00");
+                $("#refund_round_off").html("0.00");
+                $("#refund_total").html("0.00");
+                $("#refund_barcode_manual").iCheck('uncheck');  
+
+                $("#refundModal").modal('hide');
+              }
+            }
+          }
+        }
+
         $("input[name='barcode_manual']").iCheck("uncheck");
+        $("input[name='refund_barcode_manual']").iCheck("uncheck");
       }
       else if(e.which == 13)
       {
@@ -1329,26 +1448,52 @@
         {
           addRelatedItem();
         }
+        else if($("#refund_barcode_manual").is(":checked") == true && refund_total_related > 0)
+        {
+          addRefundRelatedItem();
+        }
+        else if($("#refundModal").css("display") != "none" && $(".swal2-container").length == 0)
+        {
+          $("#refundNowBtn").click();
+        }
         else
         {
-          $(".modal").not("#cardCheckoutModal, #numpadModal, #cashFloatModal").modal('hide');
+          $(".modal").not("#cardCheckoutModal, #numpadModal, #cashFloatModal, #refundModal").modal('hide');
         }
       }
       // up down
       else if(e.which == 38 || e.which == 40)
       {
-        if(total_related > 0)
+        if($("#refundModal").css("display") != "none")
         {
-          if(e.which == 38 && selecting_related > 1)
+          if(refund_total_related > 0)
           {
-            selecting_related--;
+            if(e.which == 38 && refund_selecting_related > 1)
+            {
+              refund_selecting_related--;
+            }
+            else if(e.which == 40 && refund_selecting_related != refund_total_related)
+            {
+              refund_selecting_related++;
+            }
+            selectRefundRelated();
           }
-          else if(e.which == 40 && selecting_related != total_related)
-          {
-            selecting_related++;
-          }
-          selectRelated();
         }
+        else
+        {
+          if(total_related > 0)
+          {
+            if(e.which == 38 && selecting_related > 1)
+            {
+              selecting_related--;
+            }
+            else if(e.which == 40 && selecting_related != total_related)
+            {
+              selecting_related++;
+            }
+            selectRelated();
+          }
+        }  
       }
       else if(e.key && opening == 1)
       {
@@ -1378,6 +1523,22 @@
       }
     });
 
+    $("#refund_barcode_manual").on("ifChanged", function(){
+      $("input[name='refund_barcode']").val("");
+      var manual_checked = $(this).is(":checked");
+      if(manual_checked)
+      {
+        $("input[name='refund_barcode']").attr("disabled", false).focus();
+      }
+      else
+      {
+        $("#refund_related_item_table tbody").html("");
+        refund_total_related = 0;
+        refund_selecting_related = 1;
+        $("input[name='refund_barcode']").attr("disabled", true);
+      }
+    });
+
     $("#barcode").on('keyup', function(e){
       clearInterval(searchFunc);
       // enter
@@ -1395,6 +1556,27 @@
         {
           clearTimeout(related_timeout);
           related_timeout = setTimeout(searchRelatedItem, 300);
+        }
+      }
+    });
+
+    $("input[name='refund_barcode']").on('keyup', function(e){
+      clearInterval(refundSearchFunc);
+      // enter
+      // delay 50ms because keydown will not capture on change
+      if($("#refund_barcode_manual").is(":checked") == false)
+      {
+        // ctrl
+        if(e.which != 17){
+          refundSearchFunc = setTimeout(searchAndAddItemRefund, 10);
+        }
+      }
+      else
+      {
+        if((e.key && e.key.length == 1) || e.which == 8)
+        {
+          clearTimeout(refund_related_timeout);
+          refund_related_timeout = setTimeout(searchRelatedItemRefund, 300);
         }
       }
     });
@@ -1664,7 +1846,7 @@
       closing();
     });
 
-    $("#floatInBtn, #floatOutBtn, #refundBtn, #bagiKeKetuaBtn").click(function(){
+    $("#floatInBtn, #floatOutBtn, #bagiKeKetuaBtn").click(function(){
       $("input[name='cash_float']").val("");
       $("input[name='cash_float_remarks']").val("");
       if($(this).attr("id") == "floatInBtn")
@@ -1676,11 +1858,6 @@
       {
         $("input[name='cash_float_type']").val('out');
         $("#cash_float_title").html("Cash Float ( Out )");
-      }
-      else if($(this).attr("id") == "refundBtn")
-      {
-        $("input[name='cash_float_type']").val('refund');
-        $("#cash_float_title").html("Refund");
       }
       else if($(this).attr("id") == "bagiKeKetuaBtn")
       {
@@ -1711,12 +1888,38 @@
       }, 500);
     });
 
+    $("#refundBtn").click(function(){
+      refund();
+    });
+
     $("#submitCashFloat").click(function(){
       submitCashFloat();
     });
 
     $("#barcode_toggle_checkbox").change(function(){
       barcode_toggle = $(this).is(":checked");
+    });
+
+    $("#refundNowBtn").click(function(){
+      refundNow();
+    });
+
+    $("#closeRefundModalIcon, #closeRefundModalBtn").click(function(){
+      var r = confirm("Are you sure you want to close the refund page? Once closed item will not be recoved.");
+      if (r == true) {
+        total_refund = 0;
+        refund_selecting_related = 1;
+        refund_total_related = 0;
+
+        $("#refund_related_item_table tbody").html('');
+        $(".refund_item_list table tbody").html('');
+        $("#refund_price").html("0.00");
+        $("#refund_round_off").html("0.00");
+        $("#refund_total").html("0.00");
+        $("#refund_barcode_manual").iCheck('uncheck');
+
+        $("#refundModal").modal('hide');
+      }
     });
 
     let date = new Date();
@@ -1778,6 +1981,83 @@
         $("#items-table tbody tr:first-child").addClass("new_item");
       }
       $("#barcode").val('');
+    }).fail(function(xhr){
+      if(xhr.status == 401)
+      {
+        loggedOutAlert();
+      }
+    });
+  }
+
+  function searchAndAddItemRefund()
+  {
+    $(".toast").toast('hide');
+    $("input[name='refund_barcode']").focus();
+
+    let barcode = $("input[name='refund_barcode']").val();
+
+    $.post("{{ route('searchAndAddItemRefund') }}", { "_token" : "{{ csrf_token() }}", "barcode" : barcode }, function(result){
+      if(result.error == 1)
+      {
+        Swal.fire({
+          title: result.message,
+          icon: 'error',
+          confirmButtonText: 'OK',
+        });
+      }
+      else if(result.error == 0)
+      {
+        var product_detail = result.product_detail;
+        if($(".refund_item_list table tbody tr[item_id='"+product_detail.id+"']").length > 0)
+        {
+          let tr = $(".refund_item_list table tbody tr[item_id='"+product_detail.id+"']");
+          let refund_item_price = tr.find("input.refund_item_price").val();
+          let refund_item_quantity = tr.find("input.quantity_input").val();
+
+          refund_item_quantity++;
+          let refund_item_total = refund_item_price * refund_item_quantity;
+
+          let refund_item_total_text = numberFormat(refund_item_total);
+
+          total_refund += product_detail.price;
+          tr.find("input.quantity_input").val(refund_item_quantity);
+          tr.find("input.temp_input").val(refund_item_quantity);
+          tr.find("td.refund_price").children("span").html("RM "+refund_item_total_text);
+        }
+        else
+        {
+          var html = "";
+          html += "<tr item_id='"+product_detail.id+"'>";
+          html += "<td>"+product_detail.product_name+"</td>";
+          html += "<td>";
+          html += "<div class='quantity'>";
+          html += "<i class='fa fa-minus' onclick='editRefundItem(this, \"minus\")'></i>";
+          html += "<input type='number' style='margin: 0 9px;' name='quantity_"+product_detail.id+"' class='quantity_input' value='1' item_id='"+product_detail.id+"' onkeyup='editRefundItem(this, \"number\")' />";
+          html += "<input type='hidden' class='temp_input' value='1' />";
+          html += "<input type='hidden' name='product_id[]' value='"+product_detail.id+"' />";
+          html += "<i class='fa fa-plus' onclick='editRefundItem(this, \"add\")'></i>";
+          html += "</div>";
+          html += "</td>";
+          html += "<td class='refund_price'>";
+          html += "<span>RM "+numberFormat(product_detail.price_text)+"</span><input type='hidden' class='refund_item_price' name='price_"+product_detail.id+"' value='"+product_detail.price+"' />"
+          html += "</td>";
+          html += "<td><button class='btn btn-dark items-cancel' onclick='removeRefundItem(this)'>Cancel</button></td>";
+          html += "</tr>";
+
+          $(".refund_item_list table tbody").prepend(html);
+
+          total_refund += product_detail.price;
+        }
+
+        let refund_price_text = numberFormat(total_refund);
+        let refund_obj = roundOff(total_refund);
+
+        $("#refund_price").html(refund_price_text);
+        $("#refund_round_off").html(refund_obj['round_off']);
+        $("#refund_total").html( numberFormat(refund_obj['final_total']));
+        
+      }
+      $("input[name='refund_barcode']").val('');
     }).fail(function(xhr){
       if(xhr.status == 401)
       {
@@ -2489,6 +2769,14 @@
     }
   }
 
+  function showRefund()
+  {
+    if($("#refundBtn").attr("disabled") != "disabled")
+    {
+      $("#refundBtn").click();
+    }
+  }
+
   function showCashFloatIn()
   {
     if($("#floatInBtn").attr("disabled") != "disabled")
@@ -2777,7 +3065,7 @@
           opening = 1;
 
           $("#openingBtn").attr("disabled", true);
-          $("#closingBtn, #floatInBtn, #floatOutBtn, #bagiKeKetuaBtn").attr("disabled", false);
+          $("#closingBtn, #floatInBtn, #floatOutBtn, #bagiKeKetuaBtn, #refundBtn").attr("disabled", false);
 
         }
       }).fail(function(xhr){
@@ -2911,7 +3199,7 @@
         disablePosSystem();
 
         $("#openingBtn").attr("disabled", false);
-        $("#closingBtn, #floatInBtn, #floatOutBtn, #bagiKeKetuaBtn").attr("disabled", true);
+        $("#closingBtn, #floatInBtn, #floatOutBtn, #bagiKeKetuaBtn, #refundBtn").attr("disabled", true);
 
         $("#daily_closing_content").html("This cashier are now closed.");
         $("#daily_closing_toast").toast('show');
@@ -3429,7 +3717,7 @@
   function run_barcode()
   {
     var run = true;
-    if($("#barcode_manual").is(":checked"))
+    if($("#barcode_manual").is(":checked") || $("#refund_barcode_manual").is(":checked"))
     {
       run = false;
       combined_barcode = "";
@@ -3446,23 +3734,36 @@
       // check product using barcode
       if(combined_barcode.length > 1)
       {
-        $("#barcode").val(combined_barcode);
-        combined_barcode = "";
-        clearInterval(searchFunc);
-        searchFunc = setTimeout(searchAndAddItem, 10);
+        if($("#refundModal").css("display") != "none")
+        {
+          $("input[name='refund_barcode']").val(combined_barcode);
+          combined_barcode = "";
+          clearInterval(refundSearchFunc);
+          refundSearchFunc = setTimeout(searchAndAddItemRefund, 10);
+        }
+        else
+        {
+          $("#barcode").val(combined_barcode);
+          combined_barcode = "";
+          clearInterval(searchFunc);
+          searchFunc = setTimeout(searchAndAddItem, 10);
+        }
       }
       // check shortcut key
       else if(combined_barcode.length == 1)
       {
-        for(var a = 0; a < shortcut_key.length; a++)
+        if($("#refundModal").css("display") == "none")
         {
-          if(shortcut_key[a].character)
+          for(var a = 0; a < shortcut_key.length; a++)
           {
-            if(shortcut_key[a].character.toLowerCase() == combined_barcode.toLowerCase())
+            if(shortcut_key[a].character)
             {
-              var func_name = shortcut_key[a].function;
-              func_name = func_name.replace('()','');
-              window[func_name]();
+              if(shortcut_key[a].character.toLowerCase() == combined_barcode.toLowerCase())
+              {
+                var func_name = shortcut_key[a].function;
+                func_name = func_name.replace('()','');
+                window[func_name]();
+              }
             }
           }
         }
@@ -3533,6 +3834,46 @@
     }
   }
 
+  function searchRelatedItemRefund()
+  {
+    let barcode = $("input[name='refund_barcode']").val();
+    if(barcode != "")
+    {
+      $.post("{{ route('searchRelatedItem') }}", { "_token" : "{{ csrf_token() }}", "barcode" : barcode }, function(result){
+        if(result.error == 0)
+        {
+          var related_item = result.related_item;
+
+          refund_total_related = related_item.length;
+          refund_selecting_related = 1;
+
+          var html = "";
+          for(var a = 0; a < related_item.length; a++)
+          {
+            let uom = "";
+            if(related_item[a].uom)
+            {
+              uom = related_item[a].uom;
+            }
+            html += "<tr class='"+(a == 0 ? "selected" : "" )+"' barcode='"+related_item[a].barcode+"'>";
+            html += "<td>"+related_item[a].barcode+"</td>";
+            html += "<td>"+related_item[a].product_name+"</td>";
+            html += "<td>"+uom+"</td>";
+            html += "<td>RM <span style='float: right;'>"+related_item[a].price_text+"</span></td>";
+            html += "</tr>";
+          }
+
+          $("#refund_related_item_table tbody").html(html);
+        }
+      }).fail(function(xhr){
+        if(xhr.status == 401)
+        {
+          loggedOutAlert();
+        }
+      });
+    }
+  }
+
   function selectRelated()
   {
     let row_height = 26;
@@ -3550,6 +3891,23 @@
     $("#related_item tr:nth-child("+selecting_related+")").addClass("selected");
   }
 
+  function selectRefundRelated()
+  {
+    let row_height = 26;
+    let div_height = $(".refund_related_item").height();
+    let div_scroll = $(".refund_related_item").scrollTop();
+
+    let current_height = (row_height * refund_selecting_related) + row_height;
+
+    if(current_height >= div_height)
+    {
+      $(".refund_related_item").scrollTop( (current_height - div_height) );
+    }
+
+    $("#refund_related_item_table tbody tr").removeClass("selected");
+    $("#refund_related_item_table tbody tr:nth-child("+refund_selecting_related+")").addClass("selected");
+  }
+
   function addRelatedItem()
   {
     var barcode = $("#related_item tr.selected").attr("barcode");
@@ -3559,6 +3917,17 @@
     total_related = 0;
     selecting_related = 1;
     $("#related_item").html("");
+  }
+
+  function addRefundRelatedItem()
+  {
+    var barcode = $("#refund_related_item_table tbody tr.selected").attr("barcode");
+    $("input[name='refund_barcode']").val(barcode);
+    searchAndAddItemRefund();
+
+    refund_total_related = 0;
+    refund_selecting_related = 1;
+    $("#refund_related_item_table tbody").html("");
   }
 
   function closingReport(closing_report)
@@ -3624,6 +3993,17 @@
       html += "</tr>";
     }
 
+    for(var a = 0; a < closing_report.refund_list.length; a++)
+    {
+      var refund = closing_report.refund_list[a];
+      html += "<tr>";
+      html += "<td style='vertical-align:top;'>Refund</td>";
+      html += "<td style='vertical-align:top;text-align:right;'>( "+refund.total_text+" )</td>"
+      html += "<td style='vertical-align:top;'>"+refund.created_time_text+"</td>";
+      html += "<td style='vertical-align:top;'></td>";
+      html += "</tr>";
+    }
+
     html += "<tr>";
     html += "<td style='vertical-align:top;'>Jumlah jualan tunai</td>";
     html += "<td style='vertical-align:top;text-align:right;'>"+closing_report.cash_sales+"</td>";
@@ -3679,6 +4059,250 @@
   function clickExactButton()
   {
     $("input[name='received_payment']").val(transaction_total).focus();
+  }
+
+  function refund()
+  {
+    $("#barcode_manual").iCheck('uncheck');
+    $("#refundModal").modal('show');
+  }
+
+  function numberFormat(number)
+  {
+    var new_number = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(number);
+    new_number = new_number.replace("€", "");
+    new_number = new_number.replace(" ", "");
+    new_number = new_number.replace(",", "|");
+    new_number = new_number.replace(".", ",");
+    new_number = new_number.replace("|", ".");
+    new_number = new_number.replace(/\s/g, "");
+
+    return new_number;
+  }
+
+  function roundOff(number)
+  {
+    var new_number = number.toFixed(2);
+    var last = new_number.substr(new_number.length - 1);
+    var last_2 = new_number.substr(new_number.length - 2)[0];
+    var split = new_number.split(".");
+
+    var solid_num = split[0];
+
+    if(last >= 0 && last <= 2)
+    {
+      last = 0;
+    }
+    else if(last >= 3 && last <= 7)
+    {
+      last = 5;
+    }
+    else if(last >= 8)
+    {
+      last = 0;
+      last_2 = parseInt(last_2) + 1;
+      if(last_2 == 10)
+      {
+        last_2 = 0;
+        solid_num = parseInt(solid_num) + 1;
+      }
+    }
+
+    var new_total = solid_num+"."+last_2+last;
+    var round_off = (parseFloat(new_number) - parseFloat(new_total)).toFixed(2);
+
+    var total_obj = new Object();
+    total_obj['round_off'] = round_off;
+    total_obj['final_total'] = new_total;
+
+    return total_obj;
+  }
+
+  function removeRefundItem(_this)
+  {
+    var r = confirm("Are you sure you want to remove this item?");
+    if (r == true) {
+      var tr = $(_this).parent().parent();
+      var refund_item_quantity = tr.find("input.quantity_input").val();
+      var refund_item_price = tr.find("input.refund_item_price").val();
+
+      var total = refund_item_quantity * refund_item_price;
+      total_refund = total_refund - total;
+
+      let refund_price_text = numberFormat(total_refund);
+      let refund_obj = roundOff(total_refund);
+
+      $("#refund_price").html(refund_price_text);
+      $("#refund_round_off").html(refund_obj['round_off']);
+      $("#refund_total").html( numberFormat(refund_obj['final_total']));
+
+      $(_this).parent().parent().remove();
+    }
+  }
+
+  function editRefundItem(_this, type)
+  {
+    var tr = $(_this).parent().parent().parent();
+    let refund_item_price = tr.find("input.refund_item_price").val();
+
+    var quantity;
+    if(type == 'add')
+    {
+      quantity = $(_this).siblings("input.quantity_input").val();
+
+      quantity++;
+      total_refund = parseFloat(total_refund) + parseFloat(refund_item_price);
+    }
+    else if(type == 'minus')
+    {
+      quantity = $(_this).siblings("input.quantity_input").val();
+
+      quantity--;
+      total_refund = parseFloat(total_refund) - parseFloat(refund_item_price);
+    }
+    else if(type == 'number')
+    {
+      quantity = $(_this).val();
+      prev_quantity = $(_this).siblings("input.temp_input").val();
+
+      var item_price = refund_item_price * prev_quantity;
+      var new_price = refund_item_price * quantity;
+      total_refund = parseFloat(total_refund) + (parseFloat(new_price) - parseFloat(item_price));
+    }
+
+    if(quantity === 0 || quantity === "0")
+    {
+      tr.remove();
+    }
+    else
+    {
+      let refund_item_total = refund_item_price * quantity;
+
+      let refund_item_total_text = numberFormat(refund_item_total);
+      tr.find("td.refund_price").children("span").html("RM "+refund_item_total_text);
+
+      if(type == 'number')
+      {
+        $(_this).val(quantity);
+        $(_this).siblings("input.temp_input").val(quantity);
+      }
+      else
+      {
+        $(_this).siblings("input.quantity_input").val(quantity);
+        $(_this).siblings("input.temp_input").val(quantity);
+      }
+    }
+
+    let refund_price_text = numberFormat(total_refund);
+    let refund_obj = roundOff(total_refund);
+
+    $("#refund_price").html(refund_price_text);
+    $("#refund_round_off").html(refund_obj['round_off']);
+    $("#refund_total").html( numberFormat(refund_obj['final_total']));
+  }
+
+  function refundNow()
+  {
+    $("#refundNowBtn").html("<i class='fas fa-spinner fa-spin'></i>").attr("disabled", true);
+
+    if($(".refund_item_list table tbody tr").length == 0)
+    {
+      Swal.fire({
+        title: 'You cannot submit empty refund without adding item.',
+        icon: 'error',
+        confirmButtonText: 'OK',
+      });
+
+      $("#refundNowBtn").html("Refund now").attr("disabled", false);
+
+      return;
+    }
+
+    $.post("{{ route('refundNow') }}", $("#refund_form").serialize(), function(result){
+
+      $("#refundNowBtn").html("Refund now").attr("disabled", false);
+
+      if(result.error == 0)
+      {
+        let refund = result.refund;
+        let refund_detail = result.refund_detail;
+
+        let items_html = "";
+        items_html += "<table style='font-size: 11px;width:100%;border-spacing:0px 1px;'>";
+        for(var a = 0; a < refund_detail.length; a++)
+        {
+          items_html += "<tr>";
+          items_html += "<td style='vertical-align:top;' colspan='3'>"+refund_detail[a].product_name+"</td>";
+          items_html += "</tr>";
+          items_html += "<tr>";
+          items_html += "<td style='vertical-align:top;'>"+refund_detail[a].barcode+"</td>";
+          items_html += "<td style='width: 120px;vertical-align:top;text-align:right;'>";
+
+          if(refund_detail[a].quantity > 0)
+          {
+            items_html += refund_detail[a].quantity+".00 X RM "+refund_detail[a].price_text;
+          }
+
+          items_html += "</td>";
+          items_html += "<td style='width:70px;text-align:right;vertical-align:top;'>RM "+refund_detail[a].total_text+"</td>";
+          items_html += "</tr>";
+        }
+
+        items_html += "</table>";
+        
+        $("#receipt_items").html(items_html);
+        $("#receipt_total_quantity").html(refund.total_quantity);
+        $("#receipt_total_items").html(refund.total_items);
+        $("#receipt_total").html("RM "+refund.total_text);
+        $("#receipt_payment_type").html("Cash ( Refund )");
+
+        $("#receipt_voucher").hide();
+        $("#receipt_ori_payment").html("");
+        $("#receipt_voucher_name").html("");
+        $("#receipt_discount").html("");
+
+        $("#receipt_other_payment").hide();
+        $("#receipt_cash").show();
+        $("#receipt_received_payment").html("RM "+refund.total_text);
+        $("#receipt_change").html("RM 0.00");
+
+        $("#receipt_date").html(refund.date);
+        $("#receipt_time").html("Time : "+refund.time);
+        $("#receipt_by").html("Juruwang counter : "+refund.cashier_name+"<br>Juruwang : "+refund.user_name);
+
+        $("#receipt_completed_by, #receipt_completed_by_2").html(refund.user_name);
+        $("#receipt_reprint").hide();
+
+        total_refund = 0;
+        refund_selecting_related = 1;
+        refund_total_related = 0;
+
+        $("#refund_related_item_table tbody").html('');
+        $(".refund_item_list table tbody").html('');
+        $("#refund_price").html("0.00");
+        $("#refund_round_off").html("0.00");
+        $("#refund_total").html("0.00");
+        $("#refund_barcode_manual").iCheck('uncheck');
+
+        $("#refundModal").modal('hide');
+
+        var receiptPrint = document.getElementById('receipt');
+        var newWin = window.open('','Print-Window');
+
+        newWin.document.open();
+        newWin.document.write('<html><body onload="window.print()">'+receiptPrint.innerHTML+'</body></html>');
+        newWin.document.close();
+
+        setTimeout(function(){newWin.close();},10);
+      }
+    }).fail(function(xhr){
+
+      $("#refundNowBtn").html("Refund now").attr("disabled", false);
+      if(xhr.status == 401)
+      {
+        loggedOutAlert();
+      }
+    });
   }
 
 </script>

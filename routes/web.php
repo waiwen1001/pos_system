@@ -52,8 +52,14 @@ Route::post('/editCashier', 'HomeController@editCashier')->name('editCashier');
 
 Route::post('/saveShortcutKey', 'HomeController@saveShortcutKey')->name('saveShortcutKey');
 
+// Refund
+Route::post('/searchAndAddItemRefund', 'HomeController@searchAndAddItemRefund')->name('searchAndAddItemRefund');
+Route::post('/refundNow', 'HomeController@refundNow')->name('refundNow');
+// 
+
 Route::get('/testing', 'HomeController@testing')->name('testing');
 Route::get('/myIP', 'HomeController@myIP')->name('myIP');
 Route::get('/getlogout', 'HomeController@getlogout')->name('getlogout');
+
 
 

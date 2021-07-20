@@ -52,16 +52,16 @@
       </tr>
     </thead>
     <tbody>
-      <tr>
+      <tr style="text-align: center;">
         <td></td>
-        <td>Kutipan Tunai</td>
-        <td>Credit / debit Kad</td>
-        <td>Touch & Go</td>
-        <td>Maybank QR code</td>
-        <td>Grab Pay</td>
+        <td>Kutipan<br>Tunai</td>
+        <td>Credit /<br>debit Kad</td>
+        <td>Touch<br>& Go</td>
+        <td>Maybank<br>QR code</td>
+        <td>Grab<br>Pay</td>
         <td>Boost</td>
-        <td>Cek / Lain lain</td>
-        <td>Jumlah Jualan</td>
+        <td>Cek /<br>Lain lain</td>
+        <td>Jumlah<br>Jualan</td>
       </tr>
       @foreach($pos_cashier as $cashier)
         <tr>
@@ -108,15 +108,29 @@
         <td class='align_right'>{{ $cash_float_result->float_in }}</td>
         <td class="no_border"></td>
         <td colspan="3">Baki Modal di kedai :</td>
-        <td class='align_right'>{{ $cash_float_result->closing }}</td>
+        <td class='align_right'>{{ $cash_float_result->opening }}</td>
       </tr>
 
       <tr class="no_border">
         <td colspan="3">Jualan Tunai hari ini :</td>
         <td class='align_right'>{{ $cash_float_result->cash_sales }}</td>
         <td class="no_border"></td>
-        <td colspan="3">Lain lain :</td>
-        <td class='align_right'>-</td>
+        <td colspan="3">Jumlah bagi ke ketua :</td>
+        <td class='align_right'>{{ $cash_float_result->total_boss_text }}</td>
+      </tr>
+
+      <tr class="no_border">
+        @if($cash_float_result->diff == 0)
+          <td colspan="3"></td>
+          <td class='align_right'></td>
+        @else
+          <td colspan="3">Berbeza Jumlah Closing</td>
+          <td class='align_right'>{{ $cash_float_result->diff_text }}</td>
+        @endif
+        
+        <td class="no_border"></td>
+        <td colspan="3">Jumlah refund :</td>
+        <td class='align_right'>{{ $cash_float_result->total_refund }}</td>
       </tr>
 
       <tr class="no_border">
@@ -132,6 +146,14 @@
       <tr class="no_border">
         <td class="no_border" colspan="9" style="height: 27px;"></td>
       </tr>
+
+      @if($cash_float_result->total_boss > 0)
+        <tr class="no_border" style="font-weight: bold;">
+          <td class="no_border" colspan="5" style="text-align: right;">Jumlah bagi ke ketua : </td>
+          <td class="no_border" style="text-align: right;">{{ $cash_float_result->total_boss_text }}</td>
+          <td class="no_border" colspan="3"></td>
+        </tr>
+      @endif
 
       <tr class="no_border" style="font-weight: bold;">
         <td class="no_border" colspan="5" style="text-align: right;">Baki Tunai yang perlu serah ke syarikat : </td>
@@ -178,7 +200,12 @@
               <td></td>
             </tr>
             <tr>
-              <td class='align_right' colspan="2" style="font-weight: bold;">Jumlah Jualan Tunai-shift {{ $shift->shift_count }} :</td>
+              <td class='align_right' colspan="2">Jumlah refund :</td>
+              <td class='align_right'>{{ number_format($shift->refund, 2) }}</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td class='align_right' colspan="2" style="font-weight: bold;">Jumlah Jualan Tunai - shift {{ $shift->shift_count }} :</td>
               <td class='align_right'>{{ number_format($shift->cash_sales, 2) }}</td>
               <td></td>
             </tr>
@@ -225,7 +252,7 @@
           <tr style="border: none;">
             <td colspan="4" style="height: 27px;border: none;"></td>
           </tr>
-          @if(count($pos_cashier_detail->cash_float) > 0)
+          @if(count($pos_cashier_detail->cash_float) > 0 || count($pos_cashier_detail->refund_list) > 0)
             <tr>
               <td class='align_right'>Jenis</td>
               <td class='align_right'>Remarks</td>
@@ -246,6 +273,17 @@
                 <td class='align_right'>{{ $cash_float->remarks }}</td>
                 <td class='align_right'>{{ $cash_float->amount }}</td>
                 <td class='align_right'>{{ date('h:i A', strtotime($cash_float->created_at)) }}</td>
+              </tr>
+            @endforeach
+
+            @foreach($pos_cashier_detail->refund_list as $refund)
+              <tr>
+                <td class='align_right'>
+                  Refund <br>( by : {{ $refund->user_name }} )
+                </td>
+                <td class='align_right'></td>
+                <td class='align_right'>{{ $refund->total }}</td>
+                <td class='align_right'>{{ date('h:i A', strtotime($refund->created_at)) }}</td>
               </tr>
             @endforeach
           @endif

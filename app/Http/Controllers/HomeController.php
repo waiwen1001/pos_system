@@ -15,6 +15,8 @@ use App\pos_cashier;
 use App\shortcut_key;
 use App\Invoice_sequence;
 use App\profile;
+use App\refund;
+use App\refund_detail;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -482,6 +484,30 @@ class HomeController extends Controller
         $response->transaction_summary = $transaction_summary;
         $response->product = $product;
         $response->item_count = $item_count;
+
+        return response()->json($response);
+      }
+    }
+
+    public function searchAndAddItemRefund(Request $request)
+    {
+      $product_detail = product::where('barcode', $request->barcode)->first();
+
+      if($product_detail)
+      {
+        $product_detail->price_text = number_format($product_detail->price, 2);
+        $response = new \stdClass();
+        $response->error = 0;
+        $response->message = "Success";
+        $response->product_detail = $product_detail;
+
+        return response()->json($response);
+      }
+      else
+      {
+        $response = new \stdClass();
+        $response->error = 1;
+        $response->message = "Barcode not found";
 
         return response()->json($response);
       }
@@ -1249,7 +1275,16 @@ class HomeController extends Controller
           $total_cash += $cash_sales->total_cash_sales;
         }
 
-        $cash_flow = $cashier->opening_amount + $total_cash + $total_cash_float;
+        $total_refund = 0;
+        $refund = refund::where('session_id', $session->id)->where('ip', $cashier->ip)->where('opening_id', $cashier->id)->get();
+        foreach($refund as $value)
+        {
+          $value->total_text = number_format($value->total, 2);
+          $value->created_time_text = date('h:i:s A', strtotime($value->created_at));
+          $total_refund += $value->total;
+        }
+
+        $cash_flow = $cashier->opening_amount + $total_cash + $total_cash_float - $total_refund;
 
         $closing_report = new \stdClass();
         $closing_report->opening_by = $user_name;
@@ -1261,6 +1296,7 @@ class HomeController extends Controller
         $closing_report->closing_time = date('h:i:s A', strtotime($now));
         $closing_report->diff = number_format( ($request->closing_amount - $request->calculated_amount), 2);
         $closing_report->cash_float = $cash_float_list;
+        $closing_report->refund_list = $refund;
         $closing_report->cash_sales = number_format($total_cash, 2);
         $closing_report->cash_flow = number_format($cash_flow, 2);
 
@@ -1543,15 +1579,21 @@ class HomeController extends Controller
         {
           $closing_amount -= $cash_float->amount;
         }
-        elseif($cash_float->type == "refund")
-        {
-          $closing_amount -= $cash_float->amount;
-        }
         elseif($cash_float->type == "boss")
         {
           $closing_amount -= $cash_float->amount;
         }
       }
+
+      $refund = refund::where('session_id', $session->id)->where('ip', $this->ip)->where('opening_id', $cashier->id)->get();
+      $total_refund = 0;
+
+      foreach($refund as $value)
+      {
+        $total_refund += $value->total;
+      }
+
+      $closing_amount = $closing_amount - $total_refund;
 
       $response = new \stdClass();
       $response->error = 0;
@@ -2105,6 +2147,8 @@ class HomeController extends Controller
       $total_float_in = 0;
       $total_float_out = 0;
       $total_closing = 0;
+      $total_boss = 0;
+      $total_refund = 0;
 
       $opening_list = cashier::where('session_id', $session->id)->groupBy('ip')->get();
 
@@ -2120,11 +2164,18 @@ class HomeController extends Controller
 
       $closing_list = cashier::whereIn('id', $closing_id_array)->get();
 
+      $total_diff = 0;
+
       foreach($closing_list as $closing_detail)
       {
         if($closing_detail->closing_amount)
         {
           $total_closing += $closing_detail->closing_amount;
+        }
+
+        if($closing_detail->diff)
+        {
+          $total_diff += $closing_detail->diff;
         }
       }
 
@@ -2140,10 +2191,21 @@ class HomeController extends Controller
         {
           $total_float_out += $cash_float->amount;
         }
+        elseif($cash_float->type == 'boss')
+        {
+          $total_boss += $cash_float->amount;
+        }
       }
 
-      $total_cash = $total_opening + $total_float_in + $only_cash_sales;
-      $total_deduct = $total_float_out + $total_closing;
+      $refund = refund::where('session_id', $session->id)->get();
+
+      foreach($refund as $value)
+      {
+        $total_refund += $value->total;
+      }
+
+      $total_cash = $total_opening + $total_float_in + $only_cash_sales + $total_diff;
+      $total_deduct = $total_float_out + $total_boss + $total_refund + $total_opening;
 
       $cash_float_result = new \stdClass();
       $cash_float_result->opening = number_format($total_opening, 2);
@@ -2151,8 +2213,13 @@ class HomeController extends Controller
       $cash_float_result->cash_sales = $only_cash_sales_text;
       $cash_float_result->float_out = number_format($total_float_out, 2);
       $cash_float_result->closing = number_format($total_closing, 2);
+      $cash_float_result->diff = $total_diff;
+      $cash_float_result->diff_text = number_format( $total_diff, 2);
       $cash_float_result->total_cash = number_format($total_cash, 2);
       $cash_float_result->total_deduct = number_format($total_deduct, 2);
+      $cash_float_result->total_boss = $total_boss;
+      $cash_float_result->total_boss_text = number_format($total_boss, 2);
+      $cash_float_result->total_refund = number_format($total_refund, 2);
       $cash_float_result->cash_to_company = number_format(($total_cash - $total_deduct), 2);
 
       // end daily report
@@ -2258,12 +2325,23 @@ class HomeController extends Controller
             $opening_date_time = date('d-M-Y, h:i A', strtotime($shift->opening_date_time));
           }
 
+          $shift_refund = refund::where('session_id', $session->id)->where('opening_id', $shift->id)->where('ip', $shift->ip)->get();
+          $shift_total_refund = 0;
+          foreach($shift_refund as $value)
+          {
+            $shift_total_refund += $value->total;
+          }
+
+          $drawer_cash -= $shift_total_refund;
+
           $shift->opening_date_time_text = $opening_date_time;
           $shift->shift_count = $s_key + 1;
           $shift->float_in = $shift_float_in;
           $shift->float_out= $shift_float_out;
           $shift->boss = $shift_boss;
+          $shift->refund = $shift_total_refund;
           $shift->cash_float = $cash_float_list;
+          $shift->refund_list = $shift_refund;
           $shift->boss_cash_float = $boss_cash_float;
           $shift->cash_sales = $total_cash_sales;
           $shift->drawer_cash = $drawer_cash;
@@ -2283,6 +2361,7 @@ class HomeController extends Controller
         $cashier_detail->shift = $shift_list;
         $cashier_detail->final_remain = $final_remain;
         $cashier_detail->cash_float = cash_float::where('cash_float.session_id', $session->id)->where('cash_float.ip', $cashier_detail->ip)->leftJoin('users', 'users.id', '=', 'cash_float.user_id')->select('cash_float.*', 'users.name as created_by')->get();
+        $cashier_detail->refund_list = refund::where('session_id', $session->id)->where('ip', $shift->ip)->get();
       }
       // 
 
@@ -2755,6 +2834,123 @@ class HomeController extends Controller
       Auth::logout();
 
       return redirect(route('home'));
+    }
+
+    public function refundNow(Request $request)
+    {
+      $user = Auth::user();
+      $product_id = $request->product_id;
+      if($product_id)
+      {
+        $now = date('Y-m-d H:i:s', strtotime(now()));
+        $session = session::where('closed', null)->orderBy('id', 'desc')->first();
+
+        if(!$session)
+        {
+          $session = session::create([
+            'ip' => $this->ip,
+            'opening_date_time' => $now,
+            'synced' => null,
+            'closed' => null
+          ]);
+        }
+
+        $opening_id = null;
+        $opening = cashier::where('session_id', $session->id)->where('ip', $this->ip)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
+
+        if($opening)
+        {
+          $opening_id = $opening->id;
+        }
+
+        $cashier_name = null;
+        $cashier_detail = pos_cashier::where('ip', $this->ip)->first();
+
+        if($cashier_detail)
+        {
+          $cashier_name = $cashier_detail->cashier_name;
+        }
+        
+        $refund = refund::create([
+          'session_id' => $session->id,
+          'opening_id' => $opening_id,
+          'ip' => $this->ip,
+          'cashier_name' => $cashier_name,
+          'user_id' => $user->id,
+          'user_name' => $user->name,
+          'synced' => null
+        ]);
+
+        $subtotal = 0;
+        $round_off = 0;
+        $total = 0;
+        $total_quantity = 0;
+
+        foreach($product_id as $id)
+        {
+          $product_detail = product::where('id', $id)->first();
+
+          $item_subtotal = 0;
+          $quantity_name = "quantity_".$id;
+
+          $quantity = $request->$quantity_name;
+          $item_subtotal = $product_detail->price * $quantity;
+
+          $total_quantity += $quantity;
+
+          refund_detail::create([
+            'refund_id' => $refund->id,
+            'department_id' => $product_detail->department_id,
+            'category_id' => $product_detail->category_id,
+            'product_id' => $id,
+            'barcode' => $product_detail->barcode,
+            'product_name' => $product_detail->product_name,
+            'quantity' => $quantity,
+            'price' => $product_detail->price,
+            'subtotal' => $item_subtotal,
+            'total' => $item_subtotal
+          ]);
+
+          $subtotal += $item_subtotal;
+        }
+
+        $total_summary = $this->roundDecimal($subtotal);
+
+        refund::where('id', $refund->id)->update([
+          'subtotal' => $subtotal,
+          'round_off' => $total_summary->round_off,
+          'total' => $total_summary->final_total
+        ]);
+
+        $updated_refund = refund::where('id', $refund->id)->first();
+        $refund_detail = refund_detail::where('refund_id', $refund->id)->get();
+
+        $updated_refund->total_item = count($product_id);
+        $updated_refund->total_quantity = $total_quantity;
+        $updated_refund->total_text = number_format($updated_refund->total, 2);
+        $updated_refund->date = date('l, d-m-Y', strtotime($updated_refund->created_at));
+        $updated_refund->time = date('H:i', strtotime($updated_refund->created_at));
+
+        foreach($refund_detail as $value)
+        {
+          $value->price_text = number_format($value->price, 2);
+          $value->total_text = number_format($value->total, 2);
+        }
+
+        $response = new \stdClass();
+        $response->error = 0;
+        $response->message = "Success";
+        $response->refund = $updated_refund;
+        $response->refund_detail = $refund_detail;
+
+        return response()->json($response);
+      }
+
+      $response = new \stdClass();
+      $response->error = 1;
+      $response->message = "Empty item";
+
+      return response()->json($response);
     }
 }
 

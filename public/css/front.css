@@ -109,4 +109,21 @@ body::-webkit-scrollbar-track { -webkit-box-shadow: inset 0 0 6px rgb(0 0 0 / 30
   -moz-appearance: textfield;
 }
 
+.refund_related_item_box { height: 150px; max-height: 150px; width: 100%; background: #fff; margin-top: 10px; padding: 10px; }
+.refund_related_item { width: 100%; height: 100%; overflow-x: scroll; padding-bottom: 26px; }
+.refund_related_item table { width: 100%; }
+.refund_summary { width: 100%; height: 350px; background: #689BCA; padding: 10px; margin-top: 10px; }
+.refund_item_list { width: 100%; height: 200px; background: #fff; padding: 10px; }
+.refund_item_list table { width: 100%; }
+.refund_total { margin-top: 30px; }
+.refund_total table { width: 100%; }
+.refund_total table tr td { font-size: 20px; }
+.refund_total table tr td.total { font-weight: bold; }
+.refund_total table tr td:last-child { text-align: right; }
+.refund_input { display: flex; align-items: center; }
+.refund_input input { flex: 1; }
+.refund_input label { margin: 0px; cursor: pointer; }
+.refund_submit { width: 100%; text-align: center; }
+.refund_cancel { position: absolute; right: 10px; }
+
 
