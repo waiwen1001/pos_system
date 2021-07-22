@@ -753,6 +753,7 @@
         <label style="font-size: 11px;">{!! nl2br(e($branch_address)) !!}</label>
         <!-- <label>RESIT</label> -->
         <label id="refund_title" style="display: none;">( Refund )</label>
+        <label id="refund_transaction_no" style="display: none;"></label>
         <br/>
       </div>
       <div style="border: 2px dashed #000; height: 2px;"></div>
@@ -2468,7 +2469,7 @@
         $("#receipt_total_items").html(transaction.total_items);
         $("#receipt_total").html("RM "+transaction.total_text);
         $("#receipt_payment_type").html(payment_type_text);
-        $("#refund_title").hide();
+        $("#refund_title, #refund_transaction_no").hide();
 
         $("#receipt_voucher").hide();
         $("#receipt_ori_payment").html("");
@@ -4267,7 +4268,8 @@
         $("#receipt_total_items").html(refund.total_items);
         $("#receipt_total").html("RM "+refund.total_text);
         $("#receipt_payment_type").html("Cash ( Refund )");
-        $("#refund_title").show();
+        $("#refund_title, #refund_transaction_no").show();
+        $("#refund_transaction_no").html(refund.transaction_no);
 
         $("#receipt_voucher").hide();
         $("#receipt_ori_payment").html("");

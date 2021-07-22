@@ -1737,7 +1737,7 @@ class HomeController extends Controller
       $cashier = cashier::where('synced', null)->where('closing', 1)->get();
       $cash_float = cash_float::where('synced', null)->get();
       $refund = refund::where('synced', null)->get();
-      $refund_detail = refund_detail::leftJoin('refund', 'refund.id', '=', 'refund_detail.refund_id')->where('refund.synced', null)->get();
+      $refund_detail = refund_detail::leftJoin('refund', 'refund.id', '=', 'refund_detail.refund_id')->where('refund.synced', null)->select('refund_detail.*')->get();
 
       if(count($transaction) == 0 && count($transaction_detail) == 0 && count($cashier) == 0 && count($cash_float) == 0 && count($refund) == 0 && count($refund_detail) == 0)
       {
@@ -1764,6 +1764,18 @@ class HomeController extends Controller
         if($response['error'] == 0)
         {
           session::whereIn('id', $session_list)->update([
+            'synced' => 1
+          ]);
+
+          cashier::where('synced', null)->where('closing', 1)->update([
+            'synced' => 1
+          ]);
+
+          cash_float::where('synced', null)->update([
+            'synced' => 1
+          ]);
+
+          refund::where('synced', null)->update([
             'synced' => 1
           ]);
 
