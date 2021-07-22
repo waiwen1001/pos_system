@@ -808,7 +808,7 @@
 
         <div style="display: block;font-size: 11px;" id="receipt_by"></div>
 
-        <div style="font-size: 8px; text-align: center;">
+        <div style="font-size: 8px; text-align: center;" id="receipt_transaction_no_box">
           <div style="display: inline-block;">INVOIS : <label id="receipt_transaction_no"></label></div>
         </div>
 
@@ -2470,6 +2470,7 @@
         $("#receipt_total").html("RM "+transaction.total_text);
         $("#receipt_payment_type").html(payment_type_text);
         $("#refund_title, #refund_transaction_no").hide();
+        $("#receipt_transaction_no_box").show();
 
         $("#receipt_voucher").hide();
         $("#receipt_ori_payment").html("");
@@ -4270,6 +4271,7 @@
         $("#receipt_payment_type").html("Cash ( Refund )");
         $("#refund_title, #refund_transaction_no").show();
         $("#refund_transaction_no").html(refund.transaction_no);
+        $("#receipt_transaction_no_box").hide();
 
         $("#receipt_voucher").hide();
         $("#receipt_ori_payment").html("");
