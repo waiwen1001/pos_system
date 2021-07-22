@@ -281,7 +281,7 @@
                 <td class='align_right'>
                   Refund <br>( by : {{ $refund->user_name }} )
                 </td>
-                <td class='align_right'></td>
+                <td class='align_right'>{{ $refund->transaction_no }}</td>
                 <td class='align_right'>{{ $refund->total }}</td>
                 <td class='align_right'>{{ date('h:i A', strtotime($refund->created_at)) }}</td>
               </tr>

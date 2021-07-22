@@ -59,6 +59,7 @@ Route::post('/refundNow', 'HomeController@refundNow')->name('refundNow');
 
 Route::get('/testing', 'HomeController@testing')->name('testing');
 Route::get('/myIP', 'HomeController@myIP')->name('myIP');
+Route::get('/init', 'HomeController@init')->name('init');
 Route::get('/getlogout', 'HomeController@getlogout')->name('getlogout');
 
 

@@ -160,6 +160,17 @@ class HomeController extends Controller
       $opening = 0;
       $new_session = 1;
 
+      $ip = $this->ip;
+      // default is cashier
+      $device_type = 2;
+      $pos_cashier = pos_cashier::where('ip', $ip)->first();
+      $cashier_name = null;
+      if($pos_cashier)
+      {
+        $device_type = $pos_cashier->type;
+        $cashier_name = $pos_cashier->cashier_name;
+      }
+
       if($session)
       {
         $new_session = 0;
@@ -175,10 +186,12 @@ class HomeController extends Controller
         {
           cashier::create([
             'ip' => $this->ip,
+            'cashier_name' => $cashier_name,
             'session_id' => $session->id,
             'opening' => 1,
             'opening_amount' => $prev_cashier->closing_amount,
             'opening_by' => $user->id,
+            'opening_by_name' => $user->name,
             'opening_date_time' => $now
           ]);
 
@@ -195,18 +208,7 @@ class HomeController extends Controller
         $user_management_list = [$user];
       }
 
-      $shortcut_key = shortcut_key::get();
-      $ip = $this->ip;
-
-      // default is cashier
-      $device_type = 2;
-      $device = pos_cashier::where('ip', $ip)->first();
-      if($device)
-      {
-        $device_type = $device->type;
-      }
-
-      $pos_cashier = pos_cashier::where('ip', $this->ip)->first();
+      $shortcut_key = shortcut_key::get();  
 
       $branchSyncURL = $this->branchSyncURL;
       $branch_id = $this->branch_id;
@@ -1164,14 +1166,23 @@ class HomeController extends Controller
 
       $cashier = cashier::where('ip', $this->ip)->where('session_id', $session->id)->where('opening', 1)->where('closing', null)->orderBy('id', 'desc')->first();
 
+      $cashier_name = null;
+      $pos_cashier = pos_cashier::where('ip', $this->ip)->first();
+      if($pos_cashier)
+      {
+        $cashier_name = $pos_cashier->cashier_name;
+      }
+
       if(!$cashier)
       {
         cashier::create([
           'ip' => $this->ip,
+          'cashier_name' => $cashier_name,
           'session_id' => $session->id,
           'opening' => 1,
           'opening_amount' => round($request->opening_amount, 2),
           'opening_by' => $user->id,
+          'opening_by_name' => $user->name,
           'opening_date_time' => $now
         ]);
       }
@@ -1181,6 +1192,7 @@ class HomeController extends Controller
           'opening' => 1,
           'opening_amount' => round($request->opening_amount, 2),
           'opening_by' => $user->id,
+          'opening_by_name' => $user->name,
           'opening_date_time' => $now
         ]);
       }
@@ -1301,6 +1313,7 @@ class HomeController extends Controller
           'calculated_amount' => $request->calculated_amount,
           'diff' => round($request->closing_amount, 2) - $request->calculated_amount,
           'closing_by' => $user->id,
+          'closing_by_name' => $user->name,
           'closing_date_time' => $now
         ]);
       }
@@ -1503,7 +1516,9 @@ class HomeController extends Controller
 
       cash_float::create([
         'user_id' => $user->id,
+        'created_by' => $user->name,
         'ip' => $this->ip,
+        'cashier_name' => $cashier_name,
         'session_id' => $session->id,
         'opening_id' => $cashier->id,
         'type' => $request->type,
@@ -1716,17 +1731,22 @@ class HomeController extends Controller
         return response()->json($response);
       }
 
-      if(count($session_list) == 0)
+      $transaction = transaction::whereIn('session_id', $session_list)->get();
+      $transaction_detail = transaction_detail::leftJoin('transaction', 'transaction.id', '=', 'transaction_detail.transaction_id')->whereIn('transaction.session_id', $session_list)->select('transaction_detail.*', 'transaction.session_id')->get();
+
+      $cashier = cashier::where('synced', null)->where('closing', 1)->get();
+      $cash_float = cash_float::where('synced', null)->get();
+      $refund = refund::where('synced', null)->get();
+      $refund_detail = refund_detail::leftJoin('refund', 'refund.id', '=', 'refund_detail.refund_id')->where('refund.synced', null)->get();
+
+      if(count($transaction) == 0 && count($transaction_detail) == 0 && count($cashier) == 0 && count($cash_float) == 0 && count($refund) == 0 && count($refund_detail) == 0)
       {
         $response = new \stdClass();
         $response->error = 2;
-        $response->message = "Session not found.";
+        $response->message = "No need to sync.";
 
         return response()->json($response);
       }
-
-      $transaction = transaction::whereIn('session_id', $session_list)->get();
-      $transaction_detail = transaction_detail::leftJoin('transaction', 'transaction.id', '=', 'transaction_detail.transaction_id')->whereIn('transaction.session_id', $session_list)->select('transaction_detail.*', 'transaction.session_id')->get();
 
       if($branchSyncURL)
       {
@@ -1734,7 +1754,11 @@ class HomeController extends Controller
           'session_list' => $session_list,
           'branch_id' => $this->branch_id,
           'transaction' => $transaction,
-          'transaction_detail' => $transaction_detail
+          'transaction_detail' => $transaction_detail,
+          'cashier' => $cashier,
+          'cash_float' => $cash_float,
+          'refund' => $refund,
+          'refund_detail' => $refund_detail
         ]);
 
         if($response['error'] == 0)
@@ -2876,6 +2900,20 @@ class HomeController extends Controller
         {
           $cashier_name = $cashier_detail->cashier_name;
         }
+
+        $refund_seq = Invoice_sequence::where('branch_code', "RN")->first();
+        if(!$refund_seq)
+        {
+          $refund_seq = $this->init();
+        }
+
+        $transaction_no = null;
+
+        if(date("Y-m-d",strtotime($refund_seq->updated_at)) == date("Y-m-d", strtotime($now))){
+          $transaction_no = $refund_seq->branch_code.date("Ymd").$refund_seq->next_seq;
+        }else{
+          $transaction_no = $refund_seq->branch_code.date("Ymd", strtotime($now))."00001";
+        }
         
         $refund = refund::create([
           'session_id' => $session->id,
@@ -2884,8 +2922,28 @@ class HomeController extends Controller
           'cashier_name' => $cashier_name,
           'user_id' => $user->id,
           'user_name' => $user->name,
+          'transaction_no' => $transaction_no,
           'synced' => null
         ]);
+
+        if(date("Y-m-d",strtotime($refund_seq->updated_at)) == date('Y-m-d', strtotime($now))){
+          $next = $refund_seq->next_seq;
+          $next = intval($next) + 1;
+          $i=5;
+          while($i>strlen($next)){
+            $next = "0".$next;
+          }
+          
+          Invoice_sequence::where('id',$refund_seq->id)->update([
+            'current_seq' => $refund_seq->next_seq,
+            'next_seq' => $next,
+          ]);
+        }else{
+          Invoice_sequence::where('id',$refund_seq->id)->update([
+            'current_seq' => '00001',
+            'next_seq' => '00002',
+          ]);
+        }
 
         $subtotal = 0;
         $round_off = 0;
@@ -2957,6 +3015,21 @@ class HomeController extends Controller
       $response->message = "Empty item";
 
       return response()->json($response);
+    }
+
+    public function init()
+    {
+      $refund_invoice = Invoice_sequence::where('branch_code', "RN")->first();
+      if(!$refund_invoice)
+      {
+        $refund_invoice =  Invoice_sequence::create([
+          'branch_code' => 'RN',
+          'current_seq' => '0000',
+          'next_seq' => '0001',
+        ]);
+      }
+
+      return $refund_invoice;
     }
 }
 

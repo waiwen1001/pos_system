@@ -1456,7 +1456,10 @@
         }
         else if($("#refundModal").css("display") != "none" && $(".swal2-container").length == 0)
         {
-          $("#refundNowBtn").click();
+          if($("#refundNowBtn").attr("disabled") != "disabled")
+          {
+            $("#refundNowBtn").click();
+          }
         }
         else
         {
@@ -4003,7 +4006,7 @@
       html += "<td style='vertical-align:top;'>Refund</td>";
       html += "<td style='vertical-align:top;text-align:right;'>( "+refund.total_text+" )</td>"
       html += "<td style='vertical-align:top;'>"+refund.created_time_text+"</td>";
-      html += "<td style='vertical-align:top;'></td>";
+      html += "<td style='vertical-align:top;'>"+refund.transaction_no+"</td>";
       html += "</tr>";
     }
 

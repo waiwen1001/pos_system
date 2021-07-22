@@ -14,6 +14,7 @@ class refund extends Model
       'cashier_name',
       'user_id',
       'user_name',
+      'transaction_no',
       'subtotal',
       'round_off',
       'total',

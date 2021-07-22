@@ -18,6 +18,12 @@ class DatabaseSeeder extends Seeder
             'next_seq' => '00001',
             'created_at' => now(),
             'updated_at' => now(),
+        ],[
+          'branch_code' => 'RN',
+          'current_seq' => '0000',
+          'next_seq' => '0001',
+          'created_at' => now(),
+          'updated_at' => now(),
         ]);
     }
 }
