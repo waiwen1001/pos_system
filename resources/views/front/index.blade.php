@@ -1179,13 +1179,13 @@
   <div class="modal fade" id="refundModal" tabindex="-1" role="dialog" aria-labelledby="refundModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false" style="background: rgba(0, 0, 0, 0.7);">
     <div class="modal-dialog" role="document" style="min-width: 750px;">
       <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Refund</h5>
+        <div class="modal-header" style="padding: 10px;">
+          <h5 class="modal-title" style="font-size: 16px;">Refund</h5>
           <button type="button" class="close" id="closeRefundModalIcon">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
-        <div class="modal-body" style="background: #eee;">
+        <div class="modal-body" style="background: #eee; padding: 10px;">
           <label>Enter barcode or product name</label>
           <div class="refund_input">
             <input type="text" class="form-control" name="refund_barcode" disabled />
