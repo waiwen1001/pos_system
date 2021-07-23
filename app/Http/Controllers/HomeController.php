@@ -1739,7 +1739,7 @@ class HomeController extends Controller
       $refund = refund::where('synced', null)->get();
       $refund_detail = refund_detail::leftJoin('refund', 'refund.id', '=', 'refund_detail.refund_id')->where('refund.synced', null)->select('refund_detail.*')->get();
 
-      if(count($transaction) == 0 && count($transaction_detail) == 0 && count($cashier) == 0 && count($cash_float) == 0 && count($refund) == 0 && count($refund_detail) == 0)
+      if(count($session_list) == 0 && count($transaction) == 0 && count($transaction_detail) == 0 && count($cashier) == 0 && count($cash_float) == 0 && count($refund) == 0 && count($refund_detail) == 0)
       {
         $response = new \stdClass();
         $response->error = 2;
