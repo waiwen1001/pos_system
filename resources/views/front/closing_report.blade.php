@@ -90,9 +90,9 @@
       </tr>
 
       <tr class="no_border">
-        <td colspan="4">Tambah</td>
+        <td colspan="4" style="text-align: center; font-weight: bold;">Tambah</td>
         <td class="no_border"></td>
-        <td colspan="4">Tolak</td>
+        <td colspan="4" style="text-align: center; font-weight: bold;">Tolak</td>
       </tr>
 
       <tr class="no_border">
@@ -115,23 +115,20 @@
         <td colspan="3">Jualan Tunai hari ini :</td>
         <td class='align_right'>{{ $cash_float_result->cash_sales }}</td>
         <td class="no_border"></td>
-        <td colspan="3">Jumlah bagi ke ketua :</td>
-        <td class='align_right'>{{ $cash_float_result->total_boss_text }}</td>
-      </tr>
-
-      <tr class="no_border">
-        @if($cash_float_result->diff == 0)
-          <td colspan="3"></td>
-          <td class='align_right'></td>
-        @else
-          <td colspan="3">Berbeza Jumlah Closing</td>
-          <td class='align_right'>{{ $cash_float_result->diff_text }}</td>
-        @endif
-        
-        <td class="no_border"></td>
         <td colspan="3">Jumlah refund :</td>
         <td class='align_right'>{{ $cash_float_result->total_refund }}</td>
       </tr>
+
+      @if($cash_float_result->diff != 0)
+        <tr class="no_border">
+          <td colspan="3">Berbeza Jumlah Closing</td>
+          <td class='align_right'>{{ $cash_float_result->diff_text }}</td>
+          
+          <td class="no_border"></td>
+          <td colspan="3"></td>
+          <td class='align_right'></td>
+        </tr>
+      @endif
 
       <tr class="no_border">
         <td colspan="2">Jumlah Tunai :</td>
@@ -147,13 +144,13 @@
         <td class="no_border" colspan="9" style="height: 27px;"></td>
       </tr>
 
-      @if($cash_float_result->total_boss > 0)
+      <!-- @if($cash_float_result->total_boss > 0)
         <tr class="no_border" style="font-weight: bold;">
           <td class="no_border" colspan="5" style="text-align: right;">Jumlah telah bagi ke ketua : </td>
           <td class="no_border" style="text-align: right;">{{ $cash_float_result->total_boss_text }}</td>
           <td class="no_border" colspan="3"></td>
         </tr>
-      @endif
+      @endif -->
 
       <tr class="no_border" style="font-weight: bold;">
         <td class="no_border" colspan="5" style="text-align: right;">Baki Tunai yang perlu serah ke syarikat : </td>

@@ -2247,7 +2247,7 @@ class HomeController extends Controller
       }
 
       $total_cash = $total_opening + $total_float_in + $only_cash_sales + $total_diff;
-      $total_deduct = $total_float_out + $total_boss + $total_refund + $total_opening;
+      $total_deduct = $total_float_out + $total_refund + $total_opening;
 
       $cash_float_result = new \stdClass();
       $cash_float_result->opening = number_format($total_opening, 2);
