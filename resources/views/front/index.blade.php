@@ -1597,7 +1597,10 @@
     $("input[name='reference_no']").on('keydown', function(e){
       if(e.which == 13)
       {
-        $("#submitCardPayment").click();
+        if($("#submitCardPayment").attr("disabled") != "disabled")
+        {
+          $("#submitCardPayment").click();
+        }
       }
     });
 
@@ -1758,7 +1761,10 @@
       var reference_no = $("input[name='reference_no']").val();
       if(reference_no)
       {
-        submitCardPayment();
+        if($("#submitCardPayment").attr("disabled") != "disabled")
+        {
+          submitCardPayment();
+        }
       }
       else
       {
@@ -2562,12 +2568,15 @@
 
   function submitCardPayment()
   {
+    $("#submitCardPayment").attr("disabled", true);
+
     var transaction_id = $("#transaction_id").val();
     var reference_no = $("input[name='reference_no']").val();
     var payment_type = $("#payment_type").val();
 
     $.post("{{ route('submitTransaction') }}", {"_token" : "{{ csrf_token() }}", "transaction_id" : transaction_id, "payment_type" : payment_type, "reference_no" : reference_no }, function(result){
 
+      $("#submitCardPayment").attr("disabled", false);
       $("#cardCheckoutModal").modal('hide');
       if(result.error == 0)
       {
@@ -2593,6 +2602,7 @@
         })
       }
     }).fail(function(xhr){
+      $("#submitCardPayment").attr("disabled", false);
       if(xhr.status == 401)
       {
         loggedOutAlert();
