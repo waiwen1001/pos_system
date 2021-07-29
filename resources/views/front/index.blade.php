@@ -1429,15 +1429,24 @@
 
         if($("#openingModal").css("display") != "none")
         {
-          $("#submitOpening").click();
+          if($("#submitOpening").attr("disabled") != "disabled")
+          {
+            $("#submitOpening").click();
+          }
         }
         else if($("#closingModal").css("display") != "none")
         {
-          $("#submitClosing").click();
+          if($("#submitClosing").attr("disabled") != "disabled")
+          {
+            $("#submitClosing").click();
+          }
         }
         else if($("#cashFloatModal").css("display") != "none")
         {
-          $("#submitCashFloat").click();
+          if($("#submitCashFloat").attr("disabled") != "disabled")
+          {
+            $("#submitCashFloat").click();
+          }
         }
         else if($("#clearItemsModal").css("display") != "none")
         {
@@ -1464,7 +1473,7 @@
         }
         else
         {
-          $(".modal").not("#cardCheckoutModal, #numpadModal, #cashFloatModal, #refundModal").modal('hide');
+          $(".modal").not("#cardCheckoutModal, #numpadModal, #cashFloatModal, #refundModal, #voucherModal").modal('hide');
         }
       }
       // up down
@@ -1587,12 +1596,12 @@
       }
     });
 
-    $("input[name='voucher_code']").on('keydown', function(e){
-      clearInterval(voucherFunc);
-      if(e.which != 17){
-        voucherFunc = setTimeout(submitVoucher, 200);
-      }
-    });
+    // $("input[name='voucher_code']").on('keydown', function(e){
+    //   clearInterval(voucherFunc);
+    //   if(e.which != 17){
+    //     voucherFunc = setTimeout(submitVoucher, 200);
+    //   }
+    // });
 
     $("input[name='reference_no']").on('keydown', function(e){
       if(e.which == 13)
@@ -1792,7 +1801,10 @@
     $("input[name='voucher_code']").on('keydown', function(e){
       if(e.which == 13)
       {
-        submitVoucher();
+        if($("input[name='voucher_code']").attr("disabled") != "disabled")
+        {
+          submitVoucher();
+        }
       }
     });
 
@@ -2966,6 +2978,8 @@
   
   function submitVoucher()
   {
+    $("input[name='voucher_code']").attr("disabled", true);
+
     var voucher_code = $("input[name='voucher_code']").val();
     if(voucher_code)
     {
@@ -2973,6 +2987,7 @@
     }
     else
     {
+      $("input[name='voucher_code']").attr("disabled", false);
       $("input[name='voucher_code']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Voucher code cannot be empty.</strong>");
       return false;
     }
@@ -2981,6 +2996,7 @@
     let transaction_id = $("#transaction_id").val();
 
     $.post("{{ route('submitVoucher') }}", { "_token" : "{{ csrf_token() }}", "code" : code, "transaction_id" : transaction_id}, function(result){
+      $("input[name='voucher_code']").attr("disabled", false);
       if(result.error == 0)
       {
         transaction_total = result.real_total;
@@ -3014,6 +3030,7 @@
         $("input[name='voucher_code']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>"+result.message+".</strong>");
       }
     }).fail(function(xhr){
+      $("input[name='voucher_code']").attr("disabled", false);
       if(xhr.status == 401)
       {
         loggedOutAlert();
@@ -3072,9 +3089,15 @@
   {
     var opening_amount = $("input[name='cashier_opening_amount']").val();
 
-    if(opening_amount)
+    if(opening_amount && opening_amount != 0 && opening_amount != "")
     {
+      $("#submitOpening").attr("disabled", true);
       $.post("{{ route('submitOpening') }}", {"_token" : "{{ csrf_token() }}", "opening_amount" : opening_amount}, function(result){
+
+        setTimeout(function(){
+          $("#submitOpening").attr("disabled", false);
+        }, 1000);
+        
         if(result.error == 0)
         {
           $("#openingModal").modal('hide');
@@ -3084,9 +3107,9 @@
 
           $("#openingBtn").attr("disabled", true);
           $("#closingBtn, #floatInBtn, #floatOutBtn, #bagiKeKetuaBtn, #refundBtn").attr("disabled", false);
-
         }
       }).fail(function(xhr){
+        $("#submitOpening").attr("disabled", false);
         if(xhr.status == 401)
         {
           loggedOutAlert();
@@ -3095,7 +3118,7 @@
     }
     else
     {
-      $("input[name='cashier_opening_amount']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Opening amount cannot be empty.</strong>");
+      $("input[name='cashier_opening_amount']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Opening amount cannot be empty or 0.</strong>");
     }
   }
 
@@ -3145,12 +3168,15 @@
 
   function submitClosing()
   {
+    $("#submitClosing").attr("disabled", true);
+
     var closing_amount = $("input[name='cashier_closing_amount']").val();
     var calculated_closing_amount = $("input[name='calculated_closing_amount']").val();
 
     if(closing_amount)
     {
       $.post("{{ route('submitClosing') }}", {"_token" : "{{ csrf_token() }}", "closing_amount" : closing_amount, ' calculated_amount' : calculated_closing_amount}, function(result){
+        $("#submitClosing").attr("disabled", false);
         if(result.error == 0)
         {
           $("#closingModal").modal('hide');
@@ -3159,6 +3185,7 @@
           // location.reload();
         }
       }).fail(function(xhr){
+        $("#submitClosing").attr("disabled", false);
         if(xhr.status == 401)
         {
           loggedOutAlert();
@@ -3167,6 +3194,7 @@
     }
     else
     {
+      $("#submitClosing").attr("disabled", false);
       $("input[name='cashier_closing_amount']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Closing amount cannot be empty.</strong>");
     }
   }
@@ -3251,17 +3279,21 @@
 
   function submitCashFloat()
   {
+    $("#submitCashFloat").attr("disabled", true);
+
     let amount = $("input[name='cash_float']").val();
     let remarks = $("input[name='cash_float_remarks']").val();
     let cash_float_type = $("input[name='cash_float_type']").val();
 
     if(!amount)
     {
+      $("#submitCashFloat").attr("disabled", false);
       $("input[name='cash_float']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Cash float amount cannot be empty.</strong>");
       return;
     }
 
     $.post("{{ route('submitCashFloat') }}", {"_token" : "{{ csrf_token() }}", "amount" : amount, "type" : cash_float_type, "remarks" : remarks }, function(result){
+      $("#submitCashFloat").attr("disabled", false);
       if(result.error == 1)
       {
         $("#error_content").html(result.message);
@@ -3284,6 +3316,7 @@
         openDrawer(html);
       }
     }).fail(function(xhr){
+      $("#submitCashFloat").attr("disabled", false);
       if(xhr.status == 401)
       {
         loggedOutAlert();
