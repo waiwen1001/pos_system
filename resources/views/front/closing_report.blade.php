@@ -40,6 +40,10 @@
 
 <body>
 
+  @if($reprint == 1)
+    <h4 style="text-align: center;">Reprint Daily Report</h4>
+  @endif
+
   <table style="width: 85%; margin: auto;">
     <thead>
       <tr>
@@ -174,6 +178,9 @@
               <td colspan="4">Shift {{ $shift->shift_count }}</td>
             </tr>
             <tr style="text-align: center;">
+              <td colspan="4">Opening by <b>{{ $shift->opening_by_name }}</b></td>
+            </tr>
+            <tr style="text-align: center;">
               <td colspan="4">{{ $shift->opening_date_time_text }}</td>
             </tr>
             <tr style="text-align: center;">
@@ -223,7 +230,7 @@
             </tr>
             @if($shift->diff != 0)
               <tr>
-                <td class='align_right' colspan="2">Tutup Kounter :</td>
+                <td class='align_right' colspan="2">Tutup Kaunter :</td>
                 <td class='align_right'>{{ number_format($shift->closing_amount, 2) }}</td>
                 <td></td>
               </tr>

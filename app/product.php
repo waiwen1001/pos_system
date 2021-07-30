@@ -21,7 +21,9 @@ class product extends Model
       'promotion_end',
       'promotion_price',
       'wholesale_price',
+      'wholesale_price2',
       'wholesale_quantity',
+      'wholesale_quantity2',
       'wholesale_start_date',
       'wholesale_end_date',
       'deleted_at'

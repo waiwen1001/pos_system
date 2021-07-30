@@ -99,14 +99,16 @@ body::-webkit-scrollbar-track { -webkit-box-shadow: inset 0 0 6px rgb(0 0 0 / 30
 
 /* Chrome, Safari, Edge, Opera */
 .quantity_input::-webkit-outer-spin-button,
-.quantity_input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
+.quantity_input::-webkit-inner-spin-button,
+.refund_item_price::-webkit-outer-spin-button,
+.refund_item_price::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
 }
 
 /* Firefox */
-.quantity_input[type=number] {
-  -moz-appearance: textfield;
+.quantity_input[type=number], .refund_item_price[type=number] {
+  -moz-appearance: textfield !important;
 }
 
 .refund_related_item_box { height: 150px; max-height: 150px; width: 100%; background: #fff; margin-top: 10px; padding: 10px; }
@@ -125,5 +127,6 @@ body::-webkit-scrollbar-track { -webkit-box-shadow: inset 0 0 6px rgb(0 0 0 / 30
 .refund_input label { margin: 0px; cursor: pointer; }
 .refund_submit { width: 100%; text-align: center; }
 .refund_cancel { position: absolute; right: 10px; }
+.refund_item_price { width: calc(100% - 50px); display: inline-block; }
 
 
