@@ -240,6 +240,43 @@
                 <td></td>
               </tr>
             @endif
+
+            <tr>
+              <td class='align_right' colspan="2" style="font-weight: bold;">Jumlah Jualan Kredit Kad - Shift {{ $shift->shift_count }} :</td>
+              <td class='align_right'>{{ number_format($shift->card_sales, 2) }}</td>
+              <td></td>
+            </tr>
+
+            <tr>
+              <td class='align_right' colspan="2" style="font-weight: bold;">Jumlah Jualan Touch & Go - Shift {{ $shift->shift_count }} :</td>
+              <td class='align_right'>{{ number_format($shift->tng_sales, 2) }}</td>
+              <td></td>
+            </tr>
+
+            <tr>
+              <td class='align_right' colspan="2" style="font-weight: bold;">Jumlah Jualan Maybank QR - Shift {{ $shift->shift_count }} :</td>
+              <td class='align_right'>{{ number_format($shift->maybank_qr_sales, 2) }}</td>
+              <td></td>
+            </tr>
+
+            <tr>
+              <td class='align_right' colspan="2" style="font-weight: bold;">Jumlah Jualan Grab Pay - Shift {{ $shift->shift_count }} :</td>
+              <td class='align_right'>{{ number_format($shift->grab_pay_sales, 2) }}</td>
+              <td></td>
+            </tr>
+
+            <tr>
+              <td class='align_right' colspan="2" style="font-weight: bold;">Jumlah Jualan Boost - Shift {{ $shift->shift_count }} :</td>
+              <td class='align_right'>{{ number_format($shift->boost_sales, 2) }}</td>
+              <td></td>
+            </tr>
+
+            <tr>
+              <td class='align_right' colspan="2" style="font-weight: bold;">Jumlah Jualan lain-lain - Shift {{ $shift->shift_count }} :</td>
+              <td class='align_right'>{{ number_format($shift->other_sales, 2) }}</td>
+              <td></td>
+            </tr>
+
             <tr>
               <td colspan="4" style="height: 27px;"></td>
             </tr>

@@ -463,6 +463,17 @@ class HomeController extends Controller
           }
           else
           {
+            $transaction_wholesale_price = null;
+            if($wholesale_quantity == 1)
+            {
+              $transaction_wholesale_price = $wholesale_price;
+            }
+
+            if($wholesale_quantity2 == 1)
+            {
+              $transaction_wholesale_price = $wholesale_price2;
+            }
+          
             transaction_detail::create([
               'transaction_id' => $transaction->id,
               'department_id' => $product->department_id,
@@ -2384,12 +2395,46 @@ class HomeController extends Controller
             }
           }
 
-          $cash_sales_transaction = transaction::where('completed', 1)->where('session_id', $session->id)->where('opening_id', $shift->id)->where('ip', $shift->ip)->where('payment_type', 'cash')->select('*')->selectRaw('SUM(transaction.total) as total_cash_sales')->groupBy('payment_type')->first();
+          $shift_sales_transaction = transaction::where('completed', 1)->where('session_id', $session->id)->where('opening_id', $shift->id)->where('ip', $shift->ip)->select('*')->selectRaw('SUM(transaction.total) as total_sales')->groupBy('payment_type')->get();
 
           $total_cash_sales = 0;
-          if($cash_sales_transaction)
+          $total_card_sales = 0;
+          $total_tng_sales = 0;
+          $total_maybank_qr_sales = 0;
+          $total_grab_pay_sales = 0;
+          $total_boost_sales = 0;
+          $total_other_sales = 0;
+
+          foreach($shift_sales_transaction as $sales_transaction)
           {
-            $total_cash_sales = $cash_sales_transaction->total_cash_sales;
+            if($sales_transaction->payment_type == "cash")
+            {
+              $total_cash_sales = $sales_transaction->total_sales;
+            }
+            elseif($sales_transaction->payment_type == "card")
+            {
+              $total_card_sales = $sales_transaction->total_sales;
+            }
+            elseif($sales_transaction->payment_type == "tng")
+            {
+              $total_tng_sales = $sales_transaction->total_sales;
+            }
+            elseif($sales_transaction->payment_type == "maybank_qr")
+            {
+              $total_maybank_qr_sales = $sales_transaction->total_sales;
+            }
+            elseif($sales_transaction->payment_type == "grab_pay")
+            {
+              $total_grab_pay_sales = $sales_transaction->total_sales;
+            }
+            elseif($sales_transaction->payment_type == "boost")
+            {
+              $total_boost_sales = $sales_transaction->total_sales;
+            }
+            else
+            {
+              $total_other_sales = $sales_transaction->total_sales;
+            }
           }
 
           $drawer_cash += $total_cash_sales;
@@ -2419,6 +2464,12 @@ class HomeController extends Controller
           $shift->refund_list = $shift_refund;
           $shift->boss_cash_float = $boss_cash_float;
           $shift->cash_sales = $total_cash_sales;
+          $shift->card_sales = $total_card_sales;
+          $shift->tng_sales = $total_tng_sales;
+          $shift->maybank_qr_sales = $total_maybank_qr_sales;
+          $shift->grab_pay_sales = $total_grab_pay_sales;
+          $shift->boost_sales = $total_boost_sales;
+          $shift->other_sales = $total_other_sales;
           $shift->drawer_cash = $drawer_cash;
           $shift->boss_cash = $total_boss_cash;
           $shift->remain = $drawer_cash - $total_boss_cash;
