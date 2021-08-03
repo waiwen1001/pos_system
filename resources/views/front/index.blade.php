@@ -236,7 +236,7 @@
                     @endif
                     @if($user->user_type == 1)
                       <div class="dropdown-divider"></div>
-                      <button class="dropdown-item" onclick="dailyReport()">
+                      <button class="dropdown-item" onclick="dailyReport(1)">
                         Closing Report
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showClosingReport()"></span>
                       </button>
@@ -2830,7 +2830,7 @@
   {
     if(user.user_type == 1)
     {
-      dailyReport();
+      dailyReport(1);
     }
   }
 
@@ -3249,7 +3249,7 @@
 
         opening = 0;
 
-        dailyReport();
+        dailyReport(0);
         syncHQ(3);
       }
       else
@@ -3459,9 +3459,16 @@
     });
   }
 
-  function dailyReport()
+  function dailyReport(reprint)
   {
-    window.open("{{ route('getDailyReport', ['reprint' => 1]) }}");
+    if(reprint == 1)
+    {
+      window.open("{{ route('getDailyReport', ['reprint' => 1]) }}");
+    }
+    else
+    {
+      window.open("{{ route('getDailyReport') }}");
+    }
   }
 
   function userManagement()
