@@ -809,23 +809,6 @@ class HomeController extends Controller
           $transaction_no = $seq->branch_code.date("Ymd", strtotime($now))."00001";
         }
 
-        transaction::where('id', $request->transaction_id)->update([
-          'opening_id' => $opening_id,
-          'transaction_no' => $transaction_no,
-          'reference_no' => $reference_no,
-          'subtotal' => round($subtotal, 2),
-          'total_discount' => round($total_discount, 2),
-          'payment' => round($received_cash, 2),
-          'payment_type' => $payment_type,
-          'payment_type_text' => $payment_type_text,
-          'balance' => round($balance, 2),
-          'total' => round($total, 2),
-          'round_off' => round($round_off, 2),
-          'completed' => 1,
-          'completed_by' => $user->id,
-          'transaction_date' => date('Y-m-d H:i:s', strtotime(now()))
-        ]);
-
         if(date("Y-m-d",strtotime($seq->updated_at)) == date('Y-m-d', strtotime($now))){
           $next = $seq->next_seq;
           $next = intval($next) + 1;
@@ -844,6 +827,23 @@ class HomeController extends Controller
             'next_seq' => '00002',
           ]);
         }
+
+        transaction::where('id', $request->transaction_id)->update([
+          'opening_id' => $opening_id,
+          'transaction_no' => $transaction_no,
+          'reference_no' => $reference_no,
+          'subtotal' => round($subtotal, 2),
+          'total_discount' => round($total_discount, 2),
+          'payment' => round($received_cash, 2),
+          'payment_type' => $payment_type,
+          'payment_type_text' => $payment_type_text,
+          'balance' => round($balance, 2),
+          'total' => round($total, 2),
+          'round_off' => round($round_off, 2),
+          'completed' => 1,
+          'completed_by' => $user->id,
+          'transaction_date' => date('Y-m-d H:i:s', strtotime(now()))
+        ]);
 
         $completed_transaction = transaction::where('id', $request->transaction_id)->first();
 
