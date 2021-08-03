@@ -779,6 +779,11 @@
             <div id="receipt_discount"></div>
           </div>
         </div>
+        <!-- receipt round off -->
+        <!-- <div id="receipt_round_off_box" style="width: 100%; font-size: 11px; font-weight: bold; display: flex; justify-content: space-between;">
+          <div>Round off</div>
+          <div id="receipt_round_off"></div>
+        </div> -->
         <div style="width: 100%; font-size: 11px; font-weight: bold; display: flex; justify-content: space-between;">
           <div>Jumlah Bil</div>
           <div id="receipt_total"></div>
@@ -2494,6 +2499,9 @@
         $("#receipt_voucher_name").html("");
         $("#receipt_discount").html("");
 
+        $("#receipt_round_off_box").hide();
+        $("#receipt_round_off").html("");
+
         if(transaction.payment_type != "cash")
         {
           $("#receipt_other_payment").show();
@@ -2502,6 +2510,11 @@
         }
         else
         {
+          if(transaction.round_off)
+          {
+            $("#receipt_round_off_box").show();
+            $("#receipt_round_off").html("RM "+transaction.round_off);
+          }
           $("#receipt_other_payment").hide();
           $("#receipt_cash").show();
           $("#receipt_received_payment").html("RM "+transaction.payment_text);
@@ -2587,19 +2600,21 @@
 
     if(!transaction_id)
     {
-      Swal.fire({
-        title: "Empty transaction.",
-        icon: 'error',
-        confirmButtonText: 'OK',
-      }).then((result) => {
-        /* Read more about isConfirmed, isDenied below */
-        if (result.isConfirmed) {
-          swal.close();
-        }
-      });
+      setTimeout(function(){
+        Swal.fire({
+          title: "Empty transaction.",
+          icon: 'error',
+          confirmButtonText: 'OK',
+        }).then((result) => {
+          /* Read more about isConfirmed, isDenied below */
+          if (result.isConfirmed) {
+            swal.close();
+          }
+        });
 
-      $("#submitCardPayment").attr("disabled", false);
-
+        $("#submitCardPayment").attr("disabled", false);
+      }, 500);
+    
       return;
     }
 
