@@ -271,11 +271,11 @@
               <td></td>
             </tr>
 
-            <tr>
+            <!-- <tr>
               <td class='align_right' colspan="2" style="font-weight: bold;">Jumlah Jualan lain-lain - Shift {{ $shift->shift_count }} :</td>
               <td class='align_right'>{{ number_format($shift->other_sales, 2) }}</td>
               <td></td>
-            </tr>
+            </tr> -->
 
             <tr>
               <td colspan="4" style="height: 27px;"></td>
