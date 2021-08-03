@@ -2160,6 +2160,8 @@
           $("#round_off_box").hide();
           $("#round_off").html("");
           $("#total_quantity").hide().html("");
+
+          $("#transaction_id").val("");
         }
         else
         {
@@ -2235,8 +2237,6 @@
     var transaction_id = $("#transaction_id").val();
 
     $.post("{{ route('submitTransaction') }}", {"_token" : "{{ csrf_token() }}", "received_cash" : received_cash, "transaction_id" : transaction_id, "payment_type" : "cash" }, function(result){
-
-      
       if(result.error == 0)
       {
         setTimeout(function(){
@@ -2250,6 +2250,7 @@
         $("#transaction_balance").html(result.balance);
 
         transactionCompleted(result.completed_transaction.id, 1);
+        $("#transaction_id").val("");
 
         submitClearTransaction(0);
         prependCompletedTransaction(result.completed_transaction);
@@ -2294,6 +2295,8 @@
             $("#total_quantity").hide().html("");
 
             $("#clearItemsModal").modal('hide');
+
+            $("#transaction_id").val("");
           }
         }).fail(function(xhr){
           if(xhr.status == 401)
@@ -2582,12 +2585,31 @@
     var reference_no = $("input[name='reference_no']").val();
     var payment_type = $("#payment_type").val();
 
+    if(!transaction_id)
+    {
+      Swal.fire({
+        title: "Empty transaction.",
+        icon: 'error',
+        confirmButtonText: 'OK',
+      }).then((result) => {
+        /* Read more about isConfirmed, isDenied below */
+        if (result.isConfirmed) {
+          swal.close();
+        }
+      });
+
+      $("#submitCardPayment").attr("disabled", false);
+
+      return;
+    }
+
     $.post("{{ route('submitTransaction') }}", {"_token" : "{{ csrf_token() }}", "transaction_id" : transaction_id, "payment_type" : payment_type, "reference_no" : reference_no }, function(result){
 
       $("#submitCardPayment").attr("disabled", false);
       $("#cardCheckoutModal").modal('hide');
       if(result.error == 0)
       {
+        $("#transaction_id").val("");
         $("#completedTransactionModal").modal('show');
 
         transactionCompleted(result.completed_transaction.id, 0);
