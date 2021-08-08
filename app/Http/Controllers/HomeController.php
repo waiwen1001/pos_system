@@ -1844,7 +1844,7 @@ class HomeController extends Controller
       $cashier = cashier::where('synced', null)->where('closing', 1)->get();
       $cash_float = cash_float::where('synced', null)->get();
       $refund = refund::where('synced', null)->get();
-      $refund_detail = refund_detail::leftJoin('refund', 'refund.id', '=', 'refund_detail.refund_id')->where('refund.synced', null)->select('refund_detail.*')->get();
+      $refund_detail = refund_detail::leftJoin('refund', 'refund.id', '=', 'refund_detail.refund_id')->where('refund.synced', null)->select('refund_detail.*', 'refund.transaction_no')->get();
 
       if(count($session_list) == 0 && count($transaction) == 0 && count($transaction_detail) == 0 && count($cashier) == 0 && count($cash_float) == 0 && count($refund) == 0 && count($refund_detail) == 0)
       {
