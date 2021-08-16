@@ -43,6 +43,7 @@
               <thead>
                 <th>Product Name</th>
                 <th width="120px">Quantity</th>
+                <th width="100px">Unit</th>
                 <th width="150px">Amount</th>
                 <th width="50px;"></th>
               </thead>
@@ -58,12 +59,19 @@
                           <i class="fa fa-plus" onclick="editQuantity(event, this, 'minus', '{{ $item->id }}')"></i>
                         </div>
                       </td>
+                      <td>
+                        @if($item->measurement_type == "weight")
+                          {{ $item->measurement_text }} KG
+                        @elseif($item->measurement_type == "length")
+                          {{ $item->measurement_text }} M
+                        @endif
+                      </td>
                       <td class="subtotal">
                         @if($item->quantity > 0)
                           @if($item->wholesale_price)
                             <span style="color:#9c27b0;">RM {{ number_format( ($item->quantity * $item->wholesale_price), 2) }}</span>
                           @else($item->price)
-                            RM {{ number_format( ($item->quantity * $item->price ), 2) }}
+                            RM {{ number_format( ($item->quantity * $item->measurement * $item->price ), 2) }}
                           @endif
                         @endif
                       </td>
@@ -1298,6 +1306,53 @@
     </div>
   </div> -->
 
+  <div class="modal fade" id="measurementModal" tabindex="-1" role="dialog" aria-labelledby="measurementModalLabel" aria-hidden="true" style="background: rgba(0, 0, 0, 0.7);">
+    <div class="modal-dialog" role="document" style="min-width: 750px;">
+      <div class="modal-content">
+        <div class="modal-header" style="padding: 10px;">
+          <h5 class="modal-title" style="font-size: 16px;">Measurement</h5>
+          <button type="button" class="close" id="closeMeasurementModalIcon">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" style="background: #eee; padding: 10px;">
+          <table class="table" style="width: 80%; margin: auto; background: #fff;">
+            <tbody>
+              <tr>
+                <td>Barcode</td>
+                <td id="unit_barcode"></td>
+              </tr>
+              <tr>
+                <td>Product name</td>
+                <td id="unit_product_name"></td>
+              </tr>
+              <tr>
+                <td>Price for 1<span class="unit_type"></span></td>
+                <td>RM <span id="unit_price"></span></td>
+              </tr>
+              <tr>
+                <td>Total <span class="unit_type_text">weight</span></td>
+                <td>
+                  <input type="number" class="form-control" id="unit_number" style="display: inline-block; width: calc(100% - 50px);" />
+                  <span class="unit_type"></span>
+                  <input type="hidden" id="transaction_detail_id" />
+                  <input type="hidden" id="unit_price_input" value="" />
+                </td>
+              </tr>
+              <tr>
+                <td>Total price</td>
+                <td>RM <span id="unit_total_price"></span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success" id="update_transaction_measurement">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </body>
 
 <script>
@@ -1426,7 +1481,7 @@
       }
       else if(e.which == 13)
       {
-        if(!$(e.target).closest('input[name="received_payment"]').length)
+        if(!$(e.target).closest('input[name="received_payment"]').length && !$(e.target).closest('#unit_number').length)
         {
           swal.close();
         }
@@ -1477,7 +1532,7 @@
         }
         else
         {
-          $(".modal").not("#cardCheckoutModal, #numpadModal, #cashFloatModal, #refundModal, #voucherModal").modal('hide');
+          $(".modal").not("#cardCheckoutModal, #numpadModal, #cashFloatModal, #refundModal, #voucherModal, #measurementModal").modal('hide');
         }
       }
       // up down
@@ -1893,8 +1948,6 @@
         $("#cash_float_title").html("Bagi Ke Ketua");
 
         $.get("{{ route('calculateClosingAmount') }}", function(result){
-          console.log(result.closing_amount);
-
           var html = "";
           html += "<p>Counter name : "+cashier_name+"</p>";
           html += "<p>Cashier name : "+user.name+"</p>";
@@ -1957,6 +2010,35 @@
       let date = new Date();
       $("#time").text(`${date.toLocaleTimeString()}`);
     },1000);
+
+    $("#unit_number").on('keyup', function(e){
+      if(e.which == 13)
+      {
+        if($("#update_transaction_measurement").attr("disabled") != "disabled")
+        {
+          updateTransactionMeasurement();
+        }
+      }
+      else
+      {
+        let unit_price = $("#unit_price_input").val();
+        let unit_number = $(this).val();
+
+        if(unit_number)
+        {
+          let unit_total_price = parseFloat(unit_price) * parseFloat(unit_number);
+          unit_total_price = numberFormat(unit_total_price);
+
+          $("#unit_total_price").html(unit_total_price);
+        }
+        
+      }
+    });
+
+    $("#update_transaction_measurement").click(function(){
+      updateTransactionMeasurement();
+    });
+
   });
 
   function searchAndAddItem()
@@ -1991,12 +2073,16 @@
         let transaction_summary = result.transaction_summary;
         let product = result.product;
 
+        if(product.measurement == "weight" || product.measurement == "length")
+        {
+          showMeasurement(product, result.transaction_detail);
+        }
+
         transaction_total = transaction_summary.real_total;
         $("#transaction_id").val(transaction_summary.transaction_id);
 
         $("#total_quantity").show();
         $("#total_quantity").html(result.item_count);
-
 
         $("#added_item_title").html(result.title);
         $("#added_item_content").html("Product "+product.product_name+" is successfully added");
@@ -2107,6 +2193,16 @@
       html += "<input type='text' class='quantity_input' item_id='"+item_detail.id+"' value='"+( item_detail.quantity + item_detail.wholesale_quantity )+"' onkeyup='editQuantity(event, this, \"number\", \""+item_detail.id+"\")' />"
       html += "<i class='fa fa-plus' onclick='editQuantity(event, this, \"minus\", \""+item_detail.id+"\")'></i>";
       html += "</div>";
+      html += "</td>";
+      html += "<td>";
+      if(item_detail.measurement_type == "weight")
+      {
+        html += item_detail.measurement_text+" KG";
+      }
+      else if(item_detail.measurement_type == "length")
+      {
+        html += item_detail.measurement_text+" M";
+      }
       html += "</td>";
       html += "<td class='subtotal'>";
 
@@ -2454,7 +2550,18 @@
         for(var a = 0; a < transaction_detail.length; a++)
         {
           items_html += "<tr>";
-          items_html += "<td style='vertical-align:top;' colspan='3'>"+transaction_detail[a].product_name+"</td>";
+          items_html += "<td style='vertical-align:top;' colspan='3'>";
+          items_html += transaction_detail[a].product_name;
+          if(transaction_detail[a].measurement_type == "weight")
+          {
+            items_html += " ( "+transaction_detail[a].measurement+"KG )";
+          }
+          else if(transaction_detail[a].measurement_type == "length")
+          {
+            items_html += " ( "+transaction_detail[a].measurement+"M )";
+          }
+
+          items_html += "</td>";
           items_html += "</tr>";
           items_html += "<tr>";
           items_html += "<td style='vertical-align:top;'>"+transaction_detail[a].barcode+"</td>";
@@ -3162,8 +3269,6 @@
     html += "<p>Counter name : "+cashier_name+"</p>";
     html += "<p>Cashier name : "+user.name+"</p>";
     html += "<p>Date time : {{ date('Y M d h:i:s A', strtotime(now())) }}</p>";
-
-    console.log(html);
     openDrawer(html);
 
     $("input[name='cashier_opening_amount']").val("");
@@ -3815,7 +3920,7 @@
       combined_barcode = "";
     }
 
-    if($("#voucherModal").css("display") != "none" || $("#user_management").css("display") != "none" || $("#dailyClosingModal").css("display") != "none" || $("#numpadModal").css("display") != "none" || $("#openingModal").css("display") != "none" || $("#previous_receipt").css("display") != "none" || $("#cardCheckoutModal").css("display") != "none" || $("#cashFloatModal").css("display") != "none" || $("#openingModal").css("display") != "none" || $("#closingModal").css("display") != "none" || $(".quantity_input").is(":focus") || $(".refund_item_price").is(":focus"))
+    if($("#voucherModal").css("display") != "none" || $("#user_management").css("display") != "none" || $("#dailyClosingModal").css("display") != "none" || $("#numpadModal").css("display") != "none" || $("#openingModal").css("display") != "none" || $("#previous_receipt").css("display") != "none" || $("#cardCheckoutModal").css("display") != "none" || $("#cashFloatModal").css("display") != "none" || $("#openingModal").css("display") != "none" || $("#closingModal").css("display") != "none" || $(".quantity_input").is(":focus") || $(".refund_item_price").is(":focus") || $("#measurementModal").css("display") != "none")
     {
       run = false;
       combined_barcode = "";
@@ -4433,6 +4538,75 @@
     $("#refund_price").html(refund_price_text);
     $("#refund_round_off").html(refund_obj['round_off']);
     $("#refund_total").html( numberFormat(refund_obj['final_total']));
+  }
+
+  function showMeasurement(product_detail, transaction_detail)
+  {
+    $("#unit_barcode").html(product_detail.barcode);
+    $("#unit_product_name").html(product_detail.product_name);
+    $("#unit_price").html(product_detail.using_price_text);
+    $("#unit_price_input").val(product_detail.using_price);
+    $("#unit_number").val(transaction_detail.measurement);
+    $("#transaction_detail_id").val(transaction_detail.id);
+    $("#unit_total_price").html(product_detail.using_price_text);
+
+    $(".unit_type").html("");
+    $(".unit_type_text").html("");
+
+    if(product_detail.measurement == "weight")
+    {
+      $(".unit_type").html("KG");
+      $(".unit_type_text").html("Weight");
+    }
+    else if(product_detail.measurement == "length")
+    {
+      $(".unit_type").html("M");
+      $(".unit_type_text").html("Lenght");
+    }
+
+    $("#measurementModal").modal('show');
+    setTimeout(function(){
+      $("#unit_number").focus();
+    }, 500);
+  }
+
+  function updateTransactionMeasurement()
+  {
+    $("#update_transaction_measurement").attr("disabled", true);
+    let unit_number = $("#unit_number").val();
+
+    if(unit_number == "" || unit_number == "0")
+    {
+      setTimeout(function(){
+        Swal.fire({
+          title: 'Total unit cannot be empty or 0.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+        }); 
+      }, 100);
+    
+      return;
+    }
+
+    let transaction_detail_id = $("#transaction_detail_id").val();
+    $.post("{{ route('updateTransactionMeasurement') }}", { "_token" : "{{ csrf_token() }}", "transaction_detail_id" : transaction_detail_id, "measurement" : unit_number }, function(result){
+      $("#update_transaction_measurement").attr("disabled", false);
+      if(result.error == 0)
+      {
+        var transaction_summary = result.transaction_summary;
+
+        transaction_total = transaction_summary.real_total; 
+        generateItemList(transaction_summary);
+
+        $("#measurementModal").modal('hide');
+      }
+    }).fail(function(xhr){
+      $("#update_transaction_measurement").attr("disabled", false);
+      if(xhr.status == 401)
+      {
+        loggedOutAlert();
+      }
+    })
   }
 
 </script>

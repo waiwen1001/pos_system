@@ -38,6 +38,7 @@ Route::post('/transaction_detail', 'HomeController@getTransactionDetail')->name(
 Route::get('/getDailyReport', 'HomeController@getDailyReport')->name('getDailyReport');
 Route::post('/searchRelatedItem', 'HomeController@searchRelatedItem')->name('searchRelatedItem');
 Route::get('/closingReport', 'HomeController@closingReport')->name('closingReport');
+Route::post('/updateTransactionMeasurement', 'HomeController@updateTransactionMeasurement')->name('updateTransactionMeasurement');
 
 Route::get('/branchSync', 'HomeController@branchSync')->name('branchSync');
 Route::get('/productSync', 'HomeController@productSync')->name('productSync');

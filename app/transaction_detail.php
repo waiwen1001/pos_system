@@ -16,6 +16,8 @@ class transaction_detail extends Model
       'product_name',
       'price',
       'quantity',
+      'measurement_type',
+      'measurement',
       'wholesale_price',
       'wholesale_quantity',
       'discount',

@@ -346,11 +346,32 @@ class HomeController extends Controller
         $wholesale_quantity = null;
         $wholesale_price2 = null;
         $wholesale_quantity2 = null;
+        $wholesale_price3 = null;
+        $wholesale_quantity3 = null;
+        $wholesale_price4 = null;
+        $wholesale_quantity4 = null;
+        $wholesale_price5 = null;
+        $wholesale_quantity5 = null;
+        $wholesale_price6 = null;
+        $wholesale_quantity6 = null;
+        $wholesale_price7 = null;
+        $wholesale_quantity7 = null;
 
         $normal_wholesale_price = $product->normal_wholesale_price;
         $normal_wholesale_quantity = $product->normal_wholesale_quantity;
         $normal_wholesale_price2 = $product->normal_wholesale_price2;
         $normal_wholesale_quantity2 = $product->normal_wholesale_quantity2;
+        $normal_wholesale_price3 = $product->normal_wholesale_price3;
+        $normal_wholesale_quantity3 = $product->normal_wholesale_quantity3;
+        $normal_wholesale_price4 = $product->normal_wholesale_price4;
+        $normal_wholesale_quantity4 = $product->normal_wholesale_quantity4;
+        $normal_wholesale_price5 = $product->normal_wholesale_price5;
+        $normal_wholesale_quantity5 = $product->normal_wholesale_quantity5;
+        $normal_wholesale_price6 = $product->normal_wholesale_price6;
+        $normal_wholesale_quantity6 = $product->normal_wholesale_quantity6;
+        $normal_wholesale_price7 = $product->normal_wholesale_price7;
+        $normal_wholesale_quantity7 = $product->normal_wholesale_quantity7;
+
 
         $quantity = 1;
         $subtotal = round($product->price, 2);
@@ -364,8 +385,20 @@ class HomeController extends Controller
             $wholesale_quantity = $product->wholesale_quantity;
             $wholesale_price2 = $product->wholesale_price2;
             $wholesale_quantity2 = $product->wholesale_quantity2;
+            $wholesale_price3 = $product->wholesale_price3;
+            $wholesale_quantity3 = $product->wholesale_quantity3;
+            $wholesale_price4 = $product->wholesale_price4;
+            $wholesale_quantity4 = $product->wholesale_quantity4;
+            $wholesale_price5 = $product->wholesale_price5;
+            $wholesale_quantity5 = $product->wholesale_quantity5;
+            $wholesale_price6 = $product->wholesale_price6;
+            $wholesale_quantity6 = $product->wholesale_quantity6;
+            $wholesale_price7 = $product->wholesale_price7;
+            $wholesale_quantity7 = $product->wholesale_quantity7;
           }
         }
+
+        $product->using_price = $product->price;
 
         $user = Auth::user();
         $transaction = transaction::where('completed', null)->where('ip', $this->ip)->first();
@@ -397,26 +430,53 @@ class HomeController extends Controller
 
           $transaction_wholesale_price = null;
           if($normal_wholesale_quantity == 1)
-          {
             $transaction_wholesale_price = $normal_wholesale_price;
-          }
 
           if($normal_wholesale_quantity2 == 1)
-          {
             $transaction_wholesale_price = $normal_wholesale_price2;
-          }
+
+          if($normal_wholesale_quantity3 == 1)
+            $transaction_wholesale_price = $normal_wholesale_price3;
+
+          if($normal_wholesale_quantity4 == 1)
+            $transaction_wholesale_price = $normal_wholesale_price4;
+
+          if($normal_wholesale_quantity5 == 1)
+            $transaction_wholesale_price = $normal_wholesale_price5;
+
+          if($normal_wholesale_quantity6 == 1)
+            $transaction_wholesale_price = $normal_wholesale_price6;
+
+          if($normal_wholesale_quantity7 == 1)
+            $transaction_wholesale_price = $normal_wholesale_price7;
 
           if($wholesale_quantity == 1)
-          {
             $transaction_wholesale_price = $wholesale_price;
-          }
 
           if($wholesale_quantity2 == 1)
-          {
             $transaction_wholesale_price = $wholesale_price2;
-          }
 
-          transaction_detail::create([
+          if($wholesale_quantity3 == 1)
+            $transaction_wholesale_price = $wholesale_price3;
+
+          if($wholesale_quantity4 == 1)
+            $transaction_wholesale_price = $wholesale_price4;
+
+          if($wholesale_quantity5 == 1)
+            $transaction_wholesale_price = $wholesale_price5;
+
+          if($wholesale_quantity6 == 1)
+            $transaction_wholesale_price = $wholesale_price6;
+
+          if($wholesale_quantity7 == 1)
+            $transaction_wholesale_price = $wholesale_price7;
+
+          if($transaction_wholesale_price)
+          {
+            $product->using_price = $transaction_wholesale_price;
+          }
+          
+          $transaction_detail = transaction_detail::create([
             'transaction_id' => $transaction->id,
             'department_id' => $product->department_id,
             'category_id' => $product->category_id,
@@ -425,6 +485,8 @@ class HomeController extends Controller
             'product_name' => $product->product_name,
             'price' => round($product->price, 2),
             'quantity' => 1,
+            'measurement_type' => $product->measurement,
+            'measurement' => 1,
             'wholesale_price' => $transaction_wholesale_price,
             'discount' => 0,
             'subtotal' => $subtotal,
@@ -437,7 +499,7 @@ class HomeController extends Controller
         {
           $transaction_detail = transaction_detail::where('transaction_id', $transaction->id)->where('product_id', $product->id)->where('void', null)->first();
 
-          if($transaction_detail)
+          if($transaction_detail && $product->measurement != "weight" && $product->measurement != "length")
           {
             $quantity = $transaction_detail->quantity + 1;
             $price = $product->price;
@@ -462,6 +524,46 @@ class HomeController extends Controller
               }
             }
 
+            if($normal_wholesale_quantity3)
+            {
+              if($quantity >= $normal_wholesale_quantity3)
+              {
+                $transaction_wholesale_price = $normal_wholesale_price3;
+              }
+            }
+
+            if($normal_wholesale_quantity4)
+            {
+              if($quantity >= $normal_wholesale_quantity4)
+              {
+                $transaction_wholesale_price = $normal_wholesale_price4;
+              }
+            }
+
+            if($normal_wholesale_quantity5)
+            {
+              if($quantity >= $normal_wholesale_quantity5)
+              {
+                $transaction_wholesale_price = $normal_wholesale_price5;
+              }
+            }
+
+            if($normal_wholesale_quantity6)
+            {
+              if($quantity >= $normal_wholesale_quantity6)
+              {
+                $transaction_wholesale_price = $normal_wholesale_price6;
+              }
+            }
+
+            if($normal_wholesale_quantity7)
+            {
+              if($quantity >= $normal_wholesale_quantity7)
+              {
+                $transaction_wholesale_price = $normal_wholesale_price7;
+              }
+            }
+
             if($wholesale_quantity)
             {
               if($quantity >= $wholesale_quantity)
@@ -478,15 +580,58 @@ class HomeController extends Controller
               }
             }
 
+            if($wholesale_quantity3)
+            {
+              if($quantity >= $wholesale_quantity3)
+              {
+                $transaction_wholesale_price = $wholesale_price3;
+              }
+            }
+
+            if($wholesale_quantity4)
+            {
+              if($quantity >= $wholesale_quantity4)
+              {
+                $transaction_wholesale_price = $wholesale_price4;
+              }
+            }
+
+            if($wholesale_quantity5)
+            {
+              if($quantity >= $wholesale_quantity5)
+              {
+                $transaction_wholesale_price = $wholesale_price5;
+              }
+            }
+
+            if($wholesale_quantity6)
+            {
+              if($quantity >= $wholesale_quantity6)
+              {
+                $transaction_wholesale_price = $wholesale_price6;
+              }
+            }
+
+            if($wholesale_quantity7)
+            {
+              if($quantity >= $wholesale_quantity7)
+              {
+                $transaction_wholesale_price = $wholesale_price7;
+              }
+            }
+
             if($transaction_wholesale_price)
             {
               $subtotal = round( ($transaction_detail->quantity + 1) * $transaction_wholesale_price, 2);
               $total = round( ($transaction_detail->quantity + 1) * $transaction_wholesale_price, 2);
+
+              $product->using_price = $transaction_wholesale_price;
             }
 
             transaction_detail::where('id', $transaction_detail->id)->update([
               'price' => round($product->price, 2),
               'quantity' => $quantity,
+              'measurement_type' => $product->measurement,
               'wholesale_price' => $transaction_wholesale_price,
               'subtotal' => $subtotal,
               'total' => $total
@@ -496,26 +641,53 @@ class HomeController extends Controller
           {
             $transaction_wholesale_price = null;
             if($normal_wholesale_quantity == 1)
-            {
               $transaction_wholesale_price = $normal_wholesale_price;
-            }
 
             if($normal_wholesale_quantity2 == 1)
-            {
               $transaction_wholesale_price = $normal_wholesale_price2;
-            }
+
+            if($normal_wholesale_quantity3 == 1)
+              $transaction_wholesale_price = $normal_wholesale_price3;
+
+            if($normal_wholesale_quantity4 == 1)
+              $transaction_wholesale_price = $normal_wholesale_price4;
+
+            if($normal_wholesale_quantity5 == 1)
+              $transaction_wholesale_price = $normal_wholesale_price5;
+
+            if($normal_wholesale_quantity6 == 1)
+              $transaction_wholesale_price = $normal_wholesale_price6;
+
+            if($normal_wholesale_quantity7 == 1)
+              $transaction_wholesale_price = $normal_wholesale_price7;
 
             if($wholesale_quantity == 1)
-            {
               $transaction_wholesale_price = $wholesale_price;
-            }
 
             if($wholesale_quantity2 == 1)
-            {
               $transaction_wholesale_price = $wholesale_price2;
+
+            if($wholesale_quantity3 == 1)
+              $transaction_wholesale_price = $wholesale_price3;
+
+            if($wholesale_quantity4 == 1)
+              $transaction_wholesale_price = $wholesale_price4;
+
+            if($wholesale_quantity5 == 1)
+              $transaction_wholesale_price = $wholesale_price5;
+
+            if($wholesale_quantity6 == 1)
+              $transaction_wholesale_price = $wholesale_price6;
+
+            if($wholesale_quantity7 == 1)
+              $transaction_wholesale_price = $wholesale_price7;
+
+            if($transaction_wholesale_price)
+            {
+              $product->using_price = $transaction_wholesale_price;
             }
           
-            transaction_detail::create([
+            $transaction_detail = transaction_detail::create([
               'transaction_id' => $transaction->id,
               'department_id' => $product->department_id,
               'category_id' => $product->category_id,
@@ -524,6 +696,8 @@ class HomeController extends Controller
               'product_name' => $product->product_name,
               'price' => round($product->price, 2),
               'quantity' => $quantity,
+              'measurement_type' => $product->measurement,
+              'measurement' => 1,
               'wholesale_price' => $transaction_wholesale_price,
               'discount' => 0,
               'subtotal' => $subtotal,
@@ -536,12 +710,15 @@ class HomeController extends Controller
 
         $transaction_summary = $this->transaction_summary($transaction);
 
+        $product->using_price_text = number_format($product->using_price, 2);
+
         $response = new \stdClass();
         $response->error = 0;
         $response->message = "Success";
         $response->transaction_summary = $transaction_summary;
         $response->product = $product;
         $response->item_count = $item_count;
+        $response->transaction_detail = $transaction_detail;
 
         return response()->json($response);
       }
@@ -624,15 +801,16 @@ class HomeController extends Controller
           {
             if($item->wholesale_price)
             {
-              $transaction_price = $item->quantity * $item->wholesale_price;
+              $transaction_price = ($item->quantity * $item->measurement) * $item->wholesale_price;
             }
             else
             {
-              $transaction_price = $item->quantity * $item->price;
+              $transaction_price = ($item->quantity * $item->measurement) * $item->price;
             }
           }
 
           $item->subtotal_text = number_format($item->subtotal, 2);
+          $item->measurement_text = round(floatval($item->measurement), 4);
 
           $subtotal = $subtotal + $item->subtotal;
           $total = $total + $item->total;
@@ -802,31 +980,39 @@ class HomeController extends Controller
         //Generate new invoice number
 
         $seq = Invoice_sequence::first();
-        $now = now();
-        if(date("Y-m-d",strtotime($seq->updated_at)) == date("Y-m-d", strtotime($now))){
-          $transaction_no = $seq->branch_code.date("Ymd").$seq->next_seq;
-        }else{
-          $transaction_no = $seq->branch_code.date("Ymd", strtotime($now))."00001";
+        // $now = now();
+        // if(date("Y-m-d",strtotime($seq->updated_at)) == date("Y-m-d", strtotime($now))){
+        //   $transaction_no = $seq->branch_code.date("Ymd").$seq->next_seq;
+        // }else{
+        //   $transaction_no = $seq->branch_code.date("Ymd", strtotime($now))."00001";
+        // }
+
+        // if(date("Y-m-d",strtotime($seq->updated_at)) == date('Y-m-d', strtotime($now))){
+        //   $next = $seq->next_seq;
+        //   $next = intval($next) + 1;
+        //   $i=5;
+        //   while($i>strlen($next)){
+        //     $next = "0".$next;
+        //   }
+          
+        //   Invoice_sequence::where('id',$seq->id)->update([
+        //     'current_seq' => $seq->next_seq,
+        //     'next_seq' => $next,
+        //   ]);
+        // }else{
+        //   Invoice_sequence::where('id',$seq->id)->update([
+        //     'current_seq' => '00001',
+        //     'next_seq' => '00002',
+        //   ]);
+        // }
+
+        $count = transaction::whereBetween('created_at', [date('Y-m-d 00:00:00'), date('Y-m-d 23:59:59')])->count();
+        for($a = strlen($count); $a < 5; $a++)
+        {
+          $count = "0".$count;
         }
 
-        if(date("Y-m-d",strtotime($seq->updated_at)) == date('Y-m-d', strtotime($now))){
-          $next = $seq->next_seq;
-          $next = intval($next) + 1;
-          $i=5;
-          while($i>strlen($next)){
-            $next = "0".$next;
-          }
-          
-          Invoice_sequence::where('id',$seq->id)->update([
-            'current_seq' => $seq->next_seq,
-            'next_seq' => $next,
-          ]);
-        }else{
-          Invoice_sequence::where('id',$seq->id)->update([
-            'current_seq' => '00001',
-            'next_seq' => '00002',
-          ]);
-        }
+        $transaction_no = $seq->branch_code.date('Ymd').$count;
 
         transaction::where('id', $request->transaction_id)->update([
           'opening_id' => $opening_id,
@@ -978,18 +1164,38 @@ class HomeController extends Controller
         } 
       }
 
-      $subtotal = $total_quantity * $product->price;
-      $total = $total_quantity * $product->price;
+      $subtotal = $total_quantity * $transaction_detail->measurement * $product->price;
+      $total = $total_quantity * $transaction_detail->measurement * $product->price;
 
       $wholesale_price = null;
       $wholesale_quantity = null;
       $wholesale_price2 = null;
       $wholesale_quantity2 = null;
+      $wholesale_price3 = null;
+      $wholesale_quantity3 = null;
+      $wholesale_price4 = null;
+      $wholesale_quantity4 = null;
+      $wholesale_price5 = null;
+      $wholesale_quantity5 = null;
+      $wholesale_price6 = null;
+      $wholesale_quantity6 = null;
+      $wholesale_price7 = null;
+      $wholesale_quantity7 = null;
 
       $normal_wholesale_price = $product->normal_wholesale_price;
       $normal_wholesale_quantity = $product->normal_wholesale_quantity;
       $normal_wholesale_price2 = $product->normal_wholesale_price2;
       $normal_wholesale_quantity2 = $product->normal_wholesale_quantity2;
+      $normal_wholesale_price3 = $product->normal_wholesale_price3;
+      $normal_wholesale_quantity3 = $product->normal_wholesale_quantity3;
+      $normal_wholesale_price4 = $product->normal_wholesale_price4;
+      $normal_wholesale_quantity4 = $product->normal_wholesale_quantity4;
+      $normal_wholesale_price5 = $product->normal_wholesale_price5;
+      $normal_wholesale_quantity5 = $product->normal_wholesale_quantity5;
+      $normal_wholesale_price6 = $product->normal_wholesale_price6;
+      $normal_wholesale_quantity6 = $product->normal_wholesale_quantity6;
+      $normal_wholesale_price7 = $product->normal_wholesale_price7;
+      $normal_wholesale_quantity7 = $product->normal_wholesale_quantity7;
 
       $transaction_wholesale_price = null;
       $is_wholesale = 0;
@@ -1002,6 +1208,16 @@ class HomeController extends Controller
           $wholesale_quantity = $product->wholesale_quantity;
           $wholesale_price2 = $product->wholesale_price2;
           $wholesale_quantity2 = $product->wholesale_quantity2;
+          $wholesale_price3 = $product->wholesale_price3;
+          $wholesale_quantity3 = $product->wholesale_quantity3;
+          $wholesale_price4 = $product->wholesale_price4;
+          $wholesale_quantity4 = $product->wholesale_quantity4;
+          $wholesale_price5 = $product->wholesale_price5;
+          $wholesale_quantity5 = $product->wholesale_quantity5;
+          $wholesale_price6 = $product->wholesale_price6;
+          $wholesale_quantity6 = $product->wholesale_quantity6;
+          $wholesale_price7 = $product->wholesale_price7;
+          $wholesale_quantity7 = $product->wholesale_quantity7;
         }
       }
 
@@ -1009,8 +1225,8 @@ class HomeController extends Controller
       {
         if($total_quantity >= $normal_wholesale_quantity)
         {
-          $subtotal = $total_quantity * $normal_wholesale_price;
-          $total = $total_quantity * $normal_wholesale_price;
+          $subtotal = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price;
+          $total = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price;
 
           $transaction_wholesale_price = $normal_wholesale_price;
           $is_wholesale = 1;
@@ -1021,10 +1237,70 @@ class HomeController extends Controller
       {
         if($total_quantity >= $normal_wholesale_quantity2)
         {
-          $subtotal = $total_quantity * $normal_wholesale_price2;
-          $total = $total_quantity * $normal_wholesale_price2;
+          $subtotal = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price2;
+          $total = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price2;
 
           $transaction_wholesale_price = $normal_wholesale_price2;
+          $is_wholesale = 1;
+        }
+      }
+
+      if($normal_wholesale_quantity3 && $normal_wholesale_price3)
+      {
+        if($total_quantity >= $normal_wholesale_quantity3)
+        {
+          $subtotal = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price3;
+          $total = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price3;
+
+          $transaction_wholesale_price = $normal_wholesale_price3;
+          $is_wholesale = 1;
+        }
+      }
+
+      if($normal_wholesale_quantity4 && $normal_wholesale_price4)
+      {
+        if($total_quantity >= $normal_wholesale_quantity4)
+        {
+          $subtotal = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price4;
+          $total = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price4;
+
+          $transaction_wholesale_price = $normal_wholesale_price4;
+          $is_wholesale = 1;
+        }
+      }
+
+      if($normal_wholesale_quantity5 && $normal_wholesale_price5)
+      {
+        if($total_quantity >= $normal_wholesale_quantity5)
+        {
+          $subtotal = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price5;
+          $total = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price5;
+
+          $transaction_wholesale_price = $normal_wholesale_price5;
+          $is_wholesale = 1;
+        }
+      }
+
+      if($normal_wholesale_quantity6 && $normal_wholesale_price6)
+      {
+        if($total_quantity >= $normal_wholesale_quantity6)
+        {
+          $subtotal = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price6;
+          $total = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price6;
+
+          $transaction_wholesale_price = $normal_wholesale_price6;
+          $is_wholesale = 1;
+        }
+      }
+
+      if($normal_wholesale_quantity7 && $normal_wholesale_price7)
+      {
+        if($total_quantity >= $normal_wholesale_quantity7)
+        {
+          $subtotal = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price7;
+          $total = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price7;
+
+          $transaction_wholesale_price = $normal_wholesale_price7;
           $is_wholesale = 1;
         }
       }
@@ -1033,8 +1309,8 @@ class HomeController extends Controller
       {
         if($total_quantity >= $wholesale_quantity)
         {
-          $subtotal = $total_quantity * $wholesale_price;
-          $total = $total_quantity * $wholesale_price;
+          $subtotal = $total_quantity * $transaction_detail->measurement * $wholesale_price;
+          $total = $total_quantity * $transaction_detail->measurement * $wholesale_price;
 
           $transaction_wholesale_price = $wholesale_price;
           $is_wholesale = 1;
@@ -1045,10 +1321,70 @@ class HomeController extends Controller
       {
         if($total_quantity >= $wholesale_quantity2)
         {
-          $subtotal = $total_quantity * $wholesale_price2;
-          $total = $total_quantity * $wholesale_price2;
+          $subtotal = $total_quantity * $transaction_detail->measurement * $wholesale_price2;
+          $total = $total_quantity * $transaction_detail->measurement * $wholesale_price2;
 
           $transaction_wholesale_price = $wholesale_price2;
+          $is_wholesale = 1;
+        }
+      }
+
+      if($wholesale_quantity3 && $wholesale_price3)
+      {
+        if($total_quantity >= $wholesale_quantity3)
+        {
+          $subtotal = $total_quantity * $transaction_detail->measurement * $wholesale_price3;
+          $total = $total_quantity * $transaction_detail->measurement * $wholesale_price3;
+
+          $transaction_wholesale_price = $wholesale_price3;
+          $is_wholesale = 1;
+        }
+      }
+
+      if($wholesale_quantity4 && $wholesale_price4)
+      {
+        if($total_quantity >= $wholesale_quantity4)
+        {
+          $subtotal = $total_quantity * $transaction_detail->measurement * $wholesale_price4;
+          $total = $total_quantity * $transaction_detail->measurement * $wholesale_price4;
+
+          $transaction_wholesale_price = $wholesale_price4;
+          $is_wholesale = 1;
+        }
+      }
+
+      if($wholesale_quantity5 && $wholesale_price5)
+      {
+        if($total_quantity >= $wholesale_quantity5)
+        {
+          $subtotal = $total_quantity * $transaction_detail->measurement * $wholesale_price5;
+          $total = $total_quantity * $transaction_detail->measurement * $wholesale_price5;
+
+          $transaction_wholesale_price = $wholesale_price5;
+          $is_wholesale = 1;
+        }
+      }
+
+      if($wholesale_quantity6 && $wholesale_price6)
+      {
+        if($total_quantity >= $wholesale_quantity6)
+        {
+          $subtotal = $total_quantity * $transaction_detail->measurement * $wholesale_price6;
+          $total = $total_quantity * $transaction_detail->measurement * $wholesale_price6;
+
+          $transaction_wholesale_price = $wholesale_price6;
+          $is_wholesale = 1;
+        }
+      }
+
+      if($wholesale_quantity7 && $wholesale_price7)
+      {
+        if($total_quantity >= $wholesale_quantity7)
+        {
+          $subtotal = $total_quantity * $transaction_detail->measurement * $wholesale_price7;
+          $total = $total_quantity * $transaction_detail->measurement * $wholesale_price7;
+
+          $transaction_wholesale_price = $wholesale_price7;
           $is_wholesale = 1;
         }
       }
@@ -1730,9 +2066,11 @@ class HomeController extends Controller
 
       foreach($transaction_detail_list as $transaction_detail)
       {
-        $transaction_detail->price_text = number_format($transaction_detail->price, 2);
-        $transaction_detail->wholesale_price_text = number_format($transaction_detail->wholesale_price, 2);
+        $transaction_detail->price_text = number_format( ($transaction_detail->price * $transaction_detail->measurement), 2);
+        $transaction_detail->wholesale_price_text = number_format( ($transaction_detail->wholesale_price * $transaction_detail->measurement), 2);
         $transaction_detail->total_text = number_format($transaction_detail->total, 2);
+
+        $transaction_detail->measurement = round(floatval($transaction_detail->measurement), 3);
 
         $total_quantity += $transaction_detail->quantity;
       }
@@ -1931,7 +2269,7 @@ class HomeController extends Controller
       {
         \Log::info("Updating product list on ".$key." / ".$total_product_list);
 
-        product::updateOrCreate([
+        product::withTrashed()->updateOrCreate([
           'barcode' => $product['barcode']
         ],[
           'department_id' => $product['department_id'],
@@ -1939,22 +2277,42 @@ class HomeController extends Controller
           'barcode' => $product['barcode'],
           'product_name' => $product['product_name'],
           'price' => $product['price'],
+          'uom' => $product['uom'],
+          'measurement' => $product['measurement'],
           'normal_wholesale_price' => $product['normal_wholesale_price'],
           'normal_wholesale_price2' => $product['normal_wholesale_price2'],
+          'normal_wholesale_price3' => $product['normal_wholesale_price3'],
+          'normal_wholesale_price4' => $product['normal_wholesale_price4'],
+          'normal_wholesale_price5' => $product['normal_wholesale_price5'],
+          'normal_wholesale_price6' => $product['normal_wholesale_price6'],
+          'normal_wholesale_price7' => $product['normal_wholesale_price7'],
           'normal_wholesale_quantity' => $product['normal_wholesale_quantity'],
           'normal_wholesale_quantity2' => $product['normal_wholesale_quantity2'],
+          'normal_wholesale_quantity3' => $product['normal_wholesale_quantity3'],
+          'normal_wholesale_quantity4' => $product['normal_wholesale_quantity4'],
+          'normal_wholesale_quantity5' => $product['normal_wholesale_quantity5'],
+          'normal_wholesale_quantity6' => $product['normal_wholesale_quantity6'],
+          'normal_wholesale_quantity7' => $product['normal_wholesale_quantity7'],
           'wholesale_price' => $product['wholesale_price'],
           'wholesale_price2' => $product['wholesale_price2'],
+          'wholesale_price3' => $product['wholesale_price3'],
+          'wholesale_price4' => $product['wholesale_price4'],
+          'wholesale_price5' => $product['wholesale_price5'],
+          'wholesale_price6' => $product['wholesale_price6'],
+          'wholesale_price7' => $product['wholesale_price7'],
           'wholesale_quantity' => $product['wholesale_quantity'],
           'wholesale_quantity2' => $product['wholesale_quantity2'],
+          'wholesale_quantity3' => $product['wholesale_quantity3'],
+          'wholesale_quantity4' => $product['wholesale_quantity4'],
+          'wholesale_quantity5' => $product['wholesale_quantity5'],
+          'wholesale_quantity6' => $product['wholesale_quantity6'],
+          'wholesale_quantity7' => $product['wholesale_quantity7'],
           'wholesale_start_date' => $product['wholesale_start_date'],
           'wholesale_end_date' => $product['wholesale_end_date'],
-          'uom' => $product['uom'],
           'promotion_start' => $product['promotion_start'],
           'promotion_end' => $product['promotion_end'],
           'promotion_price' => $product['promotion_price'],
           'deleted_at' => $product['deleted_at']
-
         ]);
 
         if(!in_array($product['barcode'], $barcode_array))
@@ -2052,17 +2410,38 @@ class HomeController extends Controller
               'barcode' => $product['barcode'],
               'product_name' => $product['product_name'],
               'price' => $product['price'],
+              'uom' => $product['uom'],
+              'measurement' => $product['measurement'],
               'normal_wholesale_price' => $product['normal_wholesale_price'],
               'normal_wholesale_price2' => $product['normal_wholesale_price2'],
+              'normal_wholesale_price3' => $product['normal_wholesale_price3'],
+              'normal_wholesale_price4' => $product['normal_wholesale_price4'],
+              'normal_wholesale_price5' => $product['normal_wholesale_price5'],
+              'normal_wholesale_price6' => $product['normal_wholesale_price6'],
+              'normal_wholesale_price7' => $product['normal_wholesale_price7'],
               'normal_wholesale_quantity' => $product['normal_wholesale_quantity'],
               'normal_wholesale_quantity2' => $product['normal_wholesale_quantity2'],
+              'normal_wholesale_quantity3' => $product['normal_wholesale_quantity3'],
+              'normal_wholesale_quantity4' => $product['normal_wholesale_quantity4'],
+              'normal_wholesale_quantity5' => $product['normal_wholesale_quantity5'],
+              'normal_wholesale_quantity6' => $product['normal_wholesale_quantity6'],
+              'normal_wholesale_quantity7' => $product['normal_wholesale_quantity7'],
               'wholesale_price' => $product['wholesale_price'],
               'wholesale_price2' => $product['wholesale_price2'],
+              'wholesale_price3' => $product['wholesale_price3'],
+              'wholesale_price4' => $product['wholesale_price4'],
+              'wholesale_price5' => $product['wholesale_price5'],
+              'wholesale_price6' => $product['wholesale_price6'],
+              'wholesale_price7' => $product['wholesale_price7'],
               'wholesale_quantity' => $product['wholesale_quantity'],
               'wholesale_quantity2' => $product['wholesale_quantity2'],
+              'wholesale_quantity3' => $product['wholesale_quantity3'],
+              'wholesale_quantity4' => $product['wholesale_quantity4'],
+              'wholesale_quantity5' => $product['wholesale_quantity5'],
+              'wholesale_quantity6' => $product['wholesale_quantity6'],
+              'wholesale_quantity7' => $product['wholesale_quantity7'],
               'wholesale_start_date' => $product['wholesale_start_date'],
               'wholesale_end_date' => $product['wholesale_end_date'],
-              'uom' => $product['uom'],
               'promotion_start' => $product['promotion_start'],
               'promotion_end' => $product['promotion_end'],
               'promotion_price' => $product['promotion_price'],
@@ -2732,10 +3111,47 @@ class HomeController extends Controller
 
     public function testing()
     {
-      dd(env('branch_id'), $this->branch_id, env('branchSyncURL'));
-      dd($this->getDailyReport());
-      $now = date('Y-m-d H:i:s', strtotime(now()));
-      $started_id = 34;
+      print_r("start ori".date("H:i:s") . substr((string)microtime(), 1, 8).'<br>');
+      $seq = Invoice_sequence::first();
+      $now = now();
+      if(date("Y-m-d",strtotime($seq->updated_at)) == date("Y-m-d", strtotime($now))){
+        $transaction_no = $seq->branch_code.date("Ymd").$seq->next_seq;
+      }else{
+        $transaction_no = $seq->branch_code.date("Ymd", strtotime($now))."00001";
+      }
+
+      if(date("Y-m-d",strtotime($seq->updated_at)) == date('Y-m-d', strtotime($now))){
+        $next = $seq->next_seq;
+        $next = intval($next) + 1;
+        $i=5;
+        while($i>strlen($next)){
+          $next = "0".$next;
+        }
+        
+        Invoice_sequence::where('id',$seq->id)->update([
+          'current_seq' => $seq->next_seq,
+          'next_seq' => $next,
+        ]);
+      }else{
+        Invoice_sequence::where('id',$seq->id)->update([
+          'current_seq' => '00001',
+          'next_seq' => '00002',
+        ]);
+      }
+
+      print_r("end ori ".date("H:i:s") . substr((string)microtime(), 1, 8).'<br>');
+
+      print_r("start ".date("H:i:s") . substr((string)microtime(), 1, 8).'<br>');
+      $seq = Invoice_sequence::first();
+      $count = transaction::whereBetween('created_at', [date('Y-m-d 00:00:00'), date('Y-m-d 23:59:59')])->count();
+      for($a = strlen($count); $a < 5; $a++)
+      {
+        $count = "0".$count;
+      }
+
+      $transaction_no = $seq->branch_code.date('Ymd').$count;
+      print_r("end ".date("H:i:s") . substr((string)microtime(), 1, 8).'<br>');
+      dd($transaction_no);
 
       for($c = 0; $c <= 50; $c++)
       {
@@ -3196,6 +3612,35 @@ class HomeController extends Controller
       $response = new \stdClass();
       $response->error = 1;
       $response->message = "Empty item";
+
+      return response()->json($response);
+    }
+
+    public function updateTransactionMeasurement(Request $request)
+    {
+      $transaction_detail = transaction_detail::where('id', $request->transaction_detail_id)->first();
+      $subtotal = $transaction_detail->quantity * $request->measurement * $transaction_detail->price;
+      $total = $transaction_detail->quantity * $request->measurement * $transaction_detail->price;
+
+      if($transaction_detail->wholesale_price)
+      {
+        $subtotal = $transaction_detail->quantity * $request->measurement * $transaction_detail->wholesale_price;
+        $total = $transaction_detail->quantity * $request->measurement * $transaction_detail->wholesale_price;
+      }
+
+      transaction_detail::where('id', $request->transaction_detail_id)->update([
+        'measurement' => $request->measurement,
+        'subtotal' => $subtotal,
+        'total' => $total  
+      ]);
+
+      $transaction = transaction::where('id', $transaction_detail->transaction_id)->first();
+      $transaction_summary = $this->transaction_summary($transaction);
+
+      $response = new \stdClass();
+      $response->error = 0;
+      $response->message = "Success";
+      $response->transaction_summary = $transaction_summary;
 
       return response()->json($response);
     }
