@@ -36,7 +36,7 @@
   
   <div class="" style="position: absolute; background: #F2F2F2; padding: 20px; width: 100%; height: 100%;">
     <div class="row" style="height: 100%;">
-      <div class="col-lg-5 col-sm-12" style="max-height: 100%;">
+      <div class="col-lg-6 col-sm-12" style="max-height: 100%;">
         <div class="left-box">
           <div class="items-list">
             <table id="items-table">
@@ -60,9 +60,9 @@
                         </div>
                       </td>
                       <td>
-                        @if($item->measurement_type == "weight")
+                        @if($item->measurement_type == "kilogram")
                           {{ $item->measurement_text }} KG
-                        @elseif($item->measurement_type == "length")
+                        @elseif($item->measurement_type == "meter")
                           {{ $item->measurement_text }} M
                         @endif
                       </td>
@@ -130,7 +130,7 @@
           </div>
         </div>
       </div>
-      <div class="col-lg-7 col-sm-12" style="position: relative; padding-bottom: 150px;">
+      <div class="col-lg-6 col-sm-12" style="position: relative; padding-bottom: 150px;">
         <div class="bar_code_box">
           <input type="text" class="form-control" placeholder="Bar Code Scanner & Product Code" id="barcode" disabled />
 
@@ -1331,7 +1331,7 @@
                 <td>RM <span id="unit_price"></span></td>
               </tr>
               <tr>
-                <td>Total <span class="unit_type_text">weight</span></td>
+                <td>Total <span class="unit_type_text"></span></td>
                 <td>
                   <input type="number" class="form-control" id="unit_number" style="display: inline-block; width: calc(100% - 50px);" />
                   <span class="unit_type"></span>
@@ -2073,7 +2073,7 @@
         let transaction_summary = result.transaction_summary;
         let product = result.product;
 
-        if(product.measurement == "weight" || product.measurement == "length")
+        if(product.measurement == "kilogram" || product.measurement == "meter")
         {
           showMeasurement(product, result.transaction_detail);
         }
@@ -2195,11 +2195,11 @@
       html += "</div>";
       html += "</td>";
       html += "<td>";
-      if(item_detail.measurement_type == "weight")
+      if(item_detail.measurement_type == "kilogram")
       {
         html += item_detail.measurement_text+" KG";
       }
-      else if(item_detail.measurement_type == "length")
+      else if(item_detail.measurement_type == "meter")
       {
         html += item_detail.measurement_text+" M";
       }
@@ -2552,11 +2552,11 @@
           items_html += "<tr>";
           items_html += "<td style='vertical-align:top;' colspan='3'>";
           items_html += transaction_detail[a].product_name;
-          if(transaction_detail[a].measurement_type == "weight")
+          if(transaction_detail[a].measurement_type == "kilogram")
           {
             items_html += " ( "+transaction_detail[a].measurement+"KG )";
           }
-          else if(transaction_detail[a].measurement_type == "length")
+          else if(transaction_detail[a].measurement_type == "meter")
           {
             items_html += " ( "+transaction_detail[a].measurement+"M )";
           }
@@ -4553,15 +4553,15 @@
     $(".unit_type").html("");
     $(".unit_type_text").html("");
 
-    if(product_detail.measurement == "weight")
+    if(product_detail.measurement == "kilogram")
     {
       $(".unit_type").html("KG");
       $(".unit_type_text").html("Weight");
     }
-    else if(product_detail.measurement == "length")
+    else if(product_detail.measurement == "meter")
     {
       $(".unit_type").html("M");
-      $(".unit_type_text").html("Lenght");
+      $(".unit_type_text").html("Length");
     }
 
     $("#measurementModal").modal('show');

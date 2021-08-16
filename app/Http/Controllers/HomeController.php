@@ -499,7 +499,7 @@ class HomeController extends Controller
         {
           $transaction_detail = transaction_detail::where('transaction_id', $transaction->id)->where('product_id', $product->id)->where('void', null)->first();
 
-          if($transaction_detail && $product->measurement != "weight" && $product->measurement != "length")
+          if($transaction_detail && $product->measurement != "kilogram" && $product->measurement != "meter")
           {
             $quantity = $transaction_detail->quantity + 1;
             $price = $product->price;
