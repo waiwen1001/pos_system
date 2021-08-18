@@ -15,6 +15,8 @@ class refund_detail extends Model
       'barcode',
       'product_name',
       'quantity',
+      'measurement_type',
+      'measurement',
       'price',
       'subtotal',
       'total',

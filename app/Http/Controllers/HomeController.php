@@ -1105,11 +1105,7 @@ class HomeController extends Controller
     {
       transaction_detail::where('transaction_id', $request->transaction_id)->delete();
 
-      transaction::where('id', $request->transaction_id)->update([
-        'total_discount' => 0,
-        'voucher_id' => null,
-        'voucher_code' => null
-      ]);
+      transaction::where('id', $request->transaction_id)->delete();
 
       $response = new \stdClass();
       $response->error = 0;
@@ -1164,8 +1160,10 @@ class HomeController extends Controller
         } 
       }
 
-      $subtotal = $total_quantity * $transaction_detail->measurement * $product->price;
-      $total = $total_quantity * $transaction_detail->measurement * $product->price;
+      $final_quantity = $total_quantity * $transaction_detail->measurement;
+
+      $subtotal = $final_quantity * $product->price;
+      $total = $final_quantity * $product->price;
 
       $wholesale_price = null;
       $wholesale_quantity = null;
@@ -1223,10 +1221,10 @@ class HomeController extends Controller
 
       if($normal_wholesale_quantity && $normal_wholesale_price)
       {
-        if($total_quantity >= $normal_wholesale_quantity)
+        if($final_quantity >= $normal_wholesale_quantity)
         {
-          $subtotal = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price;
-          $total = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price;
+          $subtotal = $final_quantity * $normal_wholesale_price;
+          $total = $final_quantity * $normal_wholesale_price;
 
           $transaction_wholesale_price = $normal_wholesale_price;
           $is_wholesale = 1;
@@ -1235,10 +1233,10 @@ class HomeController extends Controller
 
       if($normal_wholesale_quantity2 && $normal_wholesale_price2)
       {
-        if($total_quantity >= $normal_wholesale_quantity2)
+        if($final_quantity >= $normal_wholesale_quantity2)
         {
-          $subtotal = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price2;
-          $total = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price2;
+          $subtotal = $final_quantity * $normal_wholesale_price2;
+          $total = $final_quantity * $normal_wholesale_price2;
 
           $transaction_wholesale_price = $normal_wholesale_price2;
           $is_wholesale = 1;
@@ -1247,10 +1245,10 @@ class HomeController extends Controller
 
       if($normal_wholesale_quantity3 && $normal_wholesale_price3)
       {
-        if($total_quantity >= $normal_wholesale_quantity3)
+        if($final_quantity >= $normal_wholesale_quantity3)
         {
-          $subtotal = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price3;
-          $total = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price3;
+          $subtotal = $final_quantity * $normal_wholesale_price3;
+          $total = $final_quantity * $normal_wholesale_price3;
 
           $transaction_wholesale_price = $normal_wholesale_price3;
           $is_wholesale = 1;
@@ -1259,10 +1257,10 @@ class HomeController extends Controller
 
       if($normal_wholesale_quantity4 && $normal_wholesale_price4)
       {
-        if($total_quantity >= $normal_wholesale_quantity4)
+        if($final_quantity >= $normal_wholesale_quantity4)
         {
-          $subtotal = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price4;
-          $total = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price4;
+          $subtotal = $final_quantity * $normal_wholesale_price4;
+          $total = $final_quantity * $normal_wholesale_price4;
 
           $transaction_wholesale_price = $normal_wholesale_price4;
           $is_wholesale = 1;
@@ -1271,10 +1269,10 @@ class HomeController extends Controller
 
       if($normal_wholesale_quantity5 && $normal_wholesale_price5)
       {
-        if($total_quantity >= $normal_wholesale_quantity5)
+        if($final_quantity >= $normal_wholesale_quantity5)
         {
-          $subtotal = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price5;
-          $total = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price5;
+          $subtotal = $final_quantity * $normal_wholesale_price5;
+          $total = $final_quantity * $normal_wholesale_price5;
 
           $transaction_wholesale_price = $normal_wholesale_price5;
           $is_wholesale = 1;
@@ -1283,10 +1281,10 @@ class HomeController extends Controller
 
       if($normal_wholesale_quantity6 && $normal_wholesale_price6)
       {
-        if($total_quantity >= $normal_wholesale_quantity6)
+        if($final_quantity >= $normal_wholesale_quantity6)
         {
-          $subtotal = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price6;
-          $total = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price6;
+          $subtotal = $final_quantity * $normal_wholesale_price6;
+          $total = $final_quantity * $normal_wholesale_price6;
 
           $transaction_wholesale_price = $normal_wholesale_price6;
           $is_wholesale = 1;
@@ -1295,10 +1293,10 @@ class HomeController extends Controller
 
       if($normal_wholesale_quantity7 && $normal_wholesale_price7)
       {
-        if($total_quantity >= $normal_wholesale_quantity7)
+        if($final_quantity >= $normal_wholesale_quantity7)
         {
-          $subtotal = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price7;
-          $total = $total_quantity * $transaction_detail->measurement * $normal_wholesale_price7;
+          $subtotal = $final_quantity * $normal_wholesale_price7;
+          $total = $final_quantity * $normal_wholesale_price7;
 
           $transaction_wholesale_price = $normal_wholesale_price7;
           $is_wholesale = 1;
@@ -1307,10 +1305,10 @@ class HomeController extends Controller
 
       if($wholesale_quantity && $wholesale_price)
       {
-        if($total_quantity >= $wholesale_quantity)
+        if($final_quantity >= $wholesale_quantity)
         {
-          $subtotal = $total_quantity * $transaction_detail->measurement * $wholesale_price;
-          $total = $total_quantity * $transaction_detail->measurement * $wholesale_price;
+          $subtotal = $final_quantity * $wholesale_price;
+          $total = $final_quantity * $wholesale_price;
 
           $transaction_wholesale_price = $wholesale_price;
           $is_wholesale = 1;
@@ -1319,10 +1317,10 @@ class HomeController extends Controller
 
       if($wholesale_quantity2 && $wholesale_price2)
       {
-        if($total_quantity >= $wholesale_quantity2)
+        if($final_quantity >= $wholesale_quantity2)
         {
-          $subtotal = $total_quantity * $transaction_detail->measurement * $wholesale_price2;
-          $total = $total_quantity * $transaction_detail->measurement * $wholesale_price2;
+          $subtotal = $final_quantity * $wholesale_price2;
+          $total = $final_quantity * $wholesale_price2;
 
           $transaction_wholesale_price = $wholesale_price2;
           $is_wholesale = 1;
@@ -1331,10 +1329,10 @@ class HomeController extends Controller
 
       if($wholesale_quantity3 && $wholesale_price3)
       {
-        if($total_quantity >= $wholesale_quantity3)
+        if($final_quantity >= $wholesale_quantity3)
         {
-          $subtotal = $total_quantity * $transaction_detail->measurement * $wholesale_price3;
-          $total = $total_quantity * $transaction_detail->measurement * $wholesale_price3;
+          $subtotal = $final_quantity * $wholesale_price3;
+          $total = $final_quantity * $wholesale_price3;
 
           $transaction_wholesale_price = $wholesale_price3;
           $is_wholesale = 1;
@@ -1343,10 +1341,10 @@ class HomeController extends Controller
 
       if($wholesale_quantity4 && $wholesale_price4)
       {
-        if($total_quantity >= $wholesale_quantity4)
+        if($final_quantity >= $wholesale_quantity4)
         {
-          $subtotal = $total_quantity * $transaction_detail->measurement * $wholesale_price4;
-          $total = $total_quantity * $transaction_detail->measurement * $wholesale_price4;
+          $subtotal = $final_quantity * $wholesale_price4;
+          $total = $final_quantity * $wholesale_price4;
 
           $transaction_wholesale_price = $wholesale_price4;
           $is_wholesale = 1;
@@ -1355,10 +1353,10 @@ class HomeController extends Controller
 
       if($wholesale_quantity5 && $wholesale_price5)
       {
-        if($total_quantity >= $wholesale_quantity5)
+        if($final_quantity >= $wholesale_quantity5)
         {
-          $subtotal = $total_quantity * $transaction_detail->measurement * $wholesale_price5;
-          $total = $total_quantity * $transaction_detail->measurement * $wholesale_price5;
+          $subtotal = $final_quantity * $wholesale_price5;
+          $total = $final_quantity * $wholesale_price5;
 
           $transaction_wholesale_price = $wholesale_price5;
           $is_wholesale = 1;
@@ -1367,10 +1365,10 @@ class HomeController extends Controller
 
       if($wholesale_quantity6 && $wholesale_price6)
       {
-        if($total_quantity >= $wholesale_quantity6)
+        if($final_quantity >= $wholesale_quantity6)
         {
-          $subtotal = $total_quantity * $transaction_detail->measurement * $wholesale_price6;
-          $total = $total_quantity * $transaction_detail->measurement * $wholesale_price6;
+          $subtotal = $final_quantity * $wholesale_price6;
+          $total = $final_quantity * $wholesale_price6;
 
           $transaction_wholesale_price = $wholesale_price6;
           $is_wholesale = 1;
@@ -1379,10 +1377,10 @@ class HomeController extends Controller
 
       if($wholesale_quantity7 && $wholesale_price7)
       {
-        if($total_quantity >= $wholesale_quantity7)
+        if($final_quantity >= $wholesale_quantity7)
         {
-          $subtotal = $total_quantity * $transaction_detail->measurement * $wholesale_price7;
-          $total = $total_quantity * $transaction_detail->measurement * $wholesale_price7;
+          $subtotal = $final_quantity * $wholesale_price7;
+          $total = $final_quantity * $wholesale_price7;
 
           $transaction_wholesale_price = $wholesale_price7;
           $is_wholesale = 1;
@@ -3559,6 +3557,12 @@ class HomeController extends Controller
           $quantity_name = "quantity_".$id;
           $quantity = $request->$quantity_name;
 
+          $measurement_name = "measurement_".$id;
+          $measurement = $request->$measurement_name;
+
+          $measurement_type_name = "measurement_type_".$id;
+          $measurement_type = $request->$measurement_type_name;
+
           $total_quantity += $quantity;
 
           refund_detail::create([
@@ -3569,6 +3573,8 @@ class HomeController extends Controller
             'barcode' => $product_detail->barcode,
             'product_name' => $product_detail->product_name,
             'quantity' => $quantity,
+            'measurement_type' => $measurement_type,
+            'measurement' => $measurement,
             'price' => ($refund_price / $quantity),
             'subtotal' => $refund_price,
             'total' => $refund_price
@@ -3619,19 +3625,29 @@ class HomeController extends Controller
     public function updateTransactionMeasurement(Request $request)
     {
       $transaction_detail = transaction_detail::where('id', $request->transaction_detail_id)->first();
-      $subtotal = $transaction_detail->quantity * $request->measurement * $transaction_detail->price;
-      $total = $transaction_detail->quantity * $request->measurement * $transaction_detail->price;
 
-      if($transaction_detail->wholesale_price)
+      $response = $this->productPrice($transaction_detail->barcode, $request->measurement);
+      if($response->wholesale == 1)
       {
-        $subtotal = $transaction_detail->quantity * $request->measurement * $transaction_detail->wholesale_price;
-        $total = $transaction_detail->quantity * $request->measurement * $transaction_detail->wholesale_price;
+        transaction_detail::where('id', $transaction_detail->id)->update([
+          'wholesale_price' => $response->product_price
+        ]);
       }
+      elseif($response->wholesale == 0 && $response->product_price != $transaction_detail->price)
+      {
+        transaction_detail::where('id', $transaction_detail->id)->update([
+          'price' => $response->product_price,
+          'wholesale_price' => null
+        ]);
+      }
+
+      $subtotal = $transaction_detail->quantity * $request->measurement * $response->product_price;
+      $total = $transaction_detail->quantity * $request->measurement * $response->product_price;
 
       transaction_detail::where('id', $request->transaction_detail_id)->update([
         'measurement' => $request->measurement,
         'subtotal' => $subtotal,
-        'total' => $total  
+        'total' => $total
       ]);
 
       $transaction = transaction::where('id', $transaction_detail->transaction_id)->first();
@@ -3643,6 +3659,194 @@ class HomeController extends Controller
       $response->transaction_summary = $transaction_summary;
 
       return response()->json($response);
+    }
+
+    public function removeTransactionMeasurement(Request $request)
+    {
+      $transaction_detail = transaction_detail::where('id', $request->transaction_detail_id)->first();
+      $transaction = transaction::where('id', $transaction_detail->transaction_id)->first();
+
+      transaction_detail::where('id', $request->transaction_detail_id)->delete();
+
+      $transaction_summary = $this->transaction_summary($transaction);
+
+      $response = new \stdClass();
+      $response->error = 0;
+      $response->message = "Success";
+      $response->transaction_summary = $transaction_summary;
+
+      return response()->json($response);
+    }
+
+    public function getProductPrice(Request $request)
+    {
+      $response = $this->productPrice($request->barcode, $request->quantity);
+      return response()->json($response);
+    }
+
+    public function productPrice($barcode, $quantity)
+    {
+      $product_detail = product::where('barcode', $barcode)->first();
+      if($product_detail)
+      {
+        $now = date('Y-m-d H:i:s');
+        $product_price = $product_detail->price;
+        $wholesale = 0;
+
+        if($product_detail->promotion_start && $product_detail->promotion_end && $product_detail->promotion_price)
+        {
+          if($now >= $product_detail->promotion_start && $now <= $product_detail->promotion_end)
+          {
+            $product_price = $product_detail->promotion_price;
+          }
+        }
+
+        if($product_detail->normal_wholesale_price && $product_detail->normal_wholesale_quantity)
+        {
+          if($quantity >= $product_detail->normal_wholesale_quantity)
+          {
+            $product_price = $product_detail->normal_wholesale_price;
+            $wholesale = 1;
+          }
+        }
+
+        if($product_detail->normal_wholesale_price2 && $product_detail->normal_wholesale_quantity2)
+        {
+          if($quantity >= $product_detail->normal_wholesale_quantity2)
+          {
+            $product_price = $product_detail->normal_wholesale_price2;
+            $wholesale = 1;
+          }
+        }
+
+        if($product_detail->normal_wholesale_price3 && $product_detail->normal_wholesale_quantity3)
+        {
+          if($quantity >= $product_detail->normal_wholesale_quantity3)
+          {
+            $product_price = $product_detail->normal_wholesale_price3;
+            $wholesale = 1;
+          }
+        }
+
+        if($product_detail->normal_wholesale_price4 && $product_detail->normal_wholesale_quantity4)
+        {
+          if($quantity >= $product_detail->normal_wholesale_quantity4)
+          {
+            $product_price = $product_detail->normal_wholesale_price4;
+            $wholesale = 1;
+          }
+        }
+
+        if($product_detail->normal_wholesale_price5 && $product_detail->normal_wholesale_quantity5)
+        {
+          if($quantity >= $product_detail->normal_wholesale_quantity5)
+          {
+            $product_price = $product_detail->normal_wholesale_price5;
+            $wholesale = 1;
+          }
+        }
+
+        if($product_detail->normal_wholesale_price6 && $product_detail->normal_wholesale_quantity6)
+        {
+          if($quantity >= $product_detail->normal_wholesale_quantity6)
+          {
+            $product_price = $product_detail->normal_wholesale_price6;
+            $wholesale = 1;
+          }
+        }
+
+        if($product_detail->normal_wholesale_price7 && $product_detail->normal_wholesale_quantity7)
+        {
+          if($quantity >= $product_detail->normal_wholesale_quantity7)
+          {
+            $product_price = $product_detail->normal_wholesale_price7;
+            $wholesale = 1;
+          }
+        }
+
+        if($product_detail->wholesale_start_date && $product_detail->wholesale_end_date)
+        {
+          if($product_detail->wholesale_quantity && $product_detail->wholesale_price)
+          {
+            if($quantity >= $product_detail->wholesale_quantity)
+            {
+              $product_price = $product_detail->wholesale_price;
+              $wholesale = 1;
+            }
+          }
+
+          if($product_detail->wholesale_quantity2 && $product_detail->wholesale_price2)
+          {
+            if($quantity >= $product_detail->wholesale_quantity2)
+            {
+              $product_price = $product_detail->wholesale_price2;
+              $wholesale = 1;
+            }
+          }
+
+          if($product_detail->wholesale_quantity3 && $product_detail->wholesale_price3)
+          {
+            if($quantity >= $product_detail->wholesale_quantity3)
+            {
+              $product_price = $product_detail->wholesale_price3;
+              $wholesale = 1;
+            }
+          }
+
+          if($product_detail->wholesale_quantity4 && $product_detail->wholesale_price4)
+          {
+            if($quantity >= $product_detail->wholesale_quantity4)
+            {
+              $product_price = $product_detail->wholesale_price4;
+              $wholesale = 1;
+            }
+          }
+
+          if($product_detail->wholesale_quantity5 && $product_detail->wholesale_price5)
+          {
+            if($quantity >= $product_detail->wholesale_quantity5)
+            {
+              $product_price = $product_detail->wholesale_price5;
+              $wholesale = 1;
+            }
+          }
+
+          if($product_detail->wholesale_quantity6 && $product_detail->wholesale_price6)
+          {
+            if($quantity >= $product_detail->wholesale_quantity6)
+            {
+              $product_price = $product_detail->wholesale_price6;
+              $wholesale = 1;
+            }
+          }
+
+          if($product_detail->wholesale_quantity7 && $product_detail->wholesale_price7)
+          {
+            if($quantity >= $product_detail->wholesale_quantity7)
+            {
+              $product_price = $product_detail->wholesale_price7;
+              $wholesale = 1;
+            }
+          }
+        }
+
+        $response = new \stdClass();
+        $response->error = 0;
+        $response->message = "Success";
+        $response->product_price = $product_price;
+        $response->product_price_text = number_format($product_price, 2);
+        $response->wholesale = $wholesale;
+
+        return $response;
+      }
+      else
+      {
+        $response = new \stdClass();
+        $response->error = 1;
+        $response->message = "Product not found.";
+
+        return $response;
+      }
     }
 
     public function init()

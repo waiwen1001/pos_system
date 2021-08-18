@@ -1230,6 +1230,7 @@
                   <thead>
                     <th>Product name</th>
                     <th width="120px">Quantity</th>
+                    <th width="120px">Unit</th>
                     <th width="150px">Amount</th>
                     <th width="50px"></th>
                   </thead>
@@ -1306,14 +1307,14 @@
     </div>
   </div> -->
 
-  <div class="modal fade" id="measurementModal" tabindex="-1" role="dialog" aria-labelledby="measurementModalLabel" aria-hidden="true" style="background: rgba(0, 0, 0, 0.7);">
+  <div class="modal fade" id="measurementModal" tabindex="-1" role="dialog" aria-labelledby="measurementModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false" style="background: rgba(0, 0, 0, 0.7);">
     <div class="modal-dialog" role="document" style="min-width: 750px;">
       <div class="modal-content">
         <div class="modal-header" style="padding: 10px;">
           <h5 class="modal-title" style="font-size: 16px;">Measurement</h5>
-          <button type="button" class="close" id="closeMeasurementModalIcon">
+          <!-- <button type="button" class="close" id="closeMeasurementModalIcon">
             <span aria-hidden="true">&times;</span>
-          </button>
+          </button> -->
         </div>
         <div class="modal-body" style="background: #eee; padding: 10px;">
           <table class="table" style="width: 80%; margin: auto; background: #fff;">
@@ -1347,6 +1348,7 @@
           </table>
         </div>
         <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="remove_transaction_measurement">Remove</button>
           <button type="button" class="btn btn-success" id="update_transaction_measurement">Submit</button>
         </div>
       </div>
@@ -1366,6 +1368,7 @@
   var voucherFunc;
   var related_timeout;
   var refund_related_timeout;
+  var measurement_entry;
   var session = "{{ $session }}";
   var shortcut_key = @json($shortcut_key);
   var user = @json($user);
@@ -1525,7 +1528,7 @@
         }
         else if($("#refundModal").css("display") != "none" && $(".swal2-container").length == 0)
         {
-          if($("#refundNowBtn").attr("disabled") != "disabled" && $(".refund_item_price").is(":focus") == false)
+          if($("#refundNowBtn").attr("disabled") != "disabled" && $(".refund_item_price").is(":focus") == false && $(".measurement_input").is(":focus") == false)
           {
             $("#refundNowBtn").click();
           }
@@ -2021,22 +2024,17 @@
       }
       else
       {
-        let unit_price = $("#unit_price_input").val();
-        let unit_number = $(this).val();
-
-        if(unit_number)
-        {
-          let unit_total_price = parseFloat(unit_price) * parseFloat(unit_number);
-          unit_total_price = numberFormat(unit_total_price);
-
-          $("#unit_total_price").html(unit_total_price);
-        }
-        
+        clearTimeout(measurement_entry);
+        measurement_entry = setTimeout(getMeasurementPrice, 300);
       }
     });
 
     $("#update_transaction_measurement").click(function(){
       updateTransactionMeasurement();
+    });
+
+    $("#remove_transaction_measurement").click(function(){
+      removeTransactionMeasurement();
     });
 
   });
@@ -2142,7 +2140,7 @@
           var html = "";
           html += "<tr item_id='"+product_detail.id+"'>";
           html += "<td>"+product_detail.product_name+"</td>";
-          html += "<td>";
+          html += "<td class='refund_quantity'>";
           html += "<div class='quantity'>";
           html += "<i class='fa fa-minus' onclick='editRefundItem(this, \"minus\")'></i>";
           html += "<input type='number' style='margin: 0 9px;' name='quantity_"+product_detail.id+"' class='quantity_input' value='1' item_id='"+product_detail.id+"' onkeyup='editRefundItem(this, \"number\")' />";
@@ -2150,6 +2148,24 @@
           html += "<input type='hidden' name='product_id[]' value='"+product_detail.id+"' />";
           html += "<i class='fa fa-plus' onclick='editRefundItem(this, \"add\")'></i>";
           html += "</div>";
+          html += "</td>";
+
+          html += "<td class='refund_measurement'>";
+
+          if(product_detail.measurement == "kilogram")
+          {
+            html += "<input type='number' class='form-control measurement_input' name='measurement_"+product_detail.id+"' value='1' /> KG";
+          }
+          else if(product_detail.measurement == "meter")
+          {
+            html += "<input type='number' class='form-control measurement_input' name='measurement_"+product_detail.id+"' value='1' /> M";
+          }
+          else
+          {
+            html += "<input type='hidden' class='measurement_input' name='measurement_"+product_detail.id+"' value='1' />";
+          }
+
+          html += "<input type='hidden' name='measurement_type_"+product_detail.id+"' value='"+product_detail.measurement+"' />";
           html += "</td>";
           html += "<td class='refund_price'>";
           html += "<span>RM </span><input type='number' class='form-control refund_item_price' name='price_"+product_detail.id+"' value='"+product_detail.price+"' /><input type='hidden' class='refund_each_price' value='"+product_detail.price+"' />"
@@ -2160,6 +2176,7 @@
           $(".refund_item_list table tbody").prepend(html);
 
           enableRefundPriceEntry();
+          enableRefundMeasurementEntry();
         }
 
         calculateRefundTotal();
@@ -3920,7 +3937,7 @@
       combined_barcode = "";
     }
 
-    if($("#voucherModal").css("display") != "none" || $("#user_management").css("display") != "none" || $("#dailyClosingModal").css("display") != "none" || $("#numpadModal").css("display") != "none" || $("#openingModal").css("display") != "none" || $("#previous_receipt").css("display") != "none" || $("#cardCheckoutModal").css("display") != "none" || $("#cashFloatModal").css("display") != "none" || $("#openingModal").css("display") != "none" || $("#closingModal").css("display") != "none" || $(".quantity_input").is(":focus") || $(".refund_item_price").is(":focus") || $("#measurementModal").css("display") != "none")
+    if($("#voucherModal").css("display") != "none" || $("#user_management").css("display") != "none" || $("#dailyClosingModal").css("display") != "none" || $("#numpadModal").css("display") != "none" || $("#openingModal").css("display") != "none" || $("#previous_receipt").css("display") != "none" || $("#cardCheckoutModal").css("display") != "none" || $("#cashFloatModal").css("display") != "none" || $("#openingModal").css("display") != "none" || $("#closingModal").css("display") != "none" || $(".quantity_input").is(":focus") || $(".refund_item_price").is(":focus") || $("#measurementModal").css("display") != "none" || $(".measurement_input").is(":focus"))
     {
       run = false;
       combined_barcode = "";
@@ -4320,10 +4337,6 @@
   {
     var r = confirm("Are you sure you want to remove this item?");
     if (r == true) {
-      var tr = $(_this).parent().parent();
-      var refund_item_quantity = tr.find("input.quantity_input").val();
-      var refund_item_price = tr.find("input.refund_item_price").val();
-
       $(_this).parent().parent().remove();
       calculateRefundTotal();
     }
@@ -4355,10 +4368,6 @@
     else if(type == 'number')
     {
       quantity = $(_this).val();
-      prev_quantity = $(_this).siblings("input.temp_input").val();
-
-      var item_price = refund_each_price * prev_quantity;
-      var new_price = refund_each_price * quantity;
     }
 
     if(quantity === 0 || quantity === "0")
@@ -4367,7 +4376,8 @@
     }
     else
     {
-      let refund_item_total = refund_each_price * quantity;
+      let refund_measurement = tr.find("input.measurement_input").val();
+      let refund_item_total = refund_each_price * quantity * refund_measurement;
       let refund_item_total_text = numberFormat(refund_item_total);
       tr.find("td.refund_price").children("input.refund_item_price").val(refund_item_total);
 
@@ -4417,8 +4427,19 @@
         for(var a = 0; a < refund_detail.length; a++)
         {
           items_html += "<tr>";
-          items_html += "<td style='vertical-align:top;' colspan='3'>"+refund_detail[a].product_name+"</td>";
+          items_html += "<td style='vertical-align:top;' colspan='3'>";
+          items_html += refund_detail[a].product_name;
+          if(refund_detail[a].measurement_type == "kilogram")
+          {
+            items_html += " ( "+refund_detail[a].measurement+"KG )";
+          }
+          else if(refund_detail[a].measurement_type == "meter")
+          {
+            items_html += " ( "+refund_detail[a].measurement+"M )";
+          }
+          items_html += "</td>";
           items_html += "</tr>";
+
           items_html += "<tr>";
           items_html += "<td style='vertical-align:top;'>"+refund_detail[a].barcode+"</td>";
           items_html += "<td style='width: 120px;vertical-align:top;text-align:right;'>";
@@ -4514,6 +4535,48 @@
       }
 
       $(this).val(refund_price);
+      limitDecimal($(this), 2);
+      if(e.which == 13)
+      {
+        e.preventDefault();
+      }
+      else
+      {
+        calculateRefundTotal();
+      }
+    });
+  }
+
+  function enableRefundMeasurementEntry()
+  {
+    $("input.measurement_input").unbind('keyup');
+    $("input.measurement_input").on("keyup", function(e){
+      let refund_measurement = parseFloat($(this).val());
+
+      if(isNaN(refund_measurement))
+      { 
+        $("#refundNowBtn").attr("disabled", true);
+      }
+      else
+      {
+        $("#refundNowBtn").attr("disabled", false);
+      }
+
+      if(refund_measurement < 0)
+      { 
+        refund_measurement = refund_measurement * -1;
+      }
+
+      $(this).val(refund_measurement);
+      limitDecimal($(this), 3);
+
+      let refund_quantity = $(this).parent().siblings(".refund_quantity").find("input").val();
+      let refund_price = $(this).parent().siblings(".refund_price").find("input.refund_each_price").val();
+
+      let total_refund_price = refund_quantity * refund_measurement * refund_price;
+      total_refund_price = total_refund_price.toFixed(2);
+      $(this).parent().siblings(".refund_price").find("input.refund_item_price").val(total_refund_price);
+
       if(e.which == 13)
       {
         e.preventDefault();
@@ -4544,7 +4607,7 @@
   {
     $("#unit_barcode").html(product_detail.barcode);
     $("#unit_product_name").html(product_detail.product_name);
-    $("#unit_price").html(product_detail.using_price_text);
+    $("#unit_price").html(product_detail.using_price_text).css({"color" : "#000"});
     $("#unit_price_input").val(product_detail.using_price);
     $("#unit_number").val(transaction_detail.measurement);
     $("#transaction_detail_id").val(transaction_detail.id);
@@ -4607,6 +4670,92 @@
         loggedOutAlert();
       }
     })
+  }
+
+  function removeTransactionMeasurement()
+  {
+    let transaction_detail_id = $("#transaction_detail_id").val();
+    $("#remove_transaction_measurement").attr("disabled", true);
+
+    $.post("{{ route('removeTransactionMeasurement') }}", { "_token" : "{{ csrf_token() }}", "transaction_detail_id" : transaction_detail_id }, function(result){
+      $("#remove_transaction_measurement").attr("disabled", false);
+      if(result.error == 0)
+      {
+        var transaction_summary = result.transaction_summary;
+
+        transaction_total = transaction_summary.real_total; 
+        generateItemList(transaction_summary);
+        $("#measurementModal").modal('hide');
+      }
+    }).fail(function(xhr){
+      $("#remove_transaction_measurement").attr("disabled", false);
+      if(xhr.status == 401)
+      {
+        loggedOutAlert();
+      }
+    })
+  }
+
+  function limitDecimal(_this, total_decimal)
+  {
+    var number = _this.val();
+    if(number.includes("."))
+    {
+      let split_number = number.split(".");
+      let decimal = split_number[1];
+      if(decimal.length > total_decimal)
+      {
+        let new_decimal = decimal.substring(0, total_decimal);
+        let new_number = split_number[0]+"."+new_decimal;
+
+        _this.val(new_number);
+      }
+    }
+  }
+
+  function getMeasurementPrice()
+  {
+    let measurement_barcode = $("#unit_barcode").html();
+    limitDecimal($("#unit_number"), 3);
+    let unit_number = $("#unit_number").val();
+
+    $.get("{{ route('getProductPrice') }}", { "barcode" : measurement_barcode, "quantity" : unit_number }, function(result){
+      if(result.error == 0)
+      {
+        let unit_price = result.product_price;
+        $("#unit_price_input").val(unit_price)
+
+        if(unit_number < 0)
+        {
+          unit_number = unit_number * -1;
+          $("#unit_number").val(unit_number);
+        }
+
+        $("#unit_price").html(result.product_price_text);
+        if(result.wholesale == 1)
+        {
+          $("#unit_price, #unit_total_price").css({"color" : "#9c27b0"});
+        }
+        else
+        {
+          $("#unit_price, #unit_total_price").css({"color" : "#000"});
+        }
+
+        if(unit_number)
+        {
+          let unit_total_price = parseFloat(unit_price) * parseFloat(unit_number);
+          unit_total_price = numberFormat(unit_total_price);
+
+          $("#unit_total_price").html(unit_total_price);
+        }
+      }
+    }).fail(function(xhr){
+      if(xhr.status == 401)
+      {
+        loggedOutAlert();
+      }
+    });
+    
   }
 
 </script>
