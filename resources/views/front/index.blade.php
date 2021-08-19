@@ -1189,7 +1189,7 @@
   </div>
 
   <div class="modal fade" id="refundModal" tabindex="-1" role="dialog" aria-labelledby="refundModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false" style="background: rgba(0, 0, 0, 0.7);">
-    <div class="modal-dialog" role="document" style="min-width: 750px;">
+    <div class="modal-dialog" role="document" style="min-width: 1000px;">
       <div class="modal-content">
         <div class="modal-header" style="padding: 10px;">
           <h5 class="modal-title" style="font-size: 16px;">Refund</h5>
