@@ -3109,6 +3109,7 @@ class HomeController extends Controller
 
     public function testing()
     {
+      dd(env('branchSyncURL'));
       print_r("start ori".date("H:i:s") . substr((string)microtime(), 1, 8).'<br>');
       $seq = Invoice_sequence::first();
       $now = now();
@@ -3766,66 +3767,69 @@ class HomeController extends Controller
 
         if($product_detail->wholesale_start_date && $product_detail->wholesale_end_date)
         {
-          if($product_detail->wholesale_quantity && $product_detail->wholesale_price)
+          if($now >= $product_detail->wholesale_start_date && $now <= $product_detail->wholesale_end_date)
           {
-            if($quantity >= $product_detail->wholesale_quantity)
+            if($product_detail->wholesale_quantity && $product_detail->wholesale_price)
             {
-              $product_price = $product_detail->wholesale_price;
-              $wholesale = 1;
+              if($quantity >= $product_detail->wholesale_quantity)
+              {
+                $product_price = $product_detail->wholesale_price;
+                $wholesale = 1;
+              }
             }
-          }
 
-          if($product_detail->wholesale_quantity2 && $product_detail->wholesale_price2)
-          {
-            if($quantity >= $product_detail->wholesale_quantity2)
+            if($product_detail->wholesale_quantity2 && $product_detail->wholesale_price2)
             {
-              $product_price = $product_detail->wholesale_price2;
-              $wholesale = 1;
+              if($quantity >= $product_detail->wholesale_quantity2)
+              {
+                $product_price = $product_detail->wholesale_price2;
+                $wholesale = 1;
+              }
             }
-          }
 
-          if($product_detail->wholesale_quantity3 && $product_detail->wholesale_price3)
-          {
-            if($quantity >= $product_detail->wholesale_quantity3)
+            if($product_detail->wholesale_quantity3 && $product_detail->wholesale_price3)
             {
-              $product_price = $product_detail->wholesale_price3;
-              $wholesale = 1;
+              if($quantity >= $product_detail->wholesale_quantity3)
+              {
+                $product_price = $product_detail->wholesale_price3;
+                $wholesale = 1;
+              }
             }
-          }
 
-          if($product_detail->wholesale_quantity4 && $product_detail->wholesale_price4)
-          {
-            if($quantity >= $product_detail->wholesale_quantity4)
+            if($product_detail->wholesale_quantity4 && $product_detail->wholesale_price4)
             {
-              $product_price = $product_detail->wholesale_price4;
-              $wholesale = 1;
+              if($quantity >= $product_detail->wholesale_quantity4)
+              {
+                $product_price = $product_detail->wholesale_price4;
+                $wholesale = 1;
+              }
             }
-          }
 
-          if($product_detail->wholesale_quantity5 && $product_detail->wholesale_price5)
-          {
-            if($quantity >= $product_detail->wholesale_quantity5)
+            if($product_detail->wholesale_quantity5 && $product_detail->wholesale_price5)
             {
-              $product_price = $product_detail->wholesale_price5;
-              $wholesale = 1;
+              if($quantity >= $product_detail->wholesale_quantity5)
+              {
+                $product_price = $product_detail->wholesale_price5;
+                $wholesale = 1;
+              }
             }
-          }
 
-          if($product_detail->wholesale_quantity6 && $product_detail->wholesale_price6)
-          {
-            if($quantity >= $product_detail->wholesale_quantity6)
+            if($product_detail->wholesale_quantity6 && $product_detail->wholesale_price6)
             {
-              $product_price = $product_detail->wholesale_price6;
-              $wholesale = 1;
+              if($quantity >= $product_detail->wholesale_quantity6)
+              {
+                $product_price = $product_detail->wholesale_price6;
+                $wholesale = 1;
+              }
             }
-          }
 
-          if($product_detail->wholesale_quantity7 && $product_detail->wholesale_price7)
-          {
-            if($quantity >= $product_detail->wholesale_quantity7)
+            if($product_detail->wholesale_quantity7 && $product_detail->wholesale_price7)
             {
-              $product_price = $product_detail->wholesale_price7;
-              $wholesale = 1;
+              if($quantity >= $product_detail->wholesale_quantity7)
+              {
+                $product_price = $product_detail->wholesale_price7;
+                $wholesale = 1;
+              }
             }
           }
         }

@@ -63,7 +63,7 @@
                         @if($item->measurement_type == "kilogram")
                           {{ $item->measurement_text }} KG
                         @elseif($item->measurement_type == "meter")
-                          {{ $item->measurement_text }} M
+                          {{ $item->measurement_text }} Meter
                         @endif
                       </td>
                       <td class="subtotal">
@@ -1261,10 +1261,10 @@
           </div>
         </div>
         <div class="modal-footer">
-          <div class="refund_submit">
+          <div class="modal_submit_btn">
             <button type="button" class="btn btn-success" id="refundNowBtn">Refund now</button>
           </div>
-          <div class="refund_cancel">
+          <div class="modal_cancel_btn">
             <button id="closeRefundModalBtn" type="button" class="btn btn-secondary">Cancel</button>
           </div>
         </div>
@@ -1328,7 +1328,7 @@
                 <td id="unit_product_name"></td>
               </tr>
               <tr>
-                <td>Price for 1<span class="unit_type"></span></td>
+                <td>Price per <span class="unit_type"></span></td>
                 <td>RM <span id="unit_price"></span></td>
               </tr>
               <tr>
@@ -1348,8 +1348,12 @@
           </table>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" id="remove_transaction_measurement">Remove</button>
-          <button type="button" class="btn btn-success" id="update_transaction_measurement">Submit</button>
+          <div class="modal_submit_btn">
+            <button type="button" class="btn btn-success" id="update_transaction_measurement">Submit</button>
+          </div>
+          <div class="modal_cancel_btn">
+            <button type="button" class="btn btn-secondary" id="remove_transaction_measurement">Cancel</button>
+          </div>
         </div>
       </div>
     </div>
@@ -2025,7 +2029,7 @@
       else
       {
         clearTimeout(measurement_entry);
-        measurement_entry = setTimeout(getMeasurementPrice, 300);
+        measurement_entry = setTimeout(getMeasurementPrice, 150);
       }
     });
 
@@ -2158,7 +2162,7 @@
           }
           else if(product_detail.measurement == "meter")
           {
-            html += "<input type='number' class='form-control measurement_input' name='measurement_"+product_detail.id+"' value='1' /> M";
+            html += "<input type='number' class='form-control measurement_input' name='measurement_"+product_detail.id+"' value='1' /> Meter";
           }
           else
           {
@@ -2218,7 +2222,7 @@
       }
       else if(item_detail.measurement_type == "meter")
       {
-        html += item_detail.measurement_text+" M";
+        html += item_detail.measurement_text+" Meter";
       }
       html += "</td>";
       html += "<td class='subtotal'>";
@@ -2575,7 +2579,7 @@
           }
           else if(transaction_detail[a].measurement_type == "meter")
           {
-            items_html += " ( "+transaction_detail[a].measurement+"M )";
+            items_html += " ( "+transaction_detail[a].measurement+"Meter )";
           }
 
           items_html += "</td>";
@@ -4379,7 +4383,9 @@
       let refund_measurement = tr.find("input.measurement_input").val();
       let refund_item_total = refund_each_price * quantity * refund_measurement;
       let refund_item_total_text = numberFormat(refund_item_total);
+
       tr.find("td.refund_price").children("input.refund_item_price").val(refund_item_total);
+      limitDecimal(tr.find("td.refund_price").children("input.refund_item_price"), 2);
 
       if(type == 'number')
       {
@@ -4435,7 +4441,7 @@
           }
           else if(refund_detail[a].measurement_type == "meter")
           {
-            items_html += " ( "+refund_detail[a].measurement+"M )";
+            items_html += " ( "+refund_detail[a].measurement+"Meter )";
           }
           items_html += "</td>";
           items_html += "</tr>";
@@ -4551,6 +4557,7 @@
   {
     $("input.measurement_input").unbind('keyup');
     $("input.measurement_input").on("keyup", function(e){
+      limitDecimal($(this), 3);
       let refund_measurement = parseFloat($(this).val());
 
       if(isNaN(refund_measurement))
@@ -4568,7 +4575,6 @@
       }
 
       $(this).val(refund_measurement);
-      limitDecimal($(this), 3);
 
       let refund_quantity = $(this).parent().siblings(".refund_quantity").find("input").val();
       let refund_price = $(this).parent().siblings(".refund_price").find("input.refund_each_price").val();
@@ -4623,7 +4629,7 @@
     }
     else if(product_detail.measurement == "meter")
     {
-      $(".unit_type").html("M");
+      $(".unit_type").html("Meter");
       $(".unit_type_text").html("Length");
     }
 
@@ -4705,8 +4711,11 @@
       let decimal = split_number[1];
       if(decimal.length > total_decimal)
       {
-        let new_decimal = decimal.substring(0, total_decimal);
-        let new_number = split_number[0]+"."+new_decimal;
+        let new_decimal = decimal.substring(0, (total_decimal + 1));
+        new_decimal = "0."+new_decimal;
+        new_decimal = parseFloat(new_decimal).toFixed(total_decimal);
+        new_decimal_array = new_decimal.split(".");
+        let new_number = split_number[0]+"."+new_decimal_array[1];
 
         _this.val(new_number);
       }
