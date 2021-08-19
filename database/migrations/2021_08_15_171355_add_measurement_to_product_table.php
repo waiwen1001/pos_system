@@ -14,7 +14,7 @@ class AddMeasurementToProductTable extends Migration
     public function up()
     {
         Schema::table('product', function (Blueprint $table) {
-            $table->string('measurement')->after('uom')->nullable();
+            $table->string('measurement')->after('uom')->nullable()->default('unit');
             $table->decimal('normal_wholesale_price3', 12, 4)->after('normal_wholesale_price2')->nullable();
             $table->decimal('normal_wholesale_price4', 12, 4)->after('normal_wholesale_price3')->nullable();
             $table->decimal('normal_wholesale_price5', 12, 4)->after('normal_wholesale_price4')->nullable();
