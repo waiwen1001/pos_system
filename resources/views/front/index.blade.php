@@ -2124,67 +2124,9 @@
       else if(result.error == 0)
       {
         var product_detail = result.product_detail;
-        if($(".refund_item_list table tbody tr[item_id='"+product_detail.id+"']").length > 0)
-        {
-          let tr = $(".refund_item_list table tbody tr[item_id='"+product_detail.id+"']");
-          let refund_item_price = tr.find("input.refund_item_price").val();
-          let refund_item_quantity = tr.find("input.quantity_input").val();
-
-          refund_item_quantity++;
-          let refund_item_total = refund_item_price * refund_item_quantity;
-
-          let refund_item_total_text = numberFormat(refund_item_total);
-
-          tr.find("input.quantity_input").val(refund_item_quantity);
-          tr.find("input.temp_input").val(refund_item_quantity);
-          tr.find("td.refund_price").children("input.refund_item_price").val(refund_item_total);
-        }
-        else
-        {
-          var html = "";
-          html += "<tr item_id='"+product_detail.id+"'>";
-          html += "<td>"+product_detail.product_name+"</td>";
-          html += "<td class='refund_quantity'>";
-          html += "<div class='quantity'>";
-          html += "<i class='fa fa-minus' onclick='editRefundItem(this, \"minus\")'></i>";
-          html += "<input type='number' style='margin: 0 9px;' name='quantity_"+product_detail.id+"' class='quantity_input' value='1' item_id='"+product_detail.id+"' onkeyup='editRefundItem(this, \"number\")' />";
-          html += "<input type='hidden' class='temp_input' value='1' />";
-          html += "<input type='hidden' name='product_id[]' value='"+product_detail.id+"' />";
-          html += "<i class='fa fa-plus' onclick='editRefundItem(this, \"add\")'></i>";
-          html += "</div>";
-          html += "</td>";
-
-          html += "<td class='refund_measurement'>";
-
-          if(product_detail.measurement == "kilogram")
-          {
-            html += "<input type='number' class='form-control measurement_input' name='measurement_"+product_detail.id+"' value='1' /> KG";
-          }
-          else if(product_detail.measurement == "meter")
-          {
-            html += "<input type='number' class='form-control measurement_input' name='measurement_"+product_detail.id+"' value='1' /> Meter";
-          }
-          else
-          {
-            html += "<input type='hidden' class='measurement_input' name='measurement_"+product_detail.id+"' value='1' />";
-          }
-
-          html += "<input type='hidden' name='measurement_type_"+product_detail.id+"' value='"+product_detail.measurement+"' />";
-          html += "</td>";
-          html += "<td class='refund_price'>";
-          html += "<span>RM </span><input type='number' class='form-control refund_item_price' name='price_"+product_detail.id+"' value='"+product_detail.price+"' /><input type='hidden' class='refund_each_price' value='"+product_detail.price+"' />"
-          html += "</td>";
-          html += "<td><button type='button' class='btn btn-dark items-cancel' onclick='removeRefundItem(event, this)'>Cancel</button></td>";
-          html += "</tr>";
-
-          $(".refund_item_list table tbody").prepend(html);
-
-          enableRefundPriceEntry();
-          enableRefundMeasurementEntry();
-        }
-
-        calculateRefundTotal();
+        generateRefundItem(product_detail);
       }
+
       $("input[name='refund_barcode']").val('');
     }).fail(function(xhr){
       if(xhr.status == 401)
@@ -4354,7 +4296,6 @@
   function editRefundItem(_this, type)
   {
     var tr = $(_this).parent().parent().parent();
-    let refund_each_price = tr.find("input.refund_each_price").val();
 
     var quantity;
     if(type == 'add')
@@ -4377,29 +4318,36 @@
     if(quantity === 0 || quantity === "0")
     {
       tr.remove();
+      calculateRefundTotal();
     }
     else
     {
-      let refund_measurement = tr.find("input.measurement_input").val();
-      let refund_item_total = refund_each_price * quantity * refund_measurement;
-      let refund_item_total_text = numberFormat(refund_item_total);
+      var product_id = $(_this).siblings("input[name='product_id[]']").val();
+      var refund_measurement = tr.find("input.measurement_input").val();
 
-      tr.find("td.refund_price").children("input.refund_item_price").val(refund_item_total);
-      limitDecimal(tr.find("td.refund_price").children("input.refund_item_price"), 2);
+      var refund_final_quantity = quantity * parseFloat(refund_measurement).toFixed(3);
 
-      if(type == 'number')
-      {
-        $(_this).val(quantity);
-        $(_this).siblings("input.temp_input").val(quantity);
-      }
-      else
-      {
-        $(_this).siblings("input.quantity_input").val(quantity);
-        $(_this).siblings("input.temp_input").val(quantity);
-      }
+      $.get("{{ route('getProductPrice') }}", { "product_id" : product_id, "quantity" : refund_final_quantity }, function(result){
+
+        let refund_item_total = result.product_price * refund_final_quantity;
+
+        tr.find("td.refund_price").children("input.refund_item_price").val(refund_item_total);
+        limitDecimal(tr.find("td.refund_price").children("input.refund_item_price"), 2);
+
+        if(type == 'number')
+        {
+          $(_this).val(quantity);
+          $(_this).siblings("input.temp_input").val(quantity);
+        }
+        else
+        {
+          $(_this).siblings("input.quantity_input").val(quantity);
+          $(_this).siblings("input.temp_input").val(quantity);
+        }
+
+        calculateRefundTotal();
+      });
     }
-
-    calculateRefundTotal();
   }
 
   function refundNow()
@@ -4557,8 +4505,9 @@
   {
     $("input.measurement_input").unbind('keyup');
     $("input.measurement_input").on("keyup", function(e){
-      limitDecimal($(this), 3);
-      let refund_measurement = parseFloat($(this).val());
+      var _this = $(this);
+      limitDecimal(_this, 3);
+      let refund_measurement = parseFloat(_this.val());
 
       if(isNaN(refund_measurement))
       { 
@@ -4574,14 +4523,7 @@
         refund_measurement = refund_measurement * -1;
       }
 
-      $(this).val(refund_measurement);
-
-      let refund_quantity = $(this).parent().siblings(".refund_quantity").find("input").val();
-      let refund_price = $(this).parent().siblings(".refund_price").find("input.refund_each_price").val();
-
-      let total_refund_price = refund_quantity * refund_measurement * refund_price;
-      total_refund_price = total_refund_price.toFixed(2);
-      $(this).parent().siblings(".refund_price").find("input.refund_item_price").val(total_refund_price);
+      _this.val(refund_measurement);
 
       if(e.which == 13)
       {
@@ -4589,7 +4531,19 @@
       }
       else
       {
-        calculateRefundTotal();
+        var product_id = _this.parent().siblings(".refund_quantity").find("input[name='product_id[]']").val();
+        let refund_quantity = _this.parent().siblings(".refund_quantity").find("input").val();
+
+        var refund_final_quantity = refund_quantity * parseFloat(refund_measurement).toFixed(3);
+
+        $.get("{{ route('getProductPrice') }}", { "product_id" : product_id, "quantity" : refund_final_quantity }, function(result){
+
+          let refund_item_total = result.product_price * refund_final_quantity;
+          console.log(refund_item_total);
+
+          _this.parent().siblings(".refund_price").find("input.refund_item_price").val(refund_item_total);
+          calculateRefundTotal();
+        });
       }
     });
   }
@@ -4764,7 +4718,87 @@
         loggedOutAlert();
       }
     });
-    
+  }
+
+  function generateRefundItem(product_detail)
+  {
+    var refund_item_quantity = 1;
+    var refund_final_quantity = 1;
+    var tr;
+    var refund_measurement;
+
+    if($(".refund_item_list table tbody tr[item_id='"+product_detail.id+"']").length > 0)
+    {
+      tr = $(".refund_item_list table tbody tr[item_id='"+product_detail.id+"']");
+      refund_item_quantity = tr.find("input.quantity_input").val();
+      refund_measurement = tr.find("input.measurement_input").val();
+
+      refund_item_quantity = parseInt(refund_item_quantity) + 1;
+      refund_final_quantity = refund_item_quantity * parseFloat(refund_measurement).toFixed(3);
+    }
+
+    $.get("{{ route('getProductPrice') }}", { "barcode" : product_detail.barcode, "quantity" : refund_final_quantity }, function(result){
+      if($(".refund_item_list table tbody tr[item_id='"+product_detail.id+"']").length > 0)
+      {
+        tr = $(".refund_item_list table tbody tr[item_id='"+product_detail.id+"']");
+
+        let refund_item_total = result.product_price * refund_final_quantity;
+        tr.find("input.quantity_input").val(refund_item_quantity);
+        tr.find("input.temp_input").val(refund_item_quantity);
+        tr.find("td.refund_price").children("input.refund_item_price").val(refund_item_total);
+      }
+      else
+      {
+        var html = "";
+        html += "<tr item_id='"+product_detail.id+"'>";
+        html += "<td>"+product_detail.product_name+"</td>";
+        html += "<td class='refund_quantity'>";
+        html += "<div class='quantity'>";
+        html += "<i class='fa fa-minus' onclick='editRefundItem(this, \"minus\")'></i>";
+        html += "<input type='number' style='margin: 0 9px;' name='quantity_"+product_detail.id+"' class='quantity_input' value='1' item_id='"+product_detail.id+"' onkeyup='editRefundItem(this, \"number\")' />";
+        html += "<input type='hidden' class='temp_input' value='1' />";
+        html += "<input type='hidden' name='product_id[]' value='"+product_detail.id+"' />";
+        html += "<i class='fa fa-plus' onclick='editRefundItem(this, \"add\")'></i>";
+        html += "</div>";
+        html += "</td>";
+
+        html += "<td class='refund_measurement'>";
+
+        if(product_detail.measurement == "kilogram")
+        {
+          html += "<input type='number' class='form-control measurement_input' name='measurement_"+product_detail.id+"' value='1' /> KG";
+        }
+        else if(product_detail.measurement == "meter")
+        {
+          html += "<input type='number' class='form-control measurement_input' name='measurement_"+product_detail.id+"' value='1' /> Meter";
+        }
+        else
+        {
+          html += "<input type='hidden' class='measurement_input' name='measurement_"+product_detail.id+"' value='1' />";
+        }
+
+        html += "<input type='hidden' name='measurement_type_"+product_detail.id+"' value='"+product_detail.measurement+"' />";
+        html += "</td>";
+        html += "<td class='refund_price'>";
+        html += "<span>RM </span><input type='number' class='form-control refund_item_price' name='price_"+product_detail.id+"' value='"+result.product_price_text+"' /><input type='hidden' class='refund_each_price' value='"+result.product_price+"' />"
+        html += "</td>";
+        html += "<td><button type='button' class='btn btn-dark items-cancel' onclick='removeRefundItem(event, this)'>Cancel</button></td>";
+        html += "</tr>";
+
+        $(".refund_item_list table tbody").prepend(html);
+
+        enableRefundPriceEntry();
+        enableRefundMeasurementEntry();
+      }
+
+      calculateRefundTotal();
+
+    }).fail(function(xhr){
+      if(xhr.status == 401)
+      {
+        loggedOutAlert();
+      }
+    });
   }
 
 </script>

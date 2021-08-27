@@ -18,6 +18,8 @@ class refund_detail extends Model
       'measurement_type',
       'measurement',
       'price',
+      'wholesale_price',
+      'wholesale_quantity',
       'subtotal',
       'total',
     ];

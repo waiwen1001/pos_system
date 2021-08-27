@@ -3564,6 +3564,10 @@ class HomeController extends Controller
           $measurement_type_name = "measurement_type_".$id;
           $measurement_type = $request->$measurement_type_name;
 
+          if($measurement_type == "null")
+          {
+            $measurement_type = null;
+          }
           $total_quantity += $quantity;
 
           refund_detail::create([
@@ -3576,7 +3580,7 @@ class HomeController extends Controller
             'quantity' => $quantity,
             'measurement_type' => $measurement_type,
             'measurement' => $measurement,
-            'price' => ($refund_price / $quantity),
+            'price' => ($refund_price / $quantity / $measurement),
             'subtotal' => $refund_price,
             'total' => $refund_price
           ]);
@@ -3627,7 +3631,7 @@ class HomeController extends Controller
     {
       $transaction_detail = transaction_detail::where('id', $request->transaction_detail_id)->first();
 
-      $response = $this->productPrice($transaction_detail->barcode, $request->measurement);
+      $response = $this->productPrice($transaction_detail->barcode, $request->measurement, null);
       if($response->wholesale == 1)
       {
         transaction_detail::where('id', $transaction_detail->id)->update([
@@ -3681,13 +3685,25 @@ class HomeController extends Controller
 
     public function getProductPrice(Request $request)
     {
-      $response = $this->productPrice($request->barcode, $request->quantity);
+      $response = $this->productPrice($request->barcode, $request->quantity, $request->product_id);
       return response()->json($response);
     }
 
-    public function productPrice($barcode, $quantity)
+    public function productPrice($barcode, $quantity, $product_id = null)
     {
-      $product_detail = product::where('barcode', $barcode)->first();
+      if(!$product_id && $barcode)
+      {
+        $product_detail = product::where('barcode', $barcode)->first();
+      }
+      elseif($product_id && !$barcode)
+      {
+        $product_detail = product::where('id', $product_id)->first();
+      }
+      else
+      {
+        dd("no barcode and product ID ?");
+      }
+      
       if($product_detail)
       {
         $now = date('Y-m-d H:i:s');
