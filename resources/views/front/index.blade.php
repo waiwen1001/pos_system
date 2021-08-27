@@ -1422,6 +1422,15 @@
   });
 
   $(document).ready(function(){
+    if(localStorage.getItem('barcode_toggle') == 'true'){
+      $("#barcode_toggle_checkbox").prop('checked',true);
+      barcode_toggle = true;
+      $("#barcode_toggle_checkbox").change();
+    }else{
+      $("#barcode_toggle_checkbox").prop('checked',false);
+      barcode_toggle = false;
+      $("#barcode_toggle_checkbox").change();
+    }
 
     $('.form-check-input').iCheck({
       checkboxClass: 'icheckbox_square-blue',
@@ -1986,6 +1995,7 @@
 
     $("#barcode_toggle_checkbox").change(function(){
       barcode_toggle = $(this).is(":checked");
+      localStorage.setItem('barcode_toggle',barcode_toggle);
     });
 
     $("#refundNowBtn").click(function(){
