@@ -5,11 +5,11 @@ namespace App;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class transaction extends Model
+class delivery extends Model
 {
     use SoftDeletes;
 
-    protected $table = 'transaction';
+    protected $table = 'delivery';
     protected $fillable = [
       'session_id',
       'opening_id',
@@ -34,6 +34,7 @@ class transaction extends Model
       'void_date',
       'completed',
       'completed_by',
-      'transaction_date'
+      'transaction_date',
+      'synced'
     ];
 }

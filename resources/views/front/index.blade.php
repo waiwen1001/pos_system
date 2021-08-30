@@ -241,6 +241,15 @@
                         Bagi Ke Ketua
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showBagiKeKetua()"></span>
                       </button>
+                      <div class="dropdown-divider"></div>
+                      <button class="dropdown-item" id="foodMartBtn" {{ $opening == 1 ? '' : 'disabled' }}>
+                        FoodMart
+                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showFoodMart()"></span>
+                      </button>
+                      <button class="dropdown-item" id="grabMartBtn" {{ $opening == 1 ? '' : 'disabled' }}>
+                        GrabMart
+                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showGrabMart()"></span>
+                      </button>
                     @endif
                     @if($user->user_type == 1)
                       <div class="dropdown-divider"></div>
@@ -1359,6 +1368,35 @@
     </div>
   </div>
 
+  <div class="modal fade" id="deliveryModal" tabindex="-1" role="dialog" aria-labelledby="deliveryModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deliveryModalLabel">Delivery</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" id="syncHQContent" style="text-align: center;">
+          <div class="delivery_box">
+            <div id="foodpanda_img">
+              <img src="{{ asset('assets/images/foodpanda.png') }}" />
+            </div>
+            <div id="grab_img" style="display: none;">
+              <img src="{{ asset('assets/images/grab.png') }}" />
+            </div>
+            <h5>Are you sure you want to submit this delivery order?</h5>
+          </div>
+          <input type="hidden" name="delivery_type" />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-success" id="deliveryComfirmBtn">Comfirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </body>
 
 <script>
@@ -2049,6 +2087,30 @@
 
     $("#remove_transaction_measurement").click(function(){
       removeTransactionMeasurement();
+    });
+
+    $("#foodMartBtn, #grabMartBtn").click(function(){
+
+      $("#foodpanda_img").hide();
+      $("#grab_img").hide();
+      $("input[name='delivery_type']").val("");
+
+      if($(this).attr("id") == "foodMartBtn")
+      {
+        $("input[name='delivery_type']").val("pandamart");
+        $("#foodpanda_img").show();
+      }
+      else if($(this).attr("id") == "grabMartBtn")
+      {
+        $("input[name='delivery_type']").val("grabmart");
+        $("#grab_img").show();
+      }
+
+      $("#deliveryModal").modal('show');
+    });
+
+    $("#deliveryComfirmBtn").click(function(){
+      submitDelivery();
     });
 
   });
@@ -3220,7 +3282,7 @@
           opening = 1;
 
           $("#openingBtn").attr("disabled", true);
-          $("#closingBtn, #floatInBtn, #floatOutBtn, #bagiKeKetuaBtn, #refundBtn").attr("disabled", false);
+          $("#closingBtn, #floatInBtn, #floatOutBtn, #bagiKeKetuaBtn, #refundBtn, #foodMartBtn, #grabMartBtn").attr("disabled", false);
         }
       }).fail(function(xhr){
         $("#submitOpening").attr("disabled", false);
@@ -3357,7 +3419,7 @@
         disablePosSystem();
 
         $("#openingBtn").attr("disabled", false);
-        $("#closingBtn, #floatInBtn, #floatOutBtn, #bagiKeKetuaBtn, #refundBtn").attr("disabled", true);
+        $("#closingBtn, #floatInBtn, #floatOutBtn, #bagiKeKetuaBtn, #refundBtn, #foodMartBtn, #grabMartBtn").attr("disabled", true);
 
         $("#daily_closing_content").html("This cashier are now closed.");
         $("#daily_closing_toast").toast('show');
@@ -3510,14 +3572,14 @@
           confirmButtonText: 'OK',
         });
       }
-      else
+      else if(result.error == 2)
       {
         // no session to sync
         if(manual == 3)
         {
           logout();
         }
-        else if(manual == 2 && result.error == 2)
+        else if(manual == 2)
         {
           setTimeout(function(){
             $("#syncHQModal").modal('hide');
@@ -4549,7 +4611,6 @@
         $.get("{{ route('getProductPrice') }}", { "product_id" : product_id, "quantity" : refund_final_quantity }, function(result){
 
           let refund_item_total = result.product_price * refund_final_quantity;
-          console.log(refund_item_total);
 
           _this.parent().siblings(".refund_price").find("input.refund_item_price").val(refund_item_total);
           calculateRefundTotal();
@@ -4804,6 +4865,58 @@
       calculateRefundTotal();
 
     }).fail(function(xhr){
+      if(xhr.status == 401)
+      {
+        loggedOutAlert();
+      }
+    });
+  }
+
+  function submitDelivery()
+  {
+    $("#deliveryComfirmBtn").attr("disabled", true);
+    var transaction_id = $("#transaction_id").val();
+    if(!transaction_id)
+    {
+      setTimeout(function(){
+        Swal.fire({
+          title: "Empty transaction.",
+          icon: 'error',
+          confirmButtonText: 'OK',
+        }).then((result) => {
+          /* Read more about isConfirmed, isDenied below */
+          if (result.isConfirmed) {
+            swal.close();
+          }
+        });
+
+        $("#deliveryComfirmBtn").attr("disabled", false);
+      }, 500);
+    
+      return;
+    }
+
+    var delivery_type = $("input[name='delivery_type']").val();
+
+    $.post("{{ route('submitDelivery') }}", {"_token" : "{{ csrf_token() }}", "transaction_id" : transaction_id, "delivery_type" : delivery_type }, function(result){
+
+      if(result.error == 0)
+      {
+        $("#transaction_id").val("");
+        submitClearTransaction(0);
+        $("#total_quantity").html("");
+        $("#total_quantity").hide();
+
+        Swal.fire({
+          icon: 'success',
+          text: result.message,
+        });
+      }
+      $("#deliveryComfirmBtn").attr("disabled", false);
+      $("#deliveryModal").modal('hide');
+
+    }).fail(function(xhr){
+      $("#deliveryComfirmBtn").attr("disabled", false);
       if(xhr.status == 401)
       {
         loggedOutAlert();

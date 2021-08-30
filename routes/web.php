@@ -52,6 +52,7 @@ Route::post('/editUser', 'HomeController@editUser')->name('editUser');
 Route::post('/saveCashier', 'HomeController@createCashier')->name('createCashier');
 Route::post('/deleteCashier', 'HomeController@deleteCashier')->name('deleteCashier');
 Route::post('/editCashier', 'HomeController@editCashier')->name('editCashier');
+Route::post('/submitDelivery', 'HomeController@submitDelivery')->name('submitDelivery');
 
 Route::post('/saveShortcutKey', 'HomeController@saveShortcutKey')->name('saveShortcutKey');
 

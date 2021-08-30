@@ -17,6 +17,8 @@ use App\Invoice_sequence;
 use App\profile;
 use App\refund;
 use App\refund_detail;
+use App\delivery;
+use App\delivery_detail;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -425,7 +427,8 @@ class HomeController extends Controller
             'session_id' => $session_id,
             'ip' => $this->ip,
             'cashier_name' => $cashier_name,
-            'user_id' => $user->id
+            'user_id' => $user->id,
+            'user_name' => $user->name
           ]);
 
           $transaction_wholesale_price = null;
@@ -2181,8 +2184,10 @@ class HomeController extends Controller
       $cash_float = cash_float::where('synced', null)->get();
       $refund = refund::where('synced', null)->get();
       $refund_detail = refund_detail::leftJoin('refund', 'refund.id', '=', 'refund_detail.refund_id')->where('refund.synced', null)->select('refund_detail.*', 'refund.transaction_no')->get();
+      $delivery = delivery::where('synced', null)->get();
+      $delivery_detail = delivery_detail::leftJoin('delivery', 'delivery.id', '=', 'delivery_detail.delivery_id')->where('delivery.synced', null)->select('delivery_detail.*', 'delivery.transaction_no')->get();
 
-      if(count($session_list) == 0 && count($transaction) == 0 && count($transaction_detail) == 0 && count($cashier) == 0 && count($cash_float) == 0 && count($refund) == 0 && count($refund_detail) == 0)
+      if(count($session_list) == 0 && count($transaction) == 0 && count($transaction_detail) == 0 && count($cashier) == 0 && count($cash_float) == 0 && count($refund) == 0 && count($refund_detail) == 0 && count($delivery) == 0 && count($delivery_detail) == 0)
       {
         $response = new \stdClass();
         $response->error = 2;
@@ -2201,10 +2206,12 @@ class HomeController extends Controller
           'cashier' => $cashier,
           'cash_float' => $cash_float,
           'refund' => $refund,
-          'refund_detail' => $refund_detail
+          'refund_detail' => $refund_detail,
+          'delivery' => $delivery,
+          'delivery_detail' => $delivery_detail
         ]);
 
-        if($response['error'] == 0)
+        if($response['error'] === 0)
         {
           session::whereIn('id', $session_list)->where('closed', 1)->update([
             'synced' => 1
@@ -2219,6 +2226,10 @@ class HomeController extends Controller
           ]);
 
           refund::where('synced', null)->update([
+            'synced' => 1
+          ]);
+
+          delivery::where('synced', null)->update([
             'synced' => 1
           ]);
 
@@ -3867,6 +3878,113 @@ class HomeController extends Controller
 
         return $response;
       }
+    }
+
+    public function submitDelivery(Request $request)
+    {
+      $user = Auth::user();
+      $transaction = transaction::where('id', $request->transaction_id)->first();
+      $transaction_detail = transaction_detail::where('transaction_id', $request->transaction_id)->get();
+
+      if($transaction && count($transaction_detail) > 0)
+      {
+        $total = 0;
+        $subtotal = 0;
+        $total_discount = 0;
+
+        foreach($transaction_detail as $detail)
+        {
+          $total = round($total, 2) + round($detail->total, 2);
+          $subtotal = round($subtotal, 2) + round($detail->subtotal, 2);
+          $total_discount = round($total_discount, 2) + round($detail->total_discount, 2);
+        }
+
+        if($transaction->total_discount)
+        {
+          $total_discount = $transaction->total_discount;
+        }
+
+        $total = $total - $total_discount;
+        $total_summary = $this->roundDecimal($total);
+        $total = $total_summary->final_total;
+        $round_off = $total_summary->round_off;
+
+        $count = delivery::whereBetween('created_at', [date('Y-m-d 00:00:00'), date('Y-m-d 23:59:59')])->count();
+        $count++;
+        for($a = strlen($count); $a < 5; $a++)
+        {
+          $count = "0".$count;
+        }
+
+        $transaction_no = "DE".date('Ymd').$count;
+        $delivery_type = $request->delivery_type;
+        $delivery_type_text = null;
+
+        if($delivery_type == "pandamart")
+        {
+          $delivery_type_text = "PandaMart";
+        }
+        elseif($delivery_type == "grabmart")
+        {
+          $delivery_type_text = "GrabMart";
+        }
+
+        $delivery = delivery::create([
+          'session_id' => $transaction->session_id,
+          'opening_id' => $transaction->opening_id,
+          'ip' => $transaction->ip,
+          'cashier_name' => $transaction->cashier_name,
+          'transaction_no' => $transaction_no,
+          'user_id' => $transaction->user_id,
+          'user_name' => $transaction->user_name,
+          'subtotal' => $subtotal,
+          'total_discount' => $transaction->total_discount,
+          'voucher_id' => $transaction->voucher_id,
+          'voucher_code' => $transaction->voucher_code,
+          'delivery_type' => $delivery_type,
+          'delivery_type_text' => $delivery_type_text,
+          'total' => $total,
+          'round_off' => $round_off,
+          'completed' => 1,
+          'completed_by' => $user->id,
+          'transaction_date' => date('Y-m-d H:i:s'),
+        ]);
+
+        foreach($transaction_detail as $detail)
+        {
+          delivery_detail::create([
+            'delivery_id' => $delivery->id,
+            'department_id' => $detail->department_id,
+            'category_id' => $detail->category_id,
+            'product_id' => $detail->product_id,
+            'barcode' => $detail->barcode,
+            'product_name' => $detail->product_name,
+            'quantity' => $detail->quantity,
+            'measurement_type' => $detail->measurement_type,
+            'measurement' => $detail->measurement,
+            'price' => $detail->price,
+            'wholesale_price' => $detail->wholesale_price,
+            'discount' => $detail->discount,
+            'subtotal' => $detail->subtotal,
+            'total' => $detail->total,
+          ]);
+        }
+
+        transaction::where('id', $request->transaction_id)->forceDelete();
+        transaction_detail::where('transaction_id', $request->transaction_id)->forceDelete();
+
+        $response = new \stdClass();
+        $response->error = 0;
+        $response->message = "Order successfully submitted.";
+
+        return response()->json($response);
+      }
+
+      $response = new \stdClass();
+      $response->error = 1;
+      $response->message = "Transaction not found.";
+
+      return response()->json($response);
     }
 
     public function init()
