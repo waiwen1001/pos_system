@@ -1391,7 +1391,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-success" id="deliveryComfirmBtn">Comfirm</button>
+          <button type="button" class="btn btn-success" id="deliveryConfirmBtn">Confirm</button>
         </div>
       </div>
     </div>
@@ -2109,7 +2109,7 @@
       $("#deliveryModal").modal('show');
     });
 
-    $("#deliveryComfirmBtn").click(function(){
+    $("#deliveryConfirmBtn").click(function(){
       submitDelivery();
     });
 
@@ -4874,7 +4874,7 @@
 
   function submitDelivery()
   {
-    $("#deliveryComfirmBtn").attr("disabled", true);
+    $("#deliveryConfirmBtn").attr("disabled", true);
     var transaction_id = $("#transaction_id").val();
     if(!transaction_id)
     {
@@ -4890,7 +4890,7 @@
           }
         });
 
-        $("#deliveryComfirmBtn").attr("disabled", false);
+        $("#deliveryConfirmBtn").attr("disabled", false);
       }, 500);
     
       return;
@@ -4912,11 +4912,11 @@
           text: result.message,
         });
       }
-      $("#deliveryComfirmBtn").attr("disabled", false);
+      $("#deliveryConfirmBtn").attr("disabled", false);
       $("#deliveryModal").modal('hide');
 
     }).fail(function(xhr){
-      $("#deliveryComfirmBtn").attr("disabled", false);
+      $("#deliveryConfirmBtn").attr("disabled", false);
       if(xhr.status == 401)
       {
         loggedOutAlert();

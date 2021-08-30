@@ -421,7 +421,7 @@ class HomeController extends Controller
           if($session)
           {
             $session_id = $session->id;
-          } 
+          }
 
           $transaction = transaction::create([
             'session_id' => $session_id,
