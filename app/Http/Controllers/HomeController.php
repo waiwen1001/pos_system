@@ -2178,7 +2178,7 @@ class HomeController extends Controller
       }
 
       $transaction = transaction::whereIn('session_id', $session_list)->get();
-      $transaction_detail = transaction_detail::leftJoin('transaction', 'transaction.id', '=', 'transaction_detail.transaction_id')->whereIn('transaction.session_id', $session_list)->select('transaction_detail.*', 'transaction.session_id')->get();
+      $transaction_detail = transaction_detail::leftJoin('transaction', 'transaction.id', '=', 'transaction_detail.transaction_id')->whereIn('transaction.session_id', $session_list)->select('transaction_detail.*', 'transaction.session_id', 'transaction.created_at as transaction_date')->get();
 
       $cashier = cashier::where('synced', null)->where('closing', 1)->get();
       $cash_float = cash_float::where('synced', null)->get();
@@ -3120,7 +3120,7 @@ class HomeController extends Controller
 
     public function testing()
     {
-      dd(env('branchSyncURL'));
+      dd(env('DB_DATABASE'));
       print_r("start ori".date("H:i:s") . substr((string)microtime(), 1, 8).'<br>');
       $seq = Invoice_sequence::first();
       $now = now();
