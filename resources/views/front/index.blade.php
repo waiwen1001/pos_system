@@ -243,7 +243,7 @@
                       </button>
                       <div class="dropdown-divider"></div>
                       <button class="dropdown-item" id="foodMartBtn" {{ $opening == 1 ? '' : 'disabled' }}>
-                        FoodMart
+                        PandaMart
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showFoodMart()"></span>
                       </button>
                       <button class="dropdown-item" id="grabMartBtn" {{ $opening == 1 ? '' : 'disabled' }}>
