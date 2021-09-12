@@ -276,12 +276,15 @@
                           Sync HQ product list
                           <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="SCsyncHQProductList()"></span>
                         </button>
+                        <div class="dropdown-divider"></div>
+                        <button class="dropdown-item" onclick="showRangeDailyReportPage()">
+                          Previous closing report
+                        </button>
                       @endif
                       <button class="dropdown-item" onclick="showKeySetup()">
                         Shortcut key setup
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showKeySetup()"></span>
                       </button>
-
                     @endif
                   </div>
                 </div>
@@ -4922,6 +4925,11 @@
         loggedOutAlert();
       }
     });
+  }
+
+  function showRangeDailyReportPage()
+  {
+    window.open("{{ route('getRangeClosingReport') }}");
   }
 
 </script>

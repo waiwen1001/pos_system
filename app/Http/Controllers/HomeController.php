@@ -2541,8 +2541,15 @@ class HomeController extends Controller
       }
 
       $now = date('d/m/Y');
-      $session = session::orderBy('id', 'desc')->first();
-      // $session = session::where('id', 25)->first();
+      
+      if(isset($_GET['session_id']))
+      {
+        $session = session::where('id', $_GET['session_id'])->first();
+      }
+      else
+      {
+        $session = session::orderBy('id', 'desc')->first();
+      }
 
       $cashier = cashier::where('session_id', $session->id)->first();
       if(!$cashier)
@@ -4000,6 +4007,22 @@ class HomeController extends Controller
       }
 
       return $refund_invoice;
+    }
+
+    public function getRangeClosingReport(Request $request)
+    {
+      $date_from = date('Y-m-d');
+      $date_to = date('Y-m-d');
+
+      if($request->date_from && $request->date_to)
+      {
+        $date_from = date('Y-m-d', strtotime($request->date_from));
+        $date_to = date('Y-m-d', strtotime($request->date_to));
+      }
+
+      $session_list = session::where('opening_date_time', '>=', ($date_from." 00:00:00"))->where('closing_date_time', '<=', ($date_to." 23:59:59"))->where('closed', 1)->get();
+
+      return view('front.range_closing_report', compact('date_from', 'date_to', 'session_list'));
     }
 }
 

@@ -55,6 +55,7 @@ Route::post('/editCashier', 'HomeController@editCashier')->name('editCashier');
 Route::post('/submitDelivery', 'HomeController@submitDelivery')->name('submitDelivery');
 
 Route::post('/saveShortcutKey', 'HomeController@saveShortcutKey')->name('saveShortcutKey');
+Route::get('/closing_report_range', 'HomeController@getRangeClosingReport')->name('getRangeClosingReport');
 
 // Refund
 Route::post('/searchAndAddItemRefund', 'HomeController@searchAndAddItemRefund')->name('searchAndAddItemRefund');
