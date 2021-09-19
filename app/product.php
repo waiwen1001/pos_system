@@ -15,6 +15,8 @@ class product extends Model
       'category_id',
       'barcode',
       'product_name',
+      'cost',
+      'hide_cost_alert',
       'price',
       'uom',
       'measurement',

@@ -2170,6 +2170,8 @@
         $("input[name=barcode_manual]").iCheck('uncheck');
 
         $("#items-table tbody tr:first-child").addClass("new_item");
+
+        checkCostPrice(product);
       }
       $("#barcode").val('');
     }).fail(function(xhr){
@@ -2716,7 +2718,7 @@
         newWin.document.write('<html><body onload="window.print()">'+receiptPrint.innerHTML+'</body></html>');
         newWin.document.close();
 
-        setTimeout(function(){newWin.close();},10);
+        setTimeout(function(){newWin.close();},100);
       }
     }).fail(function(xhr){
       if(xhr.status == 401)
@@ -2911,6 +2913,8 @@
             $("#round_off_box").show();
           }
           $("#round_off").html(transaction_summary.round_off);
+
+          checkCostPrice(result.product);
         }
       }
     }).fail(function(xhr){
@@ -4784,6 +4788,8 @@
           unit_total_price = numberFormat(unit_total_price);
 
           $("#unit_total_price").html(unit_total_price);
+
+          checkCostPrice(result.product);
         }
       }
     }).fail(function(xhr){
@@ -4930,6 +4936,68 @@
   function showRangeDailyReportPage()
   {
     window.open("{{ route('getRangeClosingReport') }}");
+  }
+
+  function checkCostPrice(product)
+  {
+    if(product.cost && product.using_price && product.hide_cost_alert == null)
+    {
+      if(parseFloat(product.using_price).toFixed(2) < parseFloat(product.cost).toFixed(2))
+      {
+        var cost_html = "";
+        cost_html += "<table class='table'>";
+        cost_html += "<tr>";
+        cost_html += "<td style='text-align: left;'>Barcode : </td>";
+        cost_html += "<td style='text-align: left;'>"+product.barcode+"</td>";
+        cost_html += "</tr>";
+        cost_html += "<tr>";
+        cost_html += "<td style='text-align: left;'>Product name : </td>";
+        cost_html += "<td style='text-align: left;'>"+product.product_name+"</td>";
+        cost_html += "</tr>";
+        cost_html += "<tr>";
+        cost_html += "<td style='text-align: left;'>Cost price : </td>";
+        cost_html += "<td style='text-align: left;'>RM "+numberFormat(product.cost)+"</td>";
+        cost_html += "</tr>";
+        cost_html += "<tr>";
+        cost_html += "<td style='text-align: left; border-bottom: 1px solid #dee2e6;'>Sales price : </td>";
+        cost_html += "<td style='text-align: left; border-bottom: 1px solid #dee2e6; color: red;'>RM "+numberFormat(product.using_price)+"</td>";
+        cost_html += "</tr>";
+        cost_html += "</table>";
+        cost_html += '<div class="checkbox icheck" style="display: inline-block; margin-left: 10px;">';
+        cost_html += '<label>';
+        cost_html += "<input class='form-check-input' type='checkbox' value='"+product.id+"' id='cost_dont_show' /> Don't show again today";
+        cost_html += '</label>';
+        cost_html += '</div>';
+
+        Swal.fire({
+          title: 'Sales price is lower than cost price.',
+          html: cost_html,
+          icon: 'warning',
+        });
+
+        $('#cost_dont_show').iCheck({
+          checkboxClass: 'icheckbox_square-blue',
+          radioClass: 'iradio_square-blue',
+          increaseArea: '20%' /* optional */
+        });
+
+        $("#cost_dont_show").on("ifChanged", function(){
+          updateDontShowToday(this);
+        });
+      }
+    }
+  }
+
+  function updateDontShowToday(_this)
+  {
+    $.post("{{ route('updateDontShowToday') }}", { "_token" : "{{ csrf_token() }}", "product_id" : $(_this).val(), "show" : $(_this).is(":checked") }, function(){
+
+    }).fail(function(xhr){
+      if(xhr.status == 401)
+      {
+        loggedOutAlert();
+      }
+    });
   }
 
 </script>

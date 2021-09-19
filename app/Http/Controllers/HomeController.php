@@ -1144,6 +1144,8 @@ class HomeController extends Controller
         }
       }
 
+      $product->using_price = $product->price;
+
       $transaction_detail->price = $product->price;
 
       if($request->type == "number")
@@ -1390,6 +1392,11 @@ class HomeController extends Controller
         }
       }
 
+      if($is_wholesale == 1)
+      {
+        $product->using_price = $transaction_wholesale_price;
+      }
+
       if($total_quantity == 0)
       {
         transaction_detail::where('id', $request->item_id)->delete();
@@ -1427,6 +1434,7 @@ class HomeController extends Controller
       $response->total = number_format($total, 2);
       $response->item_quantity = $item_quantity;
       $response->transaction_summary = $transaction_summary;
+      $response->product = $product;
       return response()->json($response);
     }
 
@@ -2233,6 +2241,10 @@ class HomeController extends Controller
             'synced' => 1
           ]);
 
+          product::where('hide_cost_alert', 1)->update([
+            'hide_cost_alert' => null
+          ]);
+
           if($resync == 1)
           {
             $response = new \stdClass();
@@ -2285,6 +2297,7 @@ class HomeController extends Controller
           'category_id' => $product['category_id'],
           'barcode' => $product['barcode'],
           'product_name' => $product['product_name'],
+          'cost' => $product['cost'],
           'price' => $product['price'],
           'uom' => $product['uom'],
           'measurement' => $product['measurement'],
@@ -2418,6 +2431,7 @@ class HomeController extends Controller
               'category_id' => $product['category_id'],
               'barcode' => $product['barcode'],
               'product_name' => $product['product_name'],
+              'cost' => $product['cost'],
               'price' => $product['price'],
               'uom' => $product['uom'],
               'measurement' => $product['measurement'],
@@ -3650,6 +3664,7 @@ class HomeController extends Controller
       $transaction_detail = transaction_detail::where('id', $request->transaction_detail_id)->first();
 
       $response = $this->productPrice($transaction_detail->barcode, $request->measurement, null);
+      $product_detail = $response->product;
       if($response->wholesale == 1)
       {
         transaction_detail::where('id', $transaction_detail->id)->update([
@@ -3680,6 +3695,7 @@ class HomeController extends Controller
       $response->error = 0;
       $response->message = "Success";
       $response->transaction_summary = $transaction_summary;
+      $response->product = $product_detail;
 
       return response()->json($response);
     }
@@ -3868,9 +3884,12 @@ class HomeController extends Controller
           }
         }
 
+        $product_detail->using_price = $product_price;
+
         $response = new \stdClass();
         $response->error = 0;
         $response->message = "Success";
+        $response->product = $product_detail;
         $response->product_price = $product_price;
         $response->product_price_text = number_format($product_price, 2);
         $response->wholesale = $wholesale;
@@ -3992,6 +4011,22 @@ class HomeController extends Controller
       $response->message = "Transaction not found.";
 
       return response()->json($response);
+    }
+
+    public function updateDontShowToday(Request $request)
+    {
+      if($request->product_id)
+      {
+        $hide = null;
+        if($request->show == "true")
+        {
+          $hide = 1;
+        }
+
+        product::where('id', $request->product_id)->update([
+          'hide_cost_alert' => $hide
+        ]);
+      }
     }
 
     public function init()
