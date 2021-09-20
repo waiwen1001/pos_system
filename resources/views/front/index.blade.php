@@ -4030,7 +4030,7 @@
           $("input[name='cash_float']").focus();
         }
       }, 500);
-    },10);
+    },100);
   }
 
   function searchRelatedItem()
@@ -4279,7 +4279,7 @@
     newWin.document.write('<html><body onload="window.print()" style="text-align:center;">'+html+'</body></html>');
     newWin.document.close();
 
-    setTimeout(function(){newWin.close();},10);
+    setTimeout(function(){newWin.close();},100);
   }
 
   function loggedOutAlert()
@@ -4535,7 +4535,7 @@
         newWin.document.write('<html><body onload="window.print()">'+receiptPrint.innerHTML+'</body></html>');
         newWin.document.close();
 
-        setTimeout(function(){newWin.close();},10);
+        setTimeout(function(){newWin.close();},100);
       }
     }).fail(function(xhr){
 
