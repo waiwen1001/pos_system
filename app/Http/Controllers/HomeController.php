@@ -963,6 +963,10 @@ class HomeController extends Controller
         {
           $payment_type_text = "Boost";
         }
+        else
+        {
+          $payment_type_text = ucwords($payment_type);
+        }
       }
 
       $session = session::where('closed', null)->orderBy('id', 'desc')->first();
@@ -2607,7 +2611,7 @@ class HomeController extends Controller
         }
       }
 
-      $payment_type_list = ['cash', 'card', 'tng', 'maybank_qr', 'grab_pay', 'boost', 'other'];
+      $payment_type_list = ['cash', 'card', 'tng', 'maybank_qr', 'grab_pay', 'boost', 'pandamart', 'grabmart'];
       foreach($pos_cashier as $pos)
       {
         if(!$pos->cashier_name)
@@ -2899,7 +2903,9 @@ class HomeController extends Controller
           $total_maybank_qr_sales = 0;
           $total_grab_pay_sales = 0;
           $total_boost_sales = 0;
-          $total_other_sales = 0;
+          $total_foodpanda_sales = 0;
+          $total_grabmart_sales = 0;
+          // $total_other_sales = 0;
 
           foreach($shift_sales_transaction as $sales_transaction)
           {
@@ -2927,9 +2933,13 @@ class HomeController extends Controller
             {
               $total_boost_sales = $sales_transaction->total_sales;
             }
-            else
+            elseif($sales_transaction->payment_type == "pandamart")
             {
-              $total_other_sales = $sales_transaction->total_sales;
+              $total_foodpanda_sales = $sales_transaction->total_sales;
+            }
+            elseif($sales_transaction->payment_type == "grabmart")
+            {
+              $total_grabmart_sales = $sales_transaction->total_sales;
             }
           }
 
@@ -2965,7 +2975,9 @@ class HomeController extends Controller
           $shift->maybank_qr_sales = $total_maybank_qr_sales;
           $shift->grab_pay_sales = $total_grab_pay_sales;
           $shift->boost_sales = $total_boost_sales;
-          $shift->other_sales = $total_other_sales;
+          $shift->foodpanda_sales = $total_foodpanda_sales;
+          $shift->grabmart_sales = $total_grabmart_sales;
+          // $shift->other_sales = $total_other_sales;
           $shift->drawer_cash = $drawer_cash;
           $shift->boss_cash = $total_boss_cash;
           $shift->remain = $drawer_cash - $total_boss_cash;

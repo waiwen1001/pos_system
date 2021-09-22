@@ -47,12 +47,12 @@
   <table style="width: 85%; margin: auto;">
     <thead>
       <tr>
-        <th colspan="9">
+        <th colspan="10">
           <p style="font-weight: normal; font-size: 16px; margin: 0px; text-align: center;">Total Sales Report</p>
         </th>
       </tr>
       <tr>
-        <th colspan="9" style="text-align: center;">Tarikh : {{ $now }}</th>
+        <th colspan="10" style="text-align: center;">Tarikh : {{ $now }}</th>
       </tr>
     </thead>
     <tbody>
@@ -64,7 +64,9 @@
         <td>Maybank<br>QR code</td>
         <td>Grab<br>Pay</td>
         <td>Boost</td>
-        <td>Cek /<br>Lain lain</td>
+        <!-- <td>Cek /<br>Lain lain</td> -->
+        <td>Panda Mart</td>
+        <td>Grab Mart</td>
         <td>Jumlah<br>Jualan</td>
       </tr>
       @foreach($pos_cashier as $cashier)
@@ -76,7 +78,9 @@
           <td class='align_right'>{{ $cashier->maybank_qr }}</td>
           <td class='align_right'>{{ $cashier->grab_pay }}</td>
           <td class='align_right'>{{ $cashier->boost }}</td>
-          <td class='align_right'>{{ $cashier->other }}</td>
+          <!-- <td class='align_right'>{{ $cashier->other }}</td> -->
+          <td class='align_right'>{{ $cashier->pandamart }}</td>
+          <td class='align_right'>{{ $cashier->grabmart }}</td>
           <td class='align_right'>{{ $cashier->total }}</td>
         </tr>
       @endforeach
@@ -95,14 +99,14 @@
 
       <tr class="no_border">
         <td colspan="4" style="text-align: center; font-weight: bold;">Tambah</td>
-        <td class="no_border"></td>
+        <td colspan="2" class="no_border"></td>
         <td colspan="4" style="text-align: center; font-weight: bold;">Tolak</td>
       </tr>
 
       <tr class="no_border">
         <td colspan="3">Modal di kedai Sebelum Niaga :</td>
         <td class='align_right'>{{ $cash_float_result->opening }}</td>
-        <td class="no_border"></td>
+        <td colspan="2" class="no_border"></td>
         <td colspan="3">Pembelanjaan :</td>
         <td class='align_right'>{{ $cash_float_result->float_out }}</td>
       </tr>
@@ -110,7 +114,7 @@
       <tr class="no_border">
         <td colspan="3">Penambahan Tunai :</td>
         <td class='align_right'>{{ $cash_float_result->float_in }}</td>
-        <td class="no_border"></td>
+        <td colspan="2" class="no_border"></td>
         <td colspan="3">Baki Modal di kedai :</td>
         <td class='align_right'>{{ $cash_float_result->opening }}</td>
       </tr>
@@ -118,7 +122,7 @@
       <tr class="no_border">
         <td colspan="3">Jualan Tunai hari ini :</td>
         <td class='align_right'>{{ $cash_float_result->cash_sales }}</td>
-        <td class="no_border"></td>
+        <td colspan="2" class="no_border"></td>
         <td colspan="3">Jumlah refund :</td>
         <td class='align_right'>{{ $cash_float_result->total_refund }}</td>
       </tr>
@@ -128,7 +132,7 @@
           <td colspan="3">Berbeza Jumlah Closing</td>
           <td class='align_right'>{{ $cash_float_result->diff_text }}</td>
           
-          <td class="no_border"></td>
+          <td colspan="2" class="no_border"></td>
           <td colspan="3"></td>
           <td class='align_right'></td>
         </tr>
@@ -138,14 +142,14 @@
         <td colspan="2">Jumlah Tunai :</td>
         <td></td>
         <td class='align_right'>{{ $cash_float_result->total_cash }}</td>
-        <td class="no_border"></td>
+        <td colspan="2" class="no_border"></td>
         <td colspan="2">Jumlah :</td>
         <td></td>
         <td class='align_right'>{{ $cash_float_result->total_deduct }}</td>
       </tr>
 
       <tr class="no_border">
-        <td class="no_border" colspan="9" style="height: 27px;"></td>
+        <td class="no_border" colspan="10" style="height: 27px;"></td>
       </tr>
 
       <!-- @if($cash_float_result->total_boss > 0)
@@ -158,7 +162,7 @@
 
       <tr class="no_border" style="font-weight: bold;">
         <td class="no_border" colspan="5" style="text-align: right;">Baki Tunai yang perlu serah ke syarikat : </td>
-        <td class="no_border" style="text-align: right;">{{ $cash_float_result->cash_to_company }}</td>
+        <td colspan="2" class="no_border" style="text-align: right;">{{ $cash_float_result->cash_to_company }}</td>
         <td class="no_border" colspan="3"></td>
       </tr>
     </tbody>

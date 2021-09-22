@@ -1371,7 +1371,7 @@
     </div>
   </div>
 
-  <div class="modal fade" id="deliveryModal" tabindex="-1" role="dialog" aria-labelledby="deliveryModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+  <div class="modal fade" id="deliveryModal" tabindex="-1" role="dialog" aria-labelledby="deliveryModalLabel" aria-hidden="true" data-backdrop="static">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
@@ -1391,6 +1391,9 @@
             <h5>Are you sure you want to submit this delivery order?</h5>
           </div>
           <input type="hidden" name="delivery_type" />
+          <hr>
+          <label style="font-weight: bold; text-align: left; width: 100%;">Reference No</label>
+          <input type="text" class="form-control" name="delivery_reference_no" />
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -1535,6 +1538,7 @@
 
         $("input[name='barcode_manual']").iCheck("uncheck");
         $("input[name='refund_barcode_manual']").iCheck("uncheck");
+        $("input[name='delivery_reference_no']").val("");
       }
       else if(e.which == 13)
       {
@@ -2110,12 +2114,22 @@
       }
 
       $("#deliveryModal").modal('show');
+      setTimeout(function(){
+        $("input[name='delivery_reference_no']").focus();
+      }, 500);
     });
 
     $("#deliveryConfirmBtn").click(function(){
-      submitDelivery();
+      // submitDelivery();
+      submitDeliveryPayment();
     });
 
+    $("input[name='delivery_reference_no']").on("keyup", function(e){
+      if(e.which == 13)
+      {
+        submitDeliveryPayment();
+      }
+    }); 
   });
 
   function searchAndAddItem()
@@ -2793,6 +2807,81 @@
           }
         })
       }
+    }).fail(function(xhr){
+      $("#submitCardPayment").attr("disabled", false);
+      if(xhr.status == 401)
+      {
+        loggedOutAlert();
+      }
+    });
+  }
+
+  function submitDeliveryPayment()
+  {
+    $("#deliveryConfirmBtn").attr("disabled", true);
+
+    var transaction_id = $("#transaction_id").val();
+    var reference_no = $("input[name='delivery_reference_no']").val();
+    var payment_type = $("input[name='delivery_type']").val();
+
+    if(!transaction_id)
+    {
+      setTimeout(function(){
+        Swal.fire({
+          title: "Empty transaction.",
+          icon: 'error',
+          confirmButtonText: 'OK',
+        }).then((result) => {
+          /* Read more about isConfirmed, isDenied below */
+          if (result.isConfirmed) {
+            swal.close();
+          }
+        });
+
+        $("#deliveryConfirmBtn").attr("disabled", false);
+      }, 500);
+    
+      return;
+    }
+
+    if(reference_no == "")
+    {
+      setTimeout(function(){
+        Swal.fire({
+          title: "Reference No cannot be empty.",
+          icon: 'error',
+          confirmButtonText: 'OK',
+        }).then((result) => {
+          /* Read more about isConfirmed, isDenied below */
+          if (result.isConfirmed) {
+            swal.close();
+          }
+        });
+
+        $("#deliveryConfirmBtn").attr("disabled", false);
+      }, 500);
+    
+      return;
+    }
+
+    $.post("{{ route('submitTransaction') }}", {"_token" : "{{ csrf_token() }}", "transaction_id" : transaction_id, "payment_type" : payment_type, "reference_no" : reference_no }, function(result){
+
+      if(result.error == 0)
+      {
+        $("#transaction_id").val("");
+        submitClearTransaction(0);
+        $("#total_quantity").html("");
+        $("#total_quantity").hide();
+
+        Swal.fire({
+          icon: 'success',
+          text: 'Order successfully submitted.',
+        });
+      }
+      $("#deliveryConfirmBtn").attr("disabled", false);
+      $("#deliveryModal").modal('hide');
+      $("input[name='delivery_reference_no']").val("");
+
     }).fail(function(xhr){
       $("#submitCardPayment").attr("disabled", false);
       if(xhr.status == 401)
@@ -3962,7 +4051,7 @@
       combined_barcode = "";
     }
 
-    if($("#voucherModal").css("display") != "none" || $("#user_management").css("display") != "none" || $("#dailyClosingModal").css("display") != "none" || $("#numpadModal").css("display") != "none" || $("#openingModal").css("display") != "none" || $("#previous_receipt").css("display") != "none" || $("#cardCheckoutModal").css("display") != "none" || $("#cashFloatModal").css("display") != "none" || $("#openingModal").css("display") != "none" || $("#closingModal").css("display") != "none" || $(".quantity_input").is(":focus") || $(".refund_item_price").is(":focus") || $("#measurementModal").css("display") != "none" || $(".measurement_input").is(":focus"))
+    if($("#voucherModal").css("display") != "none" || $("#user_management").css("display") != "none" || $("#dailyClosingModal").css("display") != "none" || $("#numpadModal").css("display") != "none" || $("#openingModal").css("display") != "none" || $("#previous_receipt").css("display") != "none" || $("#cardCheckoutModal").css("display") != "none" || $("#cashFloatModal").css("display") != "none" || $("#openingModal").css("display") != "none" || $("#closingModal").css("display") != "none" || $(".quantity_input").is(":focus") || $(".refund_item_price").is(":focus") || $("#measurementModal").css("display") != "none" || $(".measurement_input").is(":focus") || $("#deliveryModal").css("display") != "none")
     {
       run = false;
       combined_barcode = "";
