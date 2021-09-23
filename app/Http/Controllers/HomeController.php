@@ -1013,7 +1013,9 @@ class HomeController extends Controller
         //   ]);
         // }
 
-        $count = transaction::whereBetween('created_at', [date('Y-m-d 00:00:00'), date('Y-m-d 23:59:59')])->count();
+        $count = transaction::whereBetween('created_at', [date('Y-m-d 00:00:00'), date('Y-m-d 23:59:59')])
+                              ->where('completed',1)
+                              ->count();
         for($a = strlen($count); $a < 5; $a++)
         {
           $count = "0".$count;
