@@ -5043,10 +5043,10 @@
         cost_html += "<td style='text-align: left;'>Product name : </td>";
         cost_html += "<td style='text-align: left;'>"+product.product_name+"</td>";
         cost_html += "</tr>";
-        cost_html += "<tr>";
-        cost_html += "<td style='text-align: left;'>Cost price : </td>";
-        cost_html += "<td style='text-align: left;'>RM "+numberFormat(product.cost)+"</td>";
-        cost_html += "</tr>";
+        // cost_html += "<tr>";
+        // cost_html += "<td style='text-align: left;'>Cost price : </td>";
+        // cost_html += "<td style='text-align: left;'>RM "+numberFormat(product.cost)+"</td>";
+        // cost_html += "</tr>";
         cost_html += "<tr>";
         cost_html += "<td style='text-align: left; border-bottom: 1px solid #dee2e6;'>Sales price : </td>";
         cost_html += "<td style='text-align: left; border-bottom: 1px solid #dee2e6; color: red;'>RM "+numberFormat(product.using_price)+"</td>";
