@@ -2247,9 +2247,9 @@ class HomeController extends Controller
             'synced' => 1
           ]);
 
-          product::where('hide_cost_alert', 1)->update([
-            'hide_cost_alert' => null
-          ]);
+          // product::where('hide_cost_alert', 1)->update([
+          //   'hide_cost_alert' => null
+          // ]);
 
           if($resync == 1)
           {
