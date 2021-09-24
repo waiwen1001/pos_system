@@ -5029,9 +5029,9 @@
 
   function checkCostPrice(product)
   {
-    if(product.cost && product.using_price && product.hide_cost_alert == null)
+    if(product.cost && product.using_price && !product.hide_cost_alert)
     {
-      if(parseFloat(product.using_price).toFixed(2) < parseFloat(product.cost).toFixed(2))
+      if(parseFloat(product.using_price) < parseFloat(product.cost))
       {
         var cost_html = "";
         cost_html += "<table class='table'>";
