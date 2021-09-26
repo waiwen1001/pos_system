@@ -4208,7 +4208,7 @@
     let div_height = $(".memo-content").height();
     let div_scroll = $(".memo-content").scrollTop();
 
-    let current_height = (row_height * selecting_related) + row_height;
+    let current_height = (row_height * (selecting_related + 5)) + row_height;
 
     if(current_height >= div_height)
     {
