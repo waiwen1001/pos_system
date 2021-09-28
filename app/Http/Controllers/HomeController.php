@@ -4070,7 +4070,10 @@ class HomeController extends Controller
         $date_to = date('Y-m-d', strtotime($request->date_to));
       }
 
-      $session_list = session::where('opening_date_time', '>=', ($date_from." 00:00:00"))->where('closing_date_time', '<=', ($date_to." 23:59:59"))->where('closed', 1)->get();
+      $session_list = session::where('closing_date_time','>',$date_from)
+                              ->where('closing_date_time', '<=', ($date_to." 23:59:59"))
+                              ->where('closed', 1)
+                              ->get();
 
       return view('front.range_closing_report', compact('date_from', 'date_to', 'session_list'));
     }
