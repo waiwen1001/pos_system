@@ -2087,6 +2087,13 @@ class HomeController extends Controller
         $transaction_detail->total_text = number_format($transaction_detail->total, 2);
 
         $transaction_detail->measurement = round(floatval($transaction_detail->measurement), 3);
+        $transaction_detail->diff = 0;
+        $transaction_detail->original_price = number_format(($transaction_detail->quantity * $transaction_detail->price), 2);
+
+        if($transaction_detail->wholesale_price)
+        {
+          $transaction_detail->diff = number_format(($transaction_detail->quantity * $transaction_detail->price) - ($transaction_detail->quantity * $transaction_detail->wholesale_price), 2);
+        }
 
         $total_quantity += $transaction_detail->quantity;
       }

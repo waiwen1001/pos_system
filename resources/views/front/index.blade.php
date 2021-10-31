@@ -2623,19 +2623,20 @@
 
           if(transaction_detail[a].quantity > 0)
           {
+            items_html += transaction_detail[a].quantity+".00 X RM "+transaction_detail[a].price_text;
+
+            items_html += "</td>";
+            items_html += "<td style='width:70px;text-align:right;vertical-align:top;'>RM "+transaction_detail[a].original_price+"</td>";
+            items_html += "</tr>";
+
             if(transaction_detail[a].wholesale_price)
             {
-              items_html += transaction_detail[a].quantity+".00 X RM "+transaction_detail[a].wholesale_price_text;
-            }
-            else
-            {
-              items_html += transaction_detail[a].quantity+".00 X RM "+transaction_detail[a].price_text;
+              items_html += "<tr>";
+              items_html += "<td></td><td style='width:70px;text-align:right;vertical-align:top;'>"+transaction_detail[a].quantity+".00 X RM "+transaction_detail[a].wholesale_price_text+"</td>";
+              items_html += "<td style='width:70px;text-align:right;vertical-align:top;'>- RM "+transaction_detail[a].diff+"</td>";
+              items_html += "</tr>";
             }
           }
-
-          items_html += "</td>";
-          items_html += "<td style='width:70px;text-align:right;vertical-align:top;'>RM "+transaction_detail[a].total_text+"</td>";
-          items_html += "</tr>";
         }
 
         items_html += "</table>";
@@ -2732,7 +2733,7 @@
         newWin.document.write('<html><body onload="window.print()">'+receiptPrint.innerHTML+'</body></html>');
         newWin.document.close();
 
-        setTimeout(function(){newWin.close();},100);
+        // setTimeout(function(){newWin.close();},100);
       }
     }).fail(function(xhr){
       if(xhr.status == 401)
