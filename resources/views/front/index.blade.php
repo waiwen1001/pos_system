@@ -2733,7 +2733,7 @@
         newWin.document.write('<html><body onload="window.print()">'+receiptPrint.innerHTML+'</body></html>');
         newWin.document.close();
 
-        // setTimeout(function(){newWin.close();},100);
+        setTimeout(function(){newWin.close();},100);
       }
     }).fail(function(xhr){
       if(xhr.status == 401)
