@@ -20,6 +20,8 @@ class product extends Model
       'price',
       'uom',
       'measurement',
+      'product_info',
+      'product_type',
       'promotion_start',
       'promotion_end',
       'promotion_price',

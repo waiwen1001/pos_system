@@ -1424,6 +1424,7 @@
   var cashier_name = "";
   var new_session = "{{ $new_session }}";
   var total_refund = 0;
+  var measurement_item = null;
 
   if(pos_cashier)
   {
@@ -2166,6 +2167,7 @@
 
         if(product.measurement == "kilogram" || product.measurement == "meter")
         {
+          measurement_item = product;
           showMeasurement(product, result.transaction_detail);
         }
 
@@ -2629,7 +2631,7 @@
             items_html += "<td style='width:70px;text-align:right;vertical-align:top;'>RM "+transaction_detail[a].original_price+"</td>";
             items_html += "</tr>";
 
-            if(transaction_detail[a].wholesale_price)
+            if(transaction_detail[a].wholesale_price && parseFloat(transaction_detail[a].wholesale_price).toFixed(2) != parseFloat(transaction_detail[a].price).toFixed(2))
             {
               items_html += "<tr>";
               items_html += "<td></td><td style='width:70px;text-align:right;vertical-align:top;'>"+transaction_detail[a].quantity+".00 X RM "+transaction_detail[a].wholesale_price_text+"</td>";
@@ -4388,7 +4390,7 @@
 
   function clickExactButton()
   {
-    $("input[name='received_payment']").val(transaction_total).focus();
+    $("input[name='received_payment']").val(parseFloat(transaction_total).toFixed(2)).focus();
   }
 
   function refund()
@@ -4850,44 +4852,173 @@
     limitDecimal($("#unit_number"), 3);
     let unit_number = $("#unit_number").val();
 
-    $.get("{{ route('getProductPrice') }}", { "barcode" : measurement_barcode, "quantity" : unit_number }, function(result){
-      if(result.error == 0)
+    unit_number = parseFloat(unit_number);
+
+    if(unit_number < 0)
+    {
+      unit_number = unit_number * -1;
+      $("#unit_number").val(unit_number);
+    }
+
+    if(unit_number != "")
+    {
+      var measurement_using_price = measurement_item.price;
+      var wholesale = 0;
+      if(measurement_item.promotion_start && measurement_item.promotion_end && measurement_item.promotion_price && measurement_item.valid_promotion == 1)
       {
-        let unit_price = result.product_price;
-        $("#unit_price_input").val(unit_price)
+        measurement_using_price = measurement_item.promotion_price;
+      }
 
-        if(unit_number < 0)
+      if(measurement_item.normal_wholesale_price && measurement_item.normal_wholesale_quantity)
+      {
+        if(unit_number >= parseFloat(measurement_item.normal_wholesale_quantity).toFixed(3))
         {
-          unit_number = unit_number * -1;
-          $("#unit_number").val(unit_number);
-        }
-
-        $("#unit_price").html(result.product_price_text);
-        if(result.wholesale == 1)
-        {
-          $("#unit_price, #unit_total_price").css({"color" : "#9c27b0"});
-        }
-        else
-        {
-          $("#unit_price, #unit_total_price").css({"color" : "#000"});
-        }
-
-        if(unit_number)
-        {
-          let unit_total_price = parseFloat(unit_price) * parseFloat(unit_number);
-          unit_total_price = numberFormat(unit_total_price);
-
-          $("#unit_total_price").html(unit_total_price);
-
-          checkCostPrice(result.product);
+          measurement_using_price = measurement_item.normal_wholesale_price;
+          wholesale = 1;
         }
       }
-    }).fail(function(xhr){
-      if(xhr.status == 401)
+
+      if(measurement_item.normal_wholesale_price2 && measurement_item.normal_wholesale_quantity2)
       {
-        loggedOutAlert();
+        console.log(unit_number, measurement_item.normal_wholesale_quantity2);
+        if(unit_number >= parseFloat(measurement_item.normal_wholesale_quantity2).toFixed(3))
+        {
+          measurement_using_price = measurement_item.normal_wholesale_price2;
+          wholesale = 1;
+        }
       }
-    });
+
+      if(measurement_item.normal_wholesale_price3 && measurement_item.normal_wholesale_quantity3)
+      {
+        if(unit_number >= parseFloat(measurement_item.normal_wholesale_quantity3).toFixed(3))
+        {
+          measurement_using_price = measurement_item.normal_wholesale_price3;
+          wholesale = 1;
+        }
+      }
+
+      if(measurement_item.normal_wholesale_price4 && measurement_item.normal_wholesale_quantity4)
+      {
+        if(unit_number >= parseFloat(measurement_item.normal_wholesale_quantity4).toFixed(3))
+        {
+          measurement_using_price = measurement_item.normal_wholesale_price4;
+          wholesale = 1;
+        }
+      }
+
+      if(measurement_item.normal_wholesale_price5 && measurement_item.normal_wholesale_quantity5)
+      {
+        if(unit_number >= parseFloat(measurement_item.normal_wholesale_quantity5).toFixed(3))
+        {
+          measurement_using_price = measurement_item.normal_wholesale_price5;
+          wholesale = 1;
+        }
+      }
+
+      if(measurement_item.normal_wholesale_price6 && measurement_item.normal_wholesale_quantity6)
+      {
+        if(unit_number >= parseFloat(measurement_item.normal_wholesale_quantity6).toFixed(3))
+        {
+          measurement_using_price = measurement_item.normal_wholesale_price6;
+          wholesale = 1;
+        }
+      }
+
+      if(measurement_item.normal_wholesale_price7 && measurement_item.normal_wholesale_quantity7)
+      {
+        if(unit_number >= parseFloat(measurement_item.normal_wholesale_quantity7).toFixed(3))
+        {
+          measurement_using_price = measurement_item.normal_wholesale_price7;
+          wholesale = 1;
+        }
+      }
+
+      if(measurement_item.valid_wholesales == 1)
+      {
+        if(measurement_item.wholesale_quantity && measurement_item.wholesale_price)
+        {
+          if(unit_number >= parseFloat(measurement_item.wholesale_quantity).toFixed(3))
+          {
+            measurement_using_price = measurement_item.wholesale_price;
+            wholesale = 1;
+          }
+        }
+
+        if(measurement_item.wholesale_quantity2 && measurement_item.wholesale_price2)
+        {
+          if(unit_number >= parseFloat(measurement_item.wholesale_quantity2).toFixed(3))
+          {
+            measurement_using_price = measurement_item.wholesale_price2;
+            wholesale = 1;
+          }
+        }
+
+        if(measurement_item.wholesale_quantity3 && measurement_item.wholesale_price3)
+        {
+          if(unit_number >= parseFloat(measurement_item.wholesale_quantity3).toFixed(3))
+          {
+            measurement_using_price = measurement_item.wholesale_price3;
+            wholesale = 1;
+          }
+        }
+
+        if(measurement_item.wholesale_quantity4 && measurement_item.wholesale_price4)
+        {
+          if(unit_number >= parseFloat(measurement_item.wholesale_quantity4).toFixed(3))
+          {
+            measurement_using_price = measurement_item.wholesale_price4;
+            wholesale = 1;
+          }
+        }
+
+        if(measurement_item.wholesale_quantity5 && measurement_item.wholesale_price5)
+        {
+          if(unit_number >= parseFloat(measurement_item.wholesale_quantity5).toFixed(3))
+          {
+            measurement_using_price = measurement_item.wholesale_price5;
+            wholesale = 1;
+          }
+        }
+
+        if(measurement_item.wholesale_quantity6 && measurement_item.wholesale_price6)
+        {
+          if(unit_number >= parseFloat(measurement_item.wholesale_quantity6).toFixed(3))
+          {
+            measurement_using_price = measurement_item.wholesale_price6;
+            wholesale = 1;
+          }
+        }
+
+        if(measurement_item.wholesale_quantity7 && measurement_item.wholesale_price7)
+        {
+          if(unit_number >= parseFloat(measurement_item.wholesale_quantity7).toFixed(3))
+          {
+            measurement_using_price = measurement_item.wholesale_price7;
+            wholesale = 1;
+          }
+        }
+      }
+    }
+
+    $("#unit_price_input").val(measurement_using_price);
+
+    $("#unit_price").html(numberFormat(measurement_using_price));
+
+    if(wholesale == 1)
+    {
+      $("#unit_price, #unit_total_price").css({"color" : "#9c27b0"});
+    }
+    else
+    {
+      $("#unit_price, #unit_total_price").css({"color" : "#000"});
+    }
+
+    let unit_total_price = parseFloat(measurement_using_price) * unit_number;
+    unit_total_price = numberFormat(unit_total_price);
+
+    $("#unit_total_price").html(unit_total_price);
+
+    checkCostPrice(measurement_item);
   }
 
   function generateRefundItem(product_detail)

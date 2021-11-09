@@ -336,11 +336,14 @@ class HomeController extends Controller
           return response()->json($response);
         }
 
+        $product->valid_promotion = null;
+        $product->valid_wholesales = null;
         if($product->promotion_start && $product->promotion_end && $product->promotion_price)
         {
           if($product->promotion_start <= $now && $product->promotion_end >= $now)
           {
             $product->price = $product->promotion_price;
+            $product->valid_promotion = 1;
           }
         }
 
@@ -374,7 +377,6 @@ class HomeController extends Controller
         $normal_wholesale_price7 = $product->normal_wholesale_price7;
         $normal_wholesale_quantity7 = $product->normal_wholesale_quantity7;
 
-
         $quantity = 1;
         $subtotal = round($product->price, 2);
         $total = round($product->price, 2);
@@ -383,6 +385,8 @@ class HomeController extends Controller
         {
           if($product->wholesale_start_date <= $now && $product->wholesale_end_date >= $now)
           {
+            $product->valid_wholesales = 1;
+
             $wholesale_price = $product->wholesale_price;
             $wholesale_quantity = $product->wholesale_quantity;
             $wholesale_price2 = $product->wholesale_price2;
@@ -490,6 +494,8 @@ class HomeController extends Controller
             'quantity' => 1,
             'measurement_type' => $product->measurement,
             'measurement' => 1,
+            'product_info' => $product->product_info,
+            'product_type' => $product->product_type,
             'wholesale_price' => $transaction_wholesale_price,
             'discount' => 0,
             'subtotal' => $subtotal,
@@ -701,6 +707,8 @@ class HomeController extends Controller
               'quantity' => $quantity,
               'measurement_type' => $product->measurement,
               'measurement' => 1,
+              'product_info' => $product->product_info,
+              'product_type' => $product->product_type,
               'wholesale_price' => $transaction_wholesale_price,
               'discount' => 0,
               'subtotal' => $subtotal,
@@ -2088,11 +2096,11 @@ class HomeController extends Controller
 
         $transaction_detail->measurement = round(floatval($transaction_detail->measurement), 3);
         $transaction_detail->diff = 0;
-        $transaction_detail->original_price = number_format(($transaction_detail->quantity * $transaction_detail->price), 2);
+        $transaction_detail->original_price = number_format(($transaction_detail->quantity * $transaction_detail->price * $transaction_detail->measurement), 2);
 
         if($transaction_detail->wholesale_price)
         {
-          $transaction_detail->diff = number_format(($transaction_detail->quantity * $transaction_detail->price) - ($transaction_detail->quantity * $transaction_detail->wholesale_price), 2);
+          $transaction_detail->diff = number_format(($transaction_detail->quantity * $transaction_detail->price * $transaction_detail->measurement) - ($transaction_detail->quantity * $transaction_detail->wholesale_price * $transaction_detail->measurement), 2);
         }
 
         $total_quantity += $transaction_detail->quantity;
@@ -2267,7 +2275,7 @@ class HomeController extends Controller
           }
           elseif($resync == 0)
           {
-            $response = $this->syncHQProductList($response['product_list'], $branchProductSyncURL);
+            $response = $this->syncHQProductList($response['product_list'], $response['hamper_list'], $branchProductSyncURL);
           }
           
           return response()->json($response);
@@ -2290,7 +2298,7 @@ class HomeController extends Controller
       }
     }
 
-    public function syncHQProductList($product_list = [], $branchProductSyncURL)
+    public function syncHQProductList($product_list = [], $hamper_list = [], $branchProductSyncURL)
     {
       if(!$product_list)
       {
@@ -2355,6 +2363,23 @@ class HomeController extends Controller
         {
           array_push($barcode_array, $product['barcode']);
         }
+      }
+
+      $total_hamper_list = count($hamper_list);
+      foreach($hamper_list as $key => $hamper)
+      {
+        \Log::info("Updating hamper list on ".$key." / ".$total_hamper_list);
+
+        product::withTrashed()->updateOrCreate([
+          'barcode' => $hamper['barcode']
+        ],[
+          'barcode' => $hamper['barcode'],
+          'product_name' => $hamper['name'],
+          'price' => $hamper['price'],
+          'product_info' => $hamper['product_list'],
+          'product_type' => "hamper",
+          'deleted_at' => $hamper['deleted_at']
+        ]);
       }
 
       if($branchProductSyncURL)
