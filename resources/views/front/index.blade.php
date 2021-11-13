@@ -4741,7 +4741,7 @@
     $("#unit_price_input").val(product_detail.using_price);
     $("#unit_number").val(transaction_detail.measurement);
     $("#transaction_detail_id").val(transaction_detail.id);
-    $("#unit_total_price").html(product_detail.using_price_text);
+    $("#unit_total_price").css({"color": "#212529"}).html(product_detail.using_price_text);
 
     $(".unit_type").html("");
     $(".unit_type_text").html("");

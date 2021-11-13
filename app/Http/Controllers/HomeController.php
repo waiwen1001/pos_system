@@ -2517,6 +2517,24 @@ class HomeController extends Controller
           }
         }
 
+        $hamper_list = $response['hamper_list'];
+        $total_hamper_list = count($hamper_list);
+        foreach($hamper_list as $key => $hamper)
+        {
+          \Log::info("Updating hamper list on ".$key." / ".$total_hamper_list);
+
+          product::withTrashed()->updateOrCreate([
+            'barcode' => $hamper['barcode']
+          ],[
+            'barcode' => $hamper['barcode'],
+            'product_name' => $hamper['name'],
+            'price' => $hamper['price'],
+            'product_info' => $hamper['product_list'],
+            'product_type' => "hamper",
+            'deleted_at' => $hamper['deleted_at']
+          ]);
+        }
+
         $voucher_list = $response['voucher_list'];
         voucher::truncate();
 
