@@ -2090,11 +2090,14 @@ class HomeController extends Controller
 
       foreach($transaction_detail_list as $transaction_detail)
       {
-        $transaction_detail->price_text = number_format( ($transaction_detail->price * $transaction_detail->measurement), 2);
-        $transaction_detail->wholesale_price_text = number_format( ($transaction_detail->wholesale_price * $transaction_detail->measurement), 2);
+        $transaction_detail->price_text = number_format($transaction_detail->price, 2);
+        $transaction_detail->wholesale_price_text = number_format($transaction_detail->wholesale_price, 2);
         $transaction_detail->total_text = number_format($transaction_detail->total, 2);
 
         $transaction_detail->measurement = round(floatval($transaction_detail->measurement), 3);
+
+        $measurement_quantity = number_format((floatval($transaction_detail->quantity * $transaction_detail->measurement)), 3);
+        $transaction_detail->measurement_quantity = $measurement_quantity;
         $transaction_detail->diff = 0;
         $transaction_detail->original_price = number_format(($transaction_detail->quantity * $transaction_detail->price * $transaction_detail->measurement), 2);
 

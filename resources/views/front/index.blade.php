@@ -2625,7 +2625,7 @@
 
           if(transaction_detail[a].quantity > 0)
           {
-            items_html += transaction_detail[a].quantity+".00 X RM "+transaction_detail[a].price_text;
+            items_html += transaction_detail[a].measurement_quantity+" X RM "+transaction_detail[a].price_text;
 
             items_html += "</td>";
             items_html += "<td style='width:70px;text-align:right;vertical-align:top;'>RM "+transaction_detail[a].original_price+"</td>";
@@ -2634,7 +2634,7 @@
             if(transaction_detail[a].wholesale_price && parseFloat(transaction_detail[a].wholesale_price).toFixed(2) != parseFloat(transaction_detail[a].price).toFixed(2))
             {
               items_html += "<tr>";
-              items_html += "<td></td><td style='width:70px;text-align:right;vertical-align:top;'>"+transaction_detail[a].quantity+".00 X RM "+transaction_detail[a].wholesale_price_text+"</td>";
+              items_html += "<td></td><td style='width:70px;text-align:right;vertical-align:top;'>"+transaction_detail[a].measurement_quantity+" X RM "+transaction_detail[a].wholesale_price_text+"</td>";
               items_html += "<td style='width:70px;text-align:right;vertical-align:top;'>- RM "+transaction_detail[a].diff+"</td>";
               items_html += "</tr>";
             }
