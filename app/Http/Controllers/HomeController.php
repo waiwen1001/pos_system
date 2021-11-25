@@ -967,6 +967,10 @@ class HomeController extends Controller
         {
           $payment_type_text = "Grab Pay";
         }
+        elseif($payment_type == "cheque")
+        {
+          $payment_type_text = "Cheque";
+        }
         elseif($payment_type == "boost")
         {
           $payment_type_text = "Boost";
@@ -2667,7 +2671,7 @@ class HomeController extends Controller
         }
       }
 
-      $payment_type_list = ['cash', 'card', 'tng', 'maybank_qr', 'grab_pay', 'boost', 'pandamart', 'grabmart'];
+      $payment_type_list = ['cash', 'card', 'tng', 'maybank_qr', 'grab_pay', 'cheque', 'boost', 'pandamart', 'grabmart'];
       foreach($pos_cashier as $pos)
       {
         if(!$pos->cashier_name)
@@ -2958,6 +2962,7 @@ class HomeController extends Controller
           $total_tng_sales = 0;
           $total_maybank_qr_sales = 0;
           $total_grab_pay_sales = 0;
+          $total_cheque_sales = 0;
           $total_boost_sales = 0;
           $total_foodpanda_sales = 0;
           $total_grabmart_sales = 0;
@@ -2984,6 +2989,10 @@ class HomeController extends Controller
             elseif($sales_transaction->payment_type == "grab_pay")
             {
               $total_grab_pay_sales = $sales_transaction->total_sales;
+            }
+            elseif($sales_transaction->payment_type == "cheque")
+            {
+              $total_cheque_sales = $sales_transaction->total_sales;
             }
             elseif($sales_transaction->payment_type == "boost")
             {
@@ -3030,6 +3039,7 @@ class HomeController extends Controller
           $shift->tng_sales = $total_tng_sales;
           $shift->maybank_qr_sales = $total_maybank_qr_sales;
           $shift->grab_pay_sales = $total_grab_pay_sales;
+          $shift->cheque_sales = $total_cheque_sales;
           $shift->boost_sales = $total_boost_sales;
           $shift->foodpanda_sales = $total_foodpanda_sales;
           $shift->grabmart_sales = $total_grabmart_sales;
@@ -3447,6 +3457,12 @@ class HomeController extends Controller
           'character' => null
         ],
         [
+          'function' => "payAsCheque()",
+          'function_name' => "Pay bill by Cheque",
+          'code' => null,
+          'character' => null
+        ],
+        [
           'function' => "payAsBoost()",
           'function_name' => "Pay bill by Boots",
           'code' => null,
@@ -3455,6 +3471,12 @@ class HomeController extends Controller
         [
           'function' => "clearTransaction()",
           'function_name' => "Clear transaction",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "showEditAmount()",
+          'function_name' => "Show edit amount page",
           'code' => null,
           'character' => null
         ],
@@ -4129,6 +4151,100 @@ class HomeController extends Controller
                               ->get();
 
       return view('front.range_closing_report', compact('date_from', 'date_to', 'session_list'));
+    }
+
+    public function getEditAmountPage()
+    {
+      $session = session::where('closed', null)->orderBy('id', 'desc')->first();
+
+      if(!$session)
+      {
+        dd("Session not found");
+      }
+
+      $cashier_list = cashier::where('session_id', $session->id)->get();
+
+      foreach($cashier_list as $cashier)
+      {
+        $cashier->cash_float = cash_float::where('opening_id', $cashier->id)->where('session_id', $session->id)->get();
+      }
+
+      return view('front.edit_amount', compact('cashier_list'));
+    }
+
+    public function updateEditAmount(Request $request)
+    {
+      $user = Auth::user();
+      if(!$user)
+      {
+        dd("Not authorized!");
+      }
+
+      if($request->cashier_opening)
+      {
+        foreach($request->cashier_opening as $cashier_opening)
+        {
+          $edit_name = "opening_edit_".$cashier_opening;
+          if($request->$edit_name == "1")
+          {
+            $opening_amount_name = "opening_".$cashier_opening;
+            if($request->$opening_amount_name !== null)
+            {
+              cashier::where('id', $cashier_opening)->update([
+                'opening_amount' => $request->$opening_amount_name,
+                'updated_by' => $user->id,
+                'updated_by_name' => $user->name
+              ]);
+            }
+          }
+        }
+      }
+
+      if($request->cash_float)
+      {
+        foreach($request->cash_float as $cash_float)
+        {
+          $edit_name = "cash_float_edit_".$cash_float;
+          if($request->$edit_name == "1")
+          {
+            $cash_float_amount_name = "amount_".$cash_float;
+            $cash_float_remarks_name = "remarks_".$cash_float;
+
+            if($request->$cash_float_amount_name !== null)
+            {
+              cash_float::where('id', $cash_float)->update([
+                'amount' => $request->$cash_float_amount_name,
+                'remarks' => $request->$cash_float_remarks_name,
+                'updated_by' => $user->id,
+                'updated_by_name' => $user->name
+              ]);
+            }
+          }
+        }
+      }
+
+      if($request->cashier_closing)
+      {
+        foreach($request->cashier_closing as $cashier_closing)
+        {
+          $edit_name = "closing_edit_".$cashier_closing;
+          if($request->$edit_name == "1")
+          {
+            $closing_amount_name = "closing_".$cashier_closing;
+
+            if($request->$closing_amount_name !== null)
+            {
+              cashier::where('id', $cashier_closing)->update([
+                'closing_amount' => $request->$closing_amount_name,
+                'updated_by' => $user->id,
+                'updated_by_name' => $user->name
+              ]);
+            }
+          }
+        }
+      }
+
+      return back();
     }
 }
 

@@ -18,6 +18,8 @@ Route::get('/setup', 'HomeController@getSetupPage')->name('setup');
 Route::get('/key_setup', 'HomeController@getKeySetupPage')->name('key_setup');
 Route::get('/profile', 'HomeController@getBranchProfile')->name('getBranchProfile');
 Route::post('/updateProfile', 'HomeController@updateProfile')->name('updateProfile');
+Route::get('/edit_amount', 'HomeController@getEditAmountPage')->name('edit_amount');
+Route::post('/updateEditAmount', 'HomeController@updateEditAmount')->name('updateEditAmount');
 
 Route::post('/searchAndAddItem', 'HomeController@searchAndAddItem')->name('searchAndAddItem');
 Route::post('/submitDeleteItem', 'HomeController@submitDeleteItem')->name('submitDeleteItem');

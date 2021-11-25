@@ -17,6 +17,8 @@ class cash_float extends Model
     'type',
     'amount',
     'remarks',
-    'synced'
+    'synced',
+    'updated_by',
+    'updated_by_name'
   ];
 }

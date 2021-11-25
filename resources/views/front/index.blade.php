@@ -285,6 +285,11 @@
                         Shortcut key setup
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showKeySetup()"></span>
                       </button>
+                      <div class="dropdown-divider"></div>
+                      <button class="dropdown-item" onclick="showEditAmount()">
+                        Edit amount
+                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showEditAmount()"></span>
+                      </button>
                     @endif
                   </div>
                 </div>
@@ -330,6 +335,10 @@
                     <button class="dropdown-item cardPayment" payment_type="grab_pay" payment_type_text="Grab Pay" href="#">
                       Grab Pay
                       <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsGrab()"></span>
+                    </button>
+                    <button class="dropdown-item cardPayment" payment_type="cheque" payment_type_text="Cheque" href="#">
+                      Cheque
+                      <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsCheque()"></span>
                     </button>
                     <button class="dropdown-item cardPayment" payment_type="boost" payment_type_text="Boost" href="#">
                       Boost
@@ -2484,7 +2493,10 @@
     void_html += "</div>";
 
     var data = "<tr transaction_id="+completed_transaction.id+">";
-    data += "<td>"+completed_transaction.cashier_name+"</td>";
+    data += "<td>";
+    if(completed_transaction.cashier_name)
+      completed_transaction.cashier_name
+    data += "</td>";
     data += "<td>"+completed_transaction.transaction_no+"</td>";
     data += "<td>"+completed_transaction.payment_type_text+"</td>";
     data += "<td>";
@@ -3209,6 +3221,14 @@
     }
   }
 
+  function payAsCheque()
+  {
+    if($("#paymentTypeBtn").attr("disabled") != "disabled")
+    {
+      $(".cardPayment[payment_type='cheque']").click();
+    }
+  }
+
   function payAsBoost()
   {
     if($("#paymentTypeBtn").attr("disabled") != "disabled")
@@ -3233,6 +3253,17 @@
     {
       window.open(
         '{{ route("key_setup") }}',
+        '_blank'
+      );
+    }
+  }
+
+  function showEditAmount()
+  {
+    if(user.user_type == 1)
+    {
+      window.open(
+        '{{ route("edit_amount") }}',
         '_blank'
       );
     }
@@ -3448,28 +3479,48 @@
 
     if(closing_amount)
     {
-      $.post("{{ route('submitClosing') }}", {"_token" : "{{ csrf_token() }}", "closing_amount" : closing_amount, ' calculated_amount' : calculated_closing_amount}, function(result){
-        $("#submitClosing").attr("disabled", false);
-        if(result.error == 0)
-        {
-          $("#closingModal").modal('hide');
-          closingReport(result.closing_report);
-          logout();
-          // location.reload();
+      if(parseFloat(closing_amount) > parseFloat(calculated_closing_amount))
+      {
+        var r = confirm("Your cashier only have RM"+calculated_closing_amount+", are you sure you want to proceed ?");
+        if (r == true) {
+          proceedClosing(closing_amount, calculated_closing_amount);
         }
-      }).fail(function(xhr){
-        $("#submitClosing").attr("disabled", false);
-        if(xhr.status == 401)
+        else
         {
-          loggedOutAlert();
+          $("#submitClosing").attr("disabled", false);
+          console.log("do nothing");
         }
-      });
+      }
+      else
+      {
+        proceedClosing(closing_amount, calculated_closing_amount);
+      }
     }
     else
     {
       $("#submitClosing").attr("disabled", false);
       $("input[name='cashier_closing_amount']").addClass("is-invalid").siblings(".invalid-feedback").html("<strong>Closing amount cannot be empty.</strong>");
     }
+  }
+
+  function proceedClosing(closing_amount, calculated_closing_amount)
+  {
+    $.post("{{ route('submitClosing') }}", {"_token" : "{{ csrf_token() }}", "closing_amount" : closing_amount, ' calculated_amount' : calculated_closing_amount}, function(result){
+      $("#submitClosing").attr("disabled", false);
+      if(result.error == 0)
+      {
+        $("#closingModal").modal('hide');
+        closingReport(result.closing_report);
+        logout();
+        // location.reload();
+      }
+    }).fail(function(xhr){
+      $("#submitClosing").attr("disabled", false);
+      if(xhr.status == 401)
+      {
+        loggedOutAlert();
+      }
+    });
   }
 
   function submitDailyClosing()
@@ -3565,6 +3616,35 @@
       return;
     }
 
+    if(cash_float_type == "out" || cash_float_type == "boss")
+    {
+      $.get("{{ route('calculateClosingAmount') }}", function(result){
+        if(parseFloat(result.closing_amount) < parseFloat(amount))
+        {
+          var r = confirm("Your cashier only have RM"+result.closing_amount_text+", are you sure you want to proceed ?");
+          if (r == true) {
+            proceedCashFloat(amount, cash_float_type, remarks);
+          }
+          else
+          {
+            $("#submitCashFloat").attr("disabled", false);
+            console.log("do nothing");
+          }
+        }
+        else
+        {
+          proceedCashFloat(amount, cash_float_type, remarks);
+        }
+      });
+    }
+    else
+    {
+      proceedCashFloat(amount, cash_float_type, remarks);
+    }
+  }
+
+  function proceedCashFloat(amount, cash_float_type, remarks)
+  {
     $.post("{{ route('submitCashFloat') }}", {"_token" : "{{ csrf_token() }}", "amount" : amount, "type" : cash_float_type, "remarks" : remarks }, function(result){
       $("#submitCashFloat").attr("disabled", false);
       if(result.error == 1)

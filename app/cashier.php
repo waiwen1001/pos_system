@@ -24,6 +24,8 @@ class cashier extends Model
       'calculated_amount',
       'diff',
       'closing_date_time',
-      'synced'
+      'synced',
+      'updated_by',
+      'updated_by_name'
     ];
 }
