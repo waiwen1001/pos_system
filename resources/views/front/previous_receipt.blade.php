@@ -93,7 +93,7 @@
                   <td>
                     <button class="btn btn-success" onclick="printReceipt('{{ $completed->id }}', 1)">Print Receipt</button>
                     <br>
-                    <a class="btn btn-primary" href="{{ route('getInvoice', ['transaction_id' => $completed->id ]) }}" style="margin-top: 10px;">Print Invoice</button>
+                    <a class="btn btn-primary" target="_blank" href="{{ route('getInvoice', ['transaction_id' => $completed->id ]) }}" style="margin-top: 10px;">Print Invoice</button>
                   </td>
                 </tr>
               @endforeach
