@@ -81,10 +81,10 @@
         <td style="border-right: 1px solid #aaa; padding: 0 5px;">{{ $detail->barcode }}</td>
         <td style="border-right: 1px solid #aaa; padding: 0 5px;">{{ $detail->product_name }}</td>
         <td style="border-right: 1px solid #aaa; padding: 0 5px; text-align: right;">{{ $detail->quantity * $detail->measurement }}</td>
-        <td style="border-right: 1px solid #aaa; padding: 0 5px; text-align: right;">{{ $detail->price }}</td>
+        <td style="border-right: 1px solid #aaa; padding: 0 5px; text-align: right;">{{ number_format($detail->price, 2) }}</td>
         <td style="border-right: 1px solid #aaa; padding: 0 5px; text-align: right;">0.00</td>
         <td style="border-right: 1px solid #aaa; padding: 0 5px; text-align: right;">0.00</td>
-        <td style="border-right: 2px solid #333; padding: 0 5px; text-align: right;">{{ $detail->total }}</td>
+        <td style="border-right: 2px solid #333; padding: 0 5px; text-align: right;">{{ number_format($detail->total, 2) }}</td>
       </tr>
     @endforeach
 
@@ -100,7 +100,7 @@
 
     <tr>
       <td colspan="2" style="padding: 0 5px; border-right: 1px solid #aaa; border-bottom-width: 0px;">Item Discount</td>
-      <td style="padding: 0 5px; text-align: right; border-right: 2px solid #333;">{{ $transaction->total_discount }}</td>
+      <td style="padding: 0 5px; text-align: right; border-right: 2px solid #333;">{{ number_format($transaction->total_discount, 2) }}</td>
     </tr>
 
     <tr>
@@ -115,7 +115,7 @@
 
     <tr>
       <td colspan="2" style="padding: 0 5px; border-right: 1px solid #aaa; border-bottom: 2px solid #333;">Net Total <span style="float: right;">(MYR)</span></td>
-      <td style="padding: 0 5px; border-bottom: 2px solid #333; border-right: 2px solid #333; text-align: right;">{{ $transaction->total }}</td>
+      <td style="padding: 0 5px; border-bottom: 2px solid #333; border-right: 2px solid #333; text-align: right;">{{ number_format($transaction->total, 2) }}</td>
     </tr>
 
     <tr>

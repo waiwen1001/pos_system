@@ -4298,13 +4298,9 @@ class HomeController extends Controller
         $contact_number = $profile->contact_number;
       }
 
-      transaction_detail::whereBetween('transaction_id', [40000, 42000])->update([
-        'transaction_id' => 41591
-      ]);
-
       $transaction = transaction::where('transaction.id', $transaction_id)->leftJoin('users', 'users.id', '=', 'transaction.completed_by')->select('transaction.*', 'users.name as completed_by_name')->first();
 
-      $transaction_detail_list = transaction_detail::where('transaction_detail.transaction_id', $transaction_id)->leftJoin('product', 'product.id', '=', 'transaction_detail.product_id')->select('transaction_detail.*', 'product.product_name', 'product.barcode')->limit(100)->get();
+      $transaction_detail_list = transaction_detail::where('transaction_detail.transaction_id', $transaction_id)->leftJoin('product', 'product.id', '=', 'transaction_detail.product_id')->select('transaction_detail.*', 'product.product_name', 'product.barcode')->get();
 
       return view('front.invoice', compact('branch_name', 'branch_address', 'contact_number', 'transaction', 'transaction_detail_list'));
     }
