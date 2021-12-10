@@ -74,7 +74,7 @@
                     <td style="vertical-align: middle;">Opening</td>
                     <td style="vertical-align: middle;">
                       <span>{{ $cashier->opening_amount }}</span>
-                      <input style="display: none;" class="form-control" type="number" value="{{ $cashier->opening_amount }}" name="opening_{{ $cashier->id }}" />
+                      <input style="display: none;" class="form-control" step="0.01" type="number" value="{{ $cashier->opening_amount }}" name="opening_{{ $cashier->id }}" />
                     </td>
                     <td style="vertical-align: middle;"></td>
                     <td style="vertical-align: middle;">
@@ -99,7 +99,7 @@
                       </td>
                       <td style="vertical-align: middle;">
                         <span>{{ $cash_float->amount }}</span>
-                        <input style="display: none;" class="form-control" type="number" value="{{ $cash_float->amount }}" name="amount_{{ $cash_float->id }}" />
+                        <input style="display: none;" class="form-control" step="0.01" type="number" value="{{ $cash_float->amount }}" name="amount_{{ $cash_float->id }}" />
                       </td>
                       <td style="vertical-align: middle;">
                         <span>{{ $cash_float->remarks }}</span>
@@ -119,7 +119,7 @@
                       <td style="vertical-align: middle;">Closing</td>
                       <td style="vertical-align: middle;">
                         <span>{{ $cashier->closing_amount }}</span>
-                        <input style="display: none;" class="form-control" type="number" value="{{ $cashier->closing_amount }}" name="closing_{{ $cashier->id }}" />
+                        <input style="display: none;" class="form-control" step="0.01" type="number" value="{{ $cashier->closing_amount }}" name="closing_{{ $cashier->id }}" />
                       </td>
                       <td style="vertical-align: middle;"></td>
                       <td style="vertical-align: middle;">
