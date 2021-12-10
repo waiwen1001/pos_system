@@ -3331,6 +3331,12 @@ class HomeController extends Controller
           'character' => null
         ],
         [
+          'function' => "showServerPreviousReceipt()",
+          'function_name' => "Show server previous receipt",
+          'code' => null,
+          'character' => null
+        ],
+        [
           'function' => "showOtherMenu()",
           'function_name' => "Show other menu",
           'code' => null,
@@ -4245,6 +4251,62 @@ class HomeController extends Controller
       }
 
       return back();
+    }
+
+    public function serverPreviousReceipt()
+    {
+      $user = Auth::user();
+      $branch_name = null;
+      $branch_address = null;
+      $contact_number = null;
+      $profile = profile::first();
+      if($profile)
+      {
+        $branch_name = $profile->branch_name;
+        $branch_address = $profile->address;
+        $contact_number = $profile->contact_number;
+      }
+
+      $date_from = date('Y-m-d 00:00:00');
+      $date_to = date('Y-m-d 23:59:59');
+
+      if(isset($_GET['date_from']))
+      {
+        $date_from = date('Y-m-d 00:00:00', strtotime($_GET['date_from']));
+      }
+
+      if(isset($_GET['date_to']))
+      {
+        $date_to = date('Y-m-d 23:59:59', strtotime($_GET['date_to']));
+      }
+
+      $completed_transaction = transaction::where('completed', 1)->whereBetween('created_at', [$date_from, $date_to])->get();
+
+      return view('front.previous_receipt', compact('user', 'completed_transaction', 'date_from', 'date_to', 'branch_name', 'branch_address', 'contact_number'));
+    }
+
+    public function getInvoice($transaction_id)
+    {
+      $branch_name = null;
+      $branch_address = null;
+      $contact_number = null;
+      $profile = profile::first();
+      if($profile)
+      {
+        $branch_name = $profile->branch_name;
+        $branch_address = $profile->address;
+        $contact_number = $profile->contact_number;
+      }
+
+      transaction_detail::whereBetween('transaction_id', [40000, 42000])->update([
+        'transaction_id' => 41591
+      ]);
+
+      $transaction = transaction::where('transaction.id', $transaction_id)->leftJoin('users', 'users.id', '=', 'transaction.completed_by')->select('transaction.*', 'users.name as completed_by_name')->first();
+
+      $transaction_detail_list = transaction_detail::where('transaction_detail.transaction_id', $transaction_id)->leftJoin('product', 'product.id', '=', 'transaction_detail.product_id')->select('transaction_detail.*', 'product.product_name', 'product.barcode')->limit(100)->get();
+
+      return view('front.invoice', compact('branch_name', 'branch_address', 'contact_number', 'transaction', 'transaction_detail_list'));
     }
 }
 

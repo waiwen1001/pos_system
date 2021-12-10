@@ -185,10 +185,17 @@
                 <span class="shortcut_func_key" style="display: none;" func_name="showVoucher()"></span>
               </div>
 
-              <div class="col-4">
-                <button class="btn btn-dark" id="previousReceiptBtn" onclick="showPreviousReceipt()">Previous Receipt</button>
-                <span class="shortcut_func_key" style="display: none;" func_name="showPreviousReceipt()"></span>
-              </div>
+              @if($device_type == 1)
+                <div class="col-4">
+                  <button class="btn btn-dark" id="serverPreviousReceiptBtn" onclick="showServerPreviousReceipt()">Previous Receipt</button>
+                  <span class="shortcut_func_key" style="display: none;" func_name="showServerPreviousReceipt()"></span>
+                </div>
+              @elseif($device_type == 2)
+                <div class="col-4">
+                  <button class="btn btn-dark" id="previousReceiptBtn" onclick="showPreviousReceipt()">Previous Receipt</button>
+                  <span class="shortcut_func_key" style="display: none;" func_name="showPreviousReceipt()"></span>
+                </div>
+              @endif
 
               <div class="col-4">
                 <div class="dropup">
@@ -2140,6 +2147,13 @@
         submitDeliveryPayment();
       }
     }); 
+
+    $("#serverPreviousReceiptBtn").click(function(){
+      window.open(
+        '{{ route("serverPreviousReceipt") }}',
+        '_blank'
+      );
+    });
   });
 
   function searchAndAddItem()
@@ -3052,6 +3066,14 @@
       setTimeout(function(){
         previous_receipt_table.draw();
       }, 50);
+    }
+  }
+
+  function showServerPreviousReceipt()
+  {
+    if($("#serverPreviousReceiptBtn").attr("disabled") != "disabled")
+    {
+      $("#serverPreviousReceiptBtn").click();
     }
   }
 

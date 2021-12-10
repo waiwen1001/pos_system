@@ -65,6 +65,9 @@ Route::post('/searchAndAddItemRefund', 'HomeController@searchAndAddItemRefund')-
 Route::post('/refundNow', 'HomeController@refundNow')->name('refundNow');
 // 
 
+Route::get('/previous_receipt', 'HomeController@serverPreviousReceipt')->name('serverPreviousReceipt');
+Route::get('/invoice/{transaction_id}', 'HomeController@getInvoice')->name('getInvoice');
+
 Route::get('/testing', 'HomeController@testing')->name('testing');
 Route::get('/myIP', 'HomeController@myIP')->name('myIP');
 Route::get('/init', 'HomeController@init')->name('init');
