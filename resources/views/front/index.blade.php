@@ -2146,13 +2146,6 @@
         submitDeliveryPayment();
       }
     }); 
-
-    $("#serverPreviousReceiptBtn").click(function(){
-      window.open(
-        '{{ route("serverPreviousReceipt") }}',
-        '_blank'
-      );
-    });
   });
 
   function searchAndAddItem()
@@ -3072,7 +3065,10 @@
   {
     if($("#serverPreviousReceiptBtn").attr("disabled") != "disabled")
     {
-      $("#serverPreviousReceiptBtn").click();
+      window.open(
+        '{{ route("serverPreviousReceipt") }}',
+        '_blank'
+      );
     }
   }
 
