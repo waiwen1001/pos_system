@@ -880,7 +880,7 @@
     </div>
   </div>
 
-  <div class="modal fade" id="cardCheckoutModal" tabindex="-1" role="dialog" aria-labelledby="cardCheckoutModalLabel" aria-hidden="true">
+  <div class="modal fade" id="cardCheckoutModal" tabindex="-1" role="dialog" aria-labelledby="cardCheckoutModalLabel" aria-hidden="true"  data-backdrop="static">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
