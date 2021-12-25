@@ -1125,9 +1125,12 @@ class HomeController extends Controller
 
     public function clearTransaction(Request $request)
     {
-      transaction_detail::where('transaction_id', $request->transaction_id)->delete();
-
-      transaction::where('id', $request->transaction_id)->delete();
+      $transaction = transaction::where('id', $request->transaction_id)->first();
+      if($transaction->completed == null)
+      {
+        transaction_detail::where('transaction_id', $request->transaction_id)->delete();
+        transaction::where('id', $request->transaction_id)->delete();
+      }
 
       $response = new \stdClass();
       $response->error = 0;

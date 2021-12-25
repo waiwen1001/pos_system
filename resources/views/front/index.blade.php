@@ -198,14 +198,13 @@
               @endif
 
               <div class="col-4">
-                <div class="dropup">
+                <div class="dropdown">
                   <button class="btn btn-dark dropdown-toggle" type="button" id="otherDropDownBtn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     Other
                   </button>
                   <span class="shortcut_func_key" style="display: none; left: -15px; top: -10px;" func_name="showOtherMenu()"></span>
 
-                  <div class="dropdown-menu" aria-labelledby="otherDropDownBtn">
-
+                  <div class="dropdown-menu" aria-labelledby="otherDropDownBtn" style="position: absolute; transform: translate3d(0px, -371px, 0px); top: 0px; left: 0px; will-change: transform;">
                     @if($device_type == 2)
                       <div id="barcode_toggle" class="dropdown-item">
                         <label style="white-space: pre-wrap; display: inline-block;">Barcode alert</label>
@@ -504,8 +503,8 @@
 
   <div class="modal fade" id="numpadModal" tabindex="-1" role="dialog" aria-labelledby="numpadModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
+      <div class="modal-content" style="margin-left: 250px;">
+        <div class="modal-header" style="padding: 10px 1em;">
           <h5 class="modal-title" id="numpadModalLabel">Cash received</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
