@@ -259,12 +259,7 @@
                     @endif
                     @if($user->user_type == 1)
                       <div class="dropdown-divider"></div>
-                      <button class="dropdown-item" onclick="dailyReport(1)">
-                        Closing Report
-                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showClosingReport()"></span>
-                      </button>
                       @if($device_type == 1)
-                        <div class="dropdown-divider"></div>
                         <!-- <button class="dropdown-item" onclick="showBranchProfile()">
                           Branch Profile
                           <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showBranchProfile()"></span>
@@ -292,6 +287,10 @@
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showKeySetup()"></span>
                       </button>
                       <div class="dropdown-divider"></div>
+                      <button class="dropdown-item" onclick="dailyReport(1)">
+                        Closing Report
+                        <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showClosingReport()"></span>
+                      </button>
                       <button class="dropdown-item" onclick="showEditAmount()">
                         Edit amount
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showEditAmount()"></span>
