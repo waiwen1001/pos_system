@@ -975,6 +975,10 @@ class HomeController extends Controller
         {
           $payment_type_text = "Boost";
         }
+        elseif($payment_type == "ebanking")
+        {
+          $payment_type_text = "E-banking";
+        }
         else
         {
           $payment_type_text = ucwords($payment_type);
@@ -2674,7 +2678,7 @@ class HomeController extends Controller
         }
       }
 
-      $payment_type_list = ['cash', 'card', 'tng', 'maybank_qr', 'grab_pay', 'cheque', 'boost', 'pandamart', 'grabmart'];
+      $payment_type_list = ['cash', 'card', 'tng', 'maybank_qr', 'grab_pay', 'cheque', 'boost', 'ebanking', 'pandamart', 'grabmart'];
       foreach($pos_cashier as $pos)
       {
         if(!$pos->cashier_name)
@@ -2967,6 +2971,7 @@ class HomeController extends Controller
           $total_grab_pay_sales = 0;
           $total_cheque_sales = 0;
           $total_boost_sales = 0;
+          $total_ebanking_sales = 0;
           $total_foodpanda_sales = 0;
           $total_grabmart_sales = 0;
           // $total_other_sales = 0;
@@ -3000,6 +3005,10 @@ class HomeController extends Controller
             elseif($sales_transaction->payment_type == "boost")
             {
               $total_boost_sales = $sales_transaction->total_sales;
+            }
+            elseif($sales_transaction->payment_type == "ebanking")
+            {
+              $total_ebanking_sales = $sales_transaction->total_sales;
             }
             elseif($sales_transaction->payment_type == "pandamart")
             {
@@ -3044,6 +3053,7 @@ class HomeController extends Controller
           $shift->grab_pay_sales = $total_grab_pay_sales;
           $shift->cheque_sales = $total_cheque_sales;
           $shift->boost_sales = $total_boost_sales;
+          $shift->ebanking_sales = $total_ebanking_sales;
           $shift->foodpanda_sales = $total_foodpanda_sales;
           $shift->grabmart_sales = $total_grabmart_sales;
           // $shift->other_sales = $total_other_sales;
@@ -3474,6 +3484,12 @@ class HomeController extends Controller
         [
           'function' => "payAsBoost()",
           'function_name' => "Pay bill by Boots",
+          'code' => null,
+          'character' => null
+        ],
+        [
+          'function' => "payAsEbanking()",
+          'function_name' => "Pay bill by E-banking",
           'code' => null,
           'character' => null
         ],

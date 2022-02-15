@@ -350,6 +350,10 @@
                       Boost
                       <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsBoost()"></span>
                     </button>
+                    <button class="dropdown-item cardPayment" payment_type="ebanking" payment_type_text="E-banking" href="#">
+                      E-banking
+                      <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsEbanking()"></span>
+                    </button>
                   </div>
                 </div>
 
@@ -3254,6 +3258,14 @@
     }
   }
 
+  function payAsEbanking()
+  {
+    if($("#paymentTypeBtn").attr("disabled") != "disabled")
+    {
+      $(".cardPayment[payment_type='ebanking']").click();
+    }
+  }
+
   function clickManualKeyin()
   {
     let manual_val = $("input[name='barcode_manual']").is(":checked");
@@ -4774,24 +4786,31 @@
     $("input.measurement_input").unbind('keyup');
     $("input.measurement_input").on("keyup", function(e){
       var _this = $(this);
+
+      if(_this.val().slice(-1) == ".")
+      {
+        return;
+      }
+
       limitDecimal(_this, 3);
       let refund_measurement = parseFloat(_this.val());
-
       if(isNaN(refund_measurement))
       { 
         $("#refundNowBtn").attr("disabled", true);
+        _this.val("");
+
+        return;
       }
       else
       {
+        if(refund_measurement < 0)
+        { 
+          refund_measurement = refund_measurement * -1;
+        }
+
         $("#refundNowBtn").attr("disabled", false);
+        _this.val(refund_measurement);
       }
-
-      if(refund_measurement < 0)
-      { 
-        refund_measurement = refund_measurement * -1;
-      }
-
-      _this.val(refund_measurement);
 
       if(e.which == 13)
       {
@@ -4804,11 +4823,13 @@
 
         var refund_final_quantity = refund_quantity * parseFloat(refund_measurement).toFixed(3);
 
+        console.log(refund_final_quantity);
+
         $.get("{{ route('getProductPrice') }}", { "product_id" : product_id, "quantity" : refund_final_quantity }, function(result){
 
           let refund_item_total = result.product_price * refund_final_quantity;
 
-          _this.parent().siblings(".refund_price").find("input.refund_item_price").val(refund_item_total);
+          _this.parent().siblings(".refund_price").find("input.refund_item_price").val(refund_item_total.toFixed(2));
           calculateRefundTotal();
         });
       }
@@ -4938,6 +4959,7 @@
         new_decimal_array = new_decimal.split(".");
         let new_number = split_number[0]+"."+new_decimal_array[1];
 
+        console.log(new_number);
         _this.val(new_number);
       }
     }
@@ -5164,11 +5186,11 @@
 
         if(product_detail.measurement == "kilogram")
         {
-          html += "<input type='number' class='form-control measurement_input' name='measurement_"+product_detail.id+"' value='1' /> KG";
+          html += "<input type='text' class='form-control measurement_input' name='measurement_"+product_detail.id+"' value='1' /> KG";
         }
         else if(product_detail.measurement == "meter")
         {
-          html += "<input type='number' class='form-control measurement_input' name='measurement_"+product_detail.id+"' value='1' /> Meter";
+          html += "<input type='text' class='form-control measurement_input' name='measurement_"+product_detail.id+"' value='1' /> Meter";
         }
         else
         {
