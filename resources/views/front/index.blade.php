@@ -788,6 +788,7 @@
         <label style="font-size: 11px;">HOME U(M) SDN BHD (125272-P)</label>
         <label style="font-size: 11px;">{{ $contact_number }}</label>
         <label style="font-size: 11px;">{!! nl2br(e($branch_address)) !!}</label>
+        <label style="font-size: 11px;">011-1780 9623</label>
         <!-- <label>RESIT</label> -->
         <label id="refund_title" style="display: none;">( Refund )</label>
         <label id="refund_transaction_no" style="display: none;"></label>
