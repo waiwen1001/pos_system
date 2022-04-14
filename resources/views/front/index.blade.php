@@ -33,6 +33,12 @@
 <script src="{{ asset('assets/boostrap-toggle/bootstrap-toggle.min.js') }}"></script>
 
 <body>
+<style>
+  .refund_item_list{
+    overflow-y: auto;
+  }
+</style>
+
   
   <div class="" style="position: absolute; background: #F2F2F2; padding: 20px; width: 100%; height: 100%;">
     <div class="row" style="height: 100%;">
