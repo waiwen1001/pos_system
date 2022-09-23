@@ -301,6 +301,9 @@
                         Edit amount
                         <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="showEditAmount()"></span>
                       </button>
+                      <button class="dropdown-item" onclick="trimData()">
+                        Trim Data
+                      </button>
                     @endif
                   </div>
                 </div>
@@ -5344,6 +5347,34 @@
         loggedOutAlert();
       }
     });
+  }
+
+  function trimData()
+  {
+    $a = prompt("Please insert the password in-order to proceed");
+    if($a == "homeu"){
+      swal.fire({
+        title : 'Processing',
+        html  : 'Database Trim Action In Progress.',
+        didOpen: () => {
+            swal.showLoading()
+        },
+        backdrop : true,
+        allowOutsideClick : false,
+      });
+
+      $.get("{{route('trimData')}}",{},
+        function(data){
+          console.log(data);
+          swal.close();
+          if(data == "error"){
+            swal.fire('Error','Something Wrong','error');
+          }else{
+            swal.fire('Success','Trim Successful','success');
+          }
+        },'json');
+    }
+    console.log($a);
   }
 
 </script>

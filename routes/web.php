@@ -73,5 +73,8 @@ Route::get('/myIP', 'HomeController@myIP')->name('myIP');
 Route::get('/init', 'HomeController@init')->name('init');
 Route::get('/getlogout', 'HomeController@getlogout')->name('getlogout');
 
+// Trim data
+Route::get('/trim-data','HomeController@trimData')->name('trimData');
+
 
 

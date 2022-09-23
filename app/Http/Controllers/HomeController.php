@@ -4323,5 +4323,19 @@ class HomeController extends Controller
 
       return view('front.invoice', compact('branch_name', 'branch_address', 'contact_number', 'transaction', 'transaction_detail_list'));
     }
+
+    public function trimData()
+    {
+      $data = Session::where('synced',NULL)->orderBy('id','ASC')->first();
+
+      $transaction_flag = transaction::where('session_id','<',$data->id)->withTrashed()->orderBy('id','DESC')->first();
+
+      if($transaction_flag != null){
+        transaction::where('session_id','<',$data->id)->forceDelete();
+        transaction_detail::where('transaction_id','<=',$transaction_flag->id)->forceDelete();
+      }
+
+      return response()->json('success');
+    }
 }
 
