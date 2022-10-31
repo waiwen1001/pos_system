@@ -2457,7 +2457,7 @@ class HomeController extends Controller
         $response = Http::post($syncURL, [
           'branch_id' => $this->branch_id,
         ]);
-
+        
         if($response['error'] == 1 || $response->getStatusCode() == "500")
         {
           $response = new \stdClass();
@@ -2678,7 +2678,7 @@ class HomeController extends Controller
         }
       }
 
-      $payment_type_list = ['cash', 'card', 'tng', 'maybank_qr', 'grab_pay', 'cheque', 'boost', 'ebanking', 'pandamart', 'grabmart'];
+      $payment_type_list = ['cash', 'card', 'tng', 'grab_pay', 'cheque', 'boost', 'ebanking', 'pandamart', 'grabmart'];
       foreach($pos_cashier as $pos)
       {
         if(!$pos->cashier_name)

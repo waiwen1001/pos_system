@@ -47,12 +47,12 @@
   <table style="width: 85%; margin: auto;">
     <thead>
       <tr>
-        <th colspan="12">
+        <th colspan="11">
           <p style="font-weight: normal; font-size: 16px; margin: 0px; text-align: center;">Total Sales Report</p>
         </th>
       </tr>
       <tr>
-        <th colspan="12" style="text-align: center;">Tarikh : {{ $now }}</th>
+        <th colspan="11" style="text-align: center;">Tarikh : {{ $now }}</th>
       </tr>
     </thead>
     <tbody>
@@ -61,7 +61,7 @@
         <td>Kutipan<br>Tunai</td>
         <td>Credit /<br>debit Kad</td>
         <td>Touch<br>& Go</td>
-        <td>Maybank<br>QR code</td>
+        {{-- <td>Maybank<br>QR code</td> --}}
         <td>Grab<br>Pay</td>
         <td>Cheque</td>
         <td>Boost</td>
@@ -77,7 +77,7 @@
           <td class='align_right'>{{ $cashier->cash }}</td>
           <td class='align_right'>{{ $cashier->card }}</td>
           <td class='align_right'>{{ $cashier->tng }}</td>
-          <td class='align_right'>{{ $cashier->maybank_qr }}</td>
+          {{-- <td class='align_right'>{{ $cashier->maybank_qr }}</td> --}}
           <td class='align_right'>{{ $cashier->grab_pay }}</td>
           <td class='align_right'>{{ $cashier->cheque }}</td>
           <td class='align_right'>{{ $cashier->boost }}</td>
@@ -104,14 +104,14 @@
       <tr class="no_border">
         <td colspan="4" style="text-align: center; font-weight: bold;">Tambah</td>
         <td colspan="3" class="no_border"></td>
-        <td colspan="5" style="text-align: center; font-weight: bold;">Tolak</td>
+        <td colspan="4" style="text-align: center; font-weight: bold;">Tolak</td>
       </tr>
 
       <tr class="no_border">
         <td colspan="3">Modal di kedai Sebelum Niaga :</td>
         <td class='align_right'>{{ $cash_float_result->opening }}</td>
         <td colspan="3" class="no_border"></td>
-        <td colspan="4">Pembelanjaan :</td>
+        <td colspan="3">Pembelanjaan :</td>
         <td class='align_right'>{{ $cash_float_result->float_out }}</td>
       </tr>
 
@@ -119,7 +119,7 @@
         <td colspan="3">Penambahan Tunai :</td>
         <td class='align_right'>{{ $cash_float_result->float_in }}</td>
         <td colspan="3" class="no_border"></td>
-        <td colspan="4">Baki Modal di kedai :</td>
+        <td colspan="3">Baki Modal di kedai :</td>
         <td class='align_right'>{{ $cash_float_result->opening }}</td>
       </tr>
 
@@ -127,7 +127,7 @@
         <td colspan="3">Jualan Tunai hari ini :</td>
         <td class='align_right'>{{ $cash_float_result->cash_sales }}</td>
         <td colspan="3" class="no_border"></td>
-        <td colspan="4">Jumlah refund :</td>
+        <td colspan="3">Jumlah refund :</td>
         <td class='align_right'>{{ $cash_float_result->total_refund }}</td>
       </tr>
 
@@ -137,7 +137,7 @@
           <td class='align_right'>{{ $cash_float_result->diff_text }}</td>
           
           <td colspan="3" class="no_border"></td>
-          <td colspan="4"></td>
+          <td colspan="3"></td>
           <td class='align_right'></td>
         </tr>
       @endif
@@ -147,7 +147,7 @@
         <td></td>
         <td class='align_right'>{{ $cash_float_result->total_cash }}</td>
         <td colspan="3" class="no_border"></td>
-        <td colspan="3">Jumlah :</td>
+        <td colspan="2">Jumlah :</td>
         <td></td>
         <td class='align_right'>{{ $cash_float_result->total_deduct }}</td>
       </tr>

@@ -342,10 +342,10 @@
                       Touch & Go
                       <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsTNG()"></span>
                     </button>
-                    <button class="dropdown-item cardPayment" payment_type="maybank_qr" payment_type_text="Maybank QRPay" href="#">
+                    {{-- <button class="dropdown-item cardPayment" payment_type="maybank_qr" payment_type_text="Maybank QRPay" href="#">
                       Maybank QRPay
                       <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsMaybank()"></span>
-                    </button>
+                    </button> --}}
                     <button class="dropdown-item cardPayment" payment_type="grab_pay" payment_type_text="Grab Pay" href="#">
                       Grab Pay
                       <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsGrab()"></span>
