@@ -2666,7 +2666,14 @@
             {
               items_html += "<tr>";
               items_html += "<td></td><td style='width:70px;text-align:right;vertical-align:top;'>"+transaction_detail[a].measurement_quantity+" X RM "+transaction_detail[a].wholesale_price_text+"</td>";
-              items_html += "<td style='width:70px;text-align:right;vertical-align:top;'>- RM "+transaction_detail[a].diff+"</td>";
+              if(transaction_detail[a].measurement_quantity < 1){
+                items_html += "<td style='width:70px;text-align:right;vertical-align:top;'> RM "+Math.abs(transaction_detail[a].diff).toFixed(2)+"</td>";
+              }else{
+                items_html += "<td style='width:70px;text-align:right;vertical-align:top;'> - RM "+transaction_detail[a].diff+"</td>";
+              }
+              console.log(transaction_detail[a].measurement_quantity,transaction_detail[a].wholesale_price_text,transaction_detail[a].diff);
+
+              
               items_html += "</tr>";
             }
           }
