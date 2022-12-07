@@ -2435,7 +2435,7 @@ class HomeController extends Controller
     }
 
     public function productSync()
-    {
+    {     
       $create_session = 0;
       if(isset($_GET['create_session']))
       {
@@ -2599,6 +2599,12 @@ class HomeController extends Controller
           $response = new \stdClass();
           $response->error = 0;
           $response->message = "Success";
+
+          Product::where('product_type','!=',NULL)
+                  ->update([
+                    'product_info' => null,
+                    'product_type' => null,
+                  ]);
 
           return response()->json($response);
         }
