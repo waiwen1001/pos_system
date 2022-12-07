@@ -2254,6 +2254,9 @@ class HomeController extends Controller
           'delivery' => $delivery,
           'delivery_detail' => $delivery_detail
         ]);
+        
+        // Check the response body (Testing)
+        // return $response->body();
 
         if($response['error'] === 0)
         {
@@ -2314,6 +2317,7 @@ class HomeController extends Controller
 
     public function syncHQProductList($product_list = [], $hamper_list = [], $branchProductSyncURL)
     {
+
       if(!$product_list)
       {
         $product_list = [];
@@ -2390,8 +2394,8 @@ class HomeController extends Controller
           'barcode' => $hamper['barcode'],
           'product_name' => $hamper['name'],
           'price' => $hamper['price'],
-          'product_info' => $hamper['product_list'],
-          'product_type' => "hamper",
+          'product_info' => NULL,
+          'product_type' => NULL,
           'deleted_at' => $hamper['deleted_at']
         ]);
       }
