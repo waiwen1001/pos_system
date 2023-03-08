@@ -20,4 +20,9 @@ class refund extends Model
       'total',
       'synced',
     ];
+
+    public function refundDetails()
+    {
+      return $this->hasMany(refund_detail::class,'refund_id');
+    }
 }

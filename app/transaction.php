@@ -36,4 +36,9 @@ class transaction extends Model
       'completed_by',
       'transaction_date'
     ];
+
+    public function transactionDetails()
+    {
+      return $this->hasMany(transaction_detail::class,'transaction_id');
+    }
 }
