@@ -2208,7 +2208,7 @@ class HomeController extends Controller
         }
       }
 
-      $branch_id = $_GET['branch_id'];
+      $branch_id = env('branch_id','');
       $branchSyncURL = $_GET['branchSyncURL'];
       $branchProductSyncURL = $_GET['branchProductSyncURL'];
 
@@ -2221,17 +2221,13 @@ class HomeController extends Controller
         return response()->json($response);
       }
 
-      $transaction = transaction::whereIn('session_id', $session_list)->get();
-      $transaction_detail = transaction_detail::leftJoin('transaction', 'transaction.id', '=', 'transaction_detail.transaction_id')->whereIn('transaction.session_id', $session_list)->select('transaction_detail.*', 'transaction.session_id', 'transaction.created_at as transaction_date')->get();
-
+      $transaction = transaction::with('transactionDetails')->whereIn('session_id', $session_list)->get();
       $cashier = cashier::where('synced', null)->where('closing', 1)->get();
       $cash_float = cash_float::where('synced', null)->get();
-      $refund = refund::where('synced', null)->get();
-      $refund_detail = refund_detail::leftJoin('refund', 'refund.id', '=', 'refund_detail.refund_id')->where('refund.synced', null)->select('refund_detail.*', 'refund.transaction_no')->get();
-      $delivery = delivery::where('synced', null)->get();
-      $delivery_detail = delivery_detail::leftJoin('delivery', 'delivery.id', '=', 'delivery_detail.delivery_id')->where('delivery.synced', null)->select('delivery_detail.*', 'delivery.transaction_no')->get();
+      $refund = refund::with('refundDetails')->where('synced', null)->get();
+      $delivery = delivery::with('deliveryDetails')->where('synced', null)->get();
 
-      if(count($session_list) == 0 && count($transaction) == 0 && count($transaction_detail) == 0 && count($cashier) == 0 && count($cash_float) == 0 && count($refund) == 0 && count($refund_detail) == 0 && count($delivery) == 0 && count($delivery_detail) == 0)
+      if(count($session_list) == 0 && count($transaction) == 0  && count($cashier) == 0 && count($cash_float) == 0 && count($refund) == 0 && count($delivery) == 0)
       {
         $response = new \stdClass();
         $response->error = 2;
@@ -2246,18 +2242,17 @@ class HomeController extends Controller
           'session_list' => $session_list,
           'branch_id' => $this->branch_id,
           'transaction' => $transaction,
-          'transaction_detail' => $transaction_detail,
           'cashier' => $cashier,
           'cash_float' => $cash_float,
           'refund' => $refund,
-          'refund_detail' => $refund_detail,
           'delivery' => $delivery,
-          'delivery_detail' => $delivery_detail
         ]);
         
         // Check the response body (Testing)
         // return $response->body();
 
+        // dd($response->json()); // Check Response Message
+        
         if($response['error'] === 0)
         {
           session::whereIn('id', $session_list)->where('closed', 1)->update([
@@ -2279,10 +2274,6 @@ class HomeController extends Controller
           delivery::where('synced', null)->update([
             'synced' => 1
           ]);
-
-          // product::where('hide_cost_alert', 1)->update([
-          //   'hide_cost_alert' => null
-          // ]);
 
           if($resync == 1)
           {

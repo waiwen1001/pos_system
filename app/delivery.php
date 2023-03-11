@@ -37,4 +37,9 @@ class delivery extends Model
       'transaction_date',
       'synced'
     ];
+
+    public function deliveryDetails()
+    {
+      return $this->hasMany(delivery_detail::class,'delivery_id');
+    }
 }
