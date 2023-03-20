@@ -2224,7 +2224,8 @@ class HomeController extends Controller
       $transaction = transaction::with('transactionDetails')->whereIn('session_id', $session_list)->get();
       $cashier = cashier::where('synced', null)->where('closing', 1)->get();
       $cash_float = cash_float::where('synced', null)->get();
-      $refund = refund::with('refundDetails')->where('synced', null)->get();
+      $refund = refund::where('synced', null)->get();
+      $refund_detail = refund_detail::leftJoin('refund', 'refund.id', '=', 'refund_detail.refund_id')->where('refund.synced', null)->select('refund_detail.*', 'refund.transaction_no')->get();
       $delivery = delivery::with('deliveryDetails')->where('synced', null)->get();
 
       if(count($session_list) == 0 && count($transaction) == 0  && count($cashier) == 0 && count($cash_float) == 0 && count($refund) == 0 && count($delivery) == 0)
@@ -2245,6 +2246,7 @@ class HomeController extends Controller
           'cashier' => $cashier,
           'cash_float' => $cash_float,
           'refund' => $refund,
+          'refund_detail' => $refund_detail,
           'delivery' => $delivery,
         ]);
         
@@ -3229,104 +3231,6 @@ class HomeController extends Controller
       $response->pos_cashier = $updated_pos_cashier;
 
       return response()->json($response);
-    }
-
-    public function testing()
-    {
-      dd(env('DB_DATABASE'));
-      print_r("start ori".date("H:i:s") . substr((string)microtime(), 1, 8).'<br>');
-      $seq = Invoice_sequence::first();
-      $now = now();
-      if(date("Y-m-d",strtotime($seq->updated_at)) == date("Y-m-d", strtotime($now))){
-        $transaction_no = $seq->branch_code.date("Ymd").$seq->next_seq;
-      }else{
-        $transaction_no = $seq->branch_code.date("Ymd", strtotime($now))."00001";
-      }
-
-      if(date("Y-m-d",strtotime($seq->updated_at)) == date('Y-m-d', strtotime($now))){
-        $next = $seq->next_seq;
-        $next = intval($next) + 1;
-        $i=5;
-        while($i>strlen($next)){
-          $next = "0".$next;
-        }
-        
-        Invoice_sequence::where('id',$seq->id)->update([
-          'current_seq' => $seq->next_seq,
-          'next_seq' => $next,
-        ]);
-      }else{
-        Invoice_sequence::where('id',$seq->id)->update([
-          'current_seq' => '00001',
-          'next_seq' => '00002',
-        ]);
-      }
-
-      print_r("end ori ".date("H:i:s") . substr((string)microtime(), 1, 8).'<br>');
-
-      print_r("start ".date("H:i:s") . substr((string)microtime(), 1, 8).'<br>');
-      $seq = Invoice_sequence::first();
-      $count = transaction::whereBetween('created_at', [date('Y-m-d 00:00:00'), date('Y-m-d 23:59:59')])->count();
-      for($a = strlen($count); $a < 5; $a++)
-      {
-        $count = "0".$count;
-      }
-
-      $transaction_no = $seq->branch_code.date('Ymd').$count;
-      print_r("end ".date("H:i:s") . substr((string)microtime(), 1, 8).'<br>');
-      dd($transaction_no);
-
-      for($c = 0; $c <= 50; $c++)
-      {
-        $transaction_query = [];
-        $transaction_detail_query = [];
-
-        for($a = 0; $a <= 100; $a++)
-        {
-          $query = [
-            "session_id" => 23,
-            "ip" => "::1",
-            "transaction_no" => "test001",
-            "user_id" => 1,
-            "subtotal" => 100,
-            "payment" => 100,
-            "payment_type" => "cash",
-            "payment_type_text" => "Cash",
-            "balance" => 0,
-            "total" => 100,
-            "completed" => 1,
-            'transaction_date' => $now,
-            'created_at' => $now,
-            'updated_at' => $now
-          ];
-
-          array_push($transaction_query, $query);
-
-          for($b = 0; $b <= 10; $b++)
-          {
-            $query = [
-              "transaction_id" => $started_id,
-              "product_id" => 1,
-              "barcode" => "test001",
-              "product_name" => "Test item",
-              "quantity" => 100,
-              "price" => 100,
-              "discount" => 0,
-              "subtotal" => 10000,
-              "total" => 10000,
-              'created_at' => $now,
-              'updated_at' => $now
-            ];
-
-            array_push($transaction_detail_query, $query);
-          }
-
-          $started_id++;
-        }
-
-        transaction::insert($transaction_query);
-        transaction_detail::insert($transaction_detail_query);
-      }
     }
 
     public function front_function_list()
@@ -4337,6 +4241,164 @@ class HomeController extends Controller
       }
 
       return response()->json('success');
+    }
+
+    public function testing()
+    {
+      $data = array(
+        // [
+        //   'data' => '26-02-2023',
+        //   'name' => 'Drypers wwd L62',
+        //   'barcode' => '9557327011024',
+        //   'time' => '8:30pm',
+        // ],
+        // [
+        //   'data' => '26-02-2023',
+        //   'name' => 'Drypers wwd M74',
+        //   'barcode' => '9557327011017',
+        //   'time' => '8:45pm',
+        // ],
+        // [
+        //   'data' => '26-02-2023',
+        //   'name' => 'Drypers wwd XXL40',
+        //   'barcode' => '9557327011048',
+        //   'time' => '8:53pm',
+        // ],
+        // [
+        //   'data' => '26-02-2023',
+        //   'name' => 'Drypers wwd M74',
+        //   'barcode' => '9557327011017',
+        //   'time' => '9:00pm',
+        // ],
+        // [
+        //   'data' => '26-02-2023',
+        //   'name' => 'Drypers wwd L62',
+        //   'barcode' => '9557327011024',
+        //   'time' => '9:48pm',
+        // ],
+        // [
+        //   'data' => '26-02-2023',
+        //   'name' => 'Drypers wwd M74',
+        //   'barcode' => '9557327011017',
+        //   'time' => '10:01pm',
+        // ],
+        // [
+        //   'data' => '27-02-2023',
+        //   'name' => 'Drypers wwd M74',
+        //   'barcode' => '9557327011017',
+        //   'time' => '9:20am',
+        // ],
+        // [
+        //   'data' => '27-02-2023',
+        //   'name' => 'Drypers wwd L62',
+        //   'barcode' => '9557327011024',
+        //   'time' => '9:28am',
+        // ],
+        // [
+        //   'data' => '27-02-2023',
+        //   'name' => 'Drypers wwd L62',
+        //   'barcode' => '9557327011024',
+        //   'time' => '11:05am',
+        // ],
+        // [
+        //   'data' => '27-02-2023',
+        //   'name' => 'Drypers wwd L62',
+        //   'barcode' => '9557327011024',
+        //   'time' => '11:39am',
+        // ],
+        // [
+        //   'data' => '27-02-2023',
+        //   'name' => 'Drypers wwd XL50',
+        //   'barcode' => '9557327011031',
+        //   'time' => '12:45pm',
+        // ],
+        // [
+        //   'data' => '27-02-2023',
+        //   'name' => 'Drypers wwd S82',
+        //   'barcode' => '9557327011000',
+        //   'time' => '2:35pm',
+        // ],
+        // [
+        //   'data' => '27-02-2023',
+        //   'name' => 'Drypers wwd NB82',
+        //   'barcode' => '9557327023430',
+        //   'time' => '2:49pm',
+        // ],
+        // [
+        //   'data' => '27-02-2023',
+        //   'name' => 'Drypers wwd L62',
+        //   'barcode' => '9557327011024',
+        //   'time' => '4:57pm',
+        // ],
+        // [
+        //   'data' => '27-02-2023',
+        //   'name' => 'Drypers wwd M74',
+        //   'barcode' => '9557327011017',
+        //   'time' => '8:43pm',
+        // ],
+        // [
+        //   'data' => '27-02-2023',
+        //   'name' => 'Drypers wwd XXL40',
+        //   'barcode' => '9557327011048',
+        //   'time' => '8:48pm',
+        // ],
+        // [
+        //   'data' => '28-02-2023',
+        //   'name' => 'Drypers wwd L62',
+        //   'barcode' => '9557327011024',
+        //   'time' => '10:01am',
+        // ],
+        // [
+        //   'data' => '28-02-2023',
+        //   'name' => 'Drypers wwd L62',
+        //   'barcode' => '9557327011024',
+        //   'time' => '10:27am',
+        // ],
+        // [
+        //   'data' => '28-02-2023',
+        //   'name' => 'Drypers wwd L62',
+        //   'barcode' => '9557327011024',
+        //   'time' => '10:49am',
+        // ],
+        // [
+        //   'data' => '28-02-2023',
+        //   'name' => 'Drypers wwd XL50',
+        //   'barcode' => '9557327011031',
+        //   'time' => '12:42pm',
+        // ],
+        // [
+        //   'data' => '28-02-2023',
+        //   'name' => 'Drypers wwd M74',
+        //   'barcode' => '9557327011017',
+        //   'time' => '2:26pm',
+        // ],
+        // [
+        //   'data' => '28-02-2023',
+        //   'name' => 'Drypers wwd S82',
+        //   'barcode' => '9557327011000',
+        //   'time' => '4:40pm',
+        // ],
+        // [
+        //   'data' => '28-02-2023',
+        //   'name' => 'Drypers wwd XL50',
+        //   'barcode' => '9557327011031',
+        //   'time' => '4:57pm',
+        // ],
+        // [
+        //   'data' => '28-02-2023',
+        //   'name' => 'Drypers wwd S82',
+        //   'barcode' => '9557327011000',
+        //   'time' => '5:10pm',
+        // ],
+        [
+          'data' => '28-02-2023',
+          'name' => 'Drypers wwd S82',
+          'barcode' => '9557327011000',
+          'time' => '8:25pm',
+        ]
+      );
+
+      return view('front.dummy',compact('data'));
     }
 }
 
