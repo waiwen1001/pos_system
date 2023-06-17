@@ -43,6 +43,7 @@ Route::get('/closingReport', 'HomeController@closingReport')->name('closingRepor
 Route::post('/updateTransactionMeasurement', 'HomeController@updateTransactionMeasurement')->name('updateTransactionMeasurement');
 Route::post('/removeTransactionMeasurement', 'HomeController@removeTransactionMeasurement')->name('removeTransactionMeasurement');
 Route::get('/getProductPrice', 'HomeController@getProductPrice')->name('getProductPrice');
+Route::get('/change-payment','HomeController@changePayment')->name('changePayment');
 
 Route::get('/branchSync', 'HomeController@branchSync')->name('branchSync');
 Route::get('/productSync', 'HomeController@productSync')->name('productSync');

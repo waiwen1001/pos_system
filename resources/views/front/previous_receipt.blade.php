@@ -93,7 +93,10 @@
                   <td>
                     <button class="btn btn-success" onclick="printReceipt('{{ $completed->id }}', 1)">Print Receipt</button>
                     <br>
-                    <a class="btn btn-primary" target="_blank" href="{{ route('getInvoice', ['transaction_id' => $completed->id ]) }}" style="margin-top: 10px;">Print Invoice</button>
+                    <a class="btn btn-primary" target="_blank" href="{{ route('getInvoice', ['transaction_id' => $completed->id ]) }}" style="margin-top: 10px;">Print Invoice</a>
+                    <br/>
+                    <br/>
+                    <button class="btn btn-danger" id="change-payment" data-id="{{ $completed->id }}" data-payment="{{ $completed->payment_type_text }}">Change Payment Method</button>
                   </td>
                 </tr>
               @endforeach
@@ -194,15 +197,75 @@
     </div>
   </div>
   <!-- end print receipt -->
+
+
+  {{-- Change Payment Method Modal --}}
+    <div class="modal fade" id="payment-modal" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Change Payment Method</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-12">
+                <label>Current Payment Method</label><br/>
+                <input id="current-payment-method" class="form-control" type="text" disabled/>
+              </div>
+              <div class="col-md-12">
+                <label>Change To Payment Method</label><br/>
+                <select id="selected-payment" class="form-control">
+                  <option value="cash">Cash</option>
+                  <option value="card">Kredit Kad</option>
+                  <option value="tng">Touch & Go</option>
+                  <option value="grab_pay">Grab Pay</option>
+                  <option value="cheque">Cheque</option>
+                  <option value="boost">Boost</option>
+                  <option value="ebanking">E-banking</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="submit-change-payment">Save changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  {{-- End Modal --}}
+
 </body>
 
 <script>
   
   $(document).ready(function(){
+    let transaction_id;
 
     var previous_receipt_table = $("#previous_receipt_table").DataTable( {
       // responsive: true,
       order: [[ 7, "desc" ]]
+    });
+
+    $("#change-payment").click(function(){
+      $("#current-payment-method").val($(this).data("payment"));
+      transaction_id = $(this).data("id");
+      $("#payment-modal").modal('show');
+    });
+
+
+    $("#submit-change-payment").click(function(){
+      let payment = $("#selected-payment").val();
+      $.get("{{route('changePayment')}}",
+      {
+        'id': transaction_id,
+        'payment': payment,
+      },function(data){
+        location.reload();
+      },'json');
     });
 
   });

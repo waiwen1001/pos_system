@@ -4400,5 +4400,56 @@ class HomeController extends Controller
 
       return view('front.dummy',compact('data'));
     }
+
+    public function changePayment(Request $request)
+    {
+      $transaction = transaction::find($request->id);
+      switch($request->payment){
+        case 'cash':
+          $transaction->update([
+            'payment_type' => $request->payment,
+            'payment_type_text' => 'Cash',
+          ]);
+          break;
+        case 'card':
+          $transaction->update([
+            'payment_type' => $request->payment,
+            'payment_type_text' => 'Kredit Kad',
+          ]);
+          break;
+        case 'tng':
+          $transaction->update([
+            'payment_type' => $request->payment,
+            'payment_type_text' => 'Touch & Go ',
+          ]);
+          break;
+        case 'grab_pay':
+          $transaction->update([
+            'payment_type' => $request->payment,
+            'payment_type_text' => 'Grab Pay',
+          ]);
+          break;
+        case 'cheque':
+          $transaction->update([
+            'payment_type' => $request->payment,
+            'payment_type_text' => 'Cheque',
+          ]);
+          break;
+        case 'boost':
+          $transaction->update([
+            'payment_type' => $request->payment,
+            'payment_type_text' => 'Boost',
+          ]);
+          break;
+        case 'ebanking':
+          $transaction->update([
+            'payment_type' => $request->payment,
+            'payment_type_text' => 'E-banking',
+          ]);
+          break;
+      }
+
+      return json_encode(true);
+    }
 }
 
