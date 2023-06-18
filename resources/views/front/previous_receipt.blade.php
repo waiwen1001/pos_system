@@ -96,7 +96,7 @@
                     <a class="btn btn-primary" target="_blank" href="{{ route('getInvoice', ['transaction_id' => $completed->id ]) }}" style="margin-top: 10px;">Print Invoice</a>
                     <br/>
                     <br/>
-                    <button class="btn btn-danger" id="change-payment" data-id="{{ $completed->id }}" data-payment="{{ $completed->payment_type_text }}">Change Payment Method</button>
+                    <button class="btn btn-danger" onclick="changePayment({{$completed->id}},'{{$completed->payment_type_text}}')">Change Payment Method</button>
                   </td>
                 </tr>
               @endforeach
@@ -241,20 +241,19 @@
 </body>
 
 <script>
-  
+  let transaction_id;
   $(document).ready(function(){
-    let transaction_id;
-
+    
     var previous_receipt_table = $("#previous_receipt_table").DataTable( {
       // responsive: true,
       order: [[ 7, "desc" ]]
     });
 
-    $("#change-payment").click(function(){
-      $("#current-payment-method").val($(this).data("payment"));
-      transaction_id = $(this).data("id");
-      $("#payment-modal").modal('show');
-    });
+    // $("#change-payment").click(function(){
+    //   $("#current-payment-method").val($(this).data("payment"));
+    //   transaction_id = $(this).data("id");
+    //   $("#payment-modal").modal('show');
+    // });
 
 
     $("#submit-change-payment").click(function(){
@@ -419,6 +418,13 @@
         loggedOutAlert();
       }
     });
+  }
+
+  function changePayment(id,payment)
+  {
+    $("#current-payment-method").val(payment);
+    transaction_id = id;
+    $("#payment-modal").modal('show');
   }
 
 </script>
