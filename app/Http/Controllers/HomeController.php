@@ -2221,7 +2221,7 @@ class HomeController extends Controller
         return response()->json($response);
       }
 
-      $transaction = transaction::with('transactionDetails')->whereIn('session_id', $session_list)->get();
+      $transaction = transaction::with('transactionDetails')->whereIn('session_id', $session_list)->orderBy('id')->get();
       $cashier = cashier::where('synced', null)->where('closing', 1)->get();
       $cash_float = cash_float::where('synced', null)->get();
       $refund = refund::where('synced', null)->get();
