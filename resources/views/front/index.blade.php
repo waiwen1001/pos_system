@@ -37,6 +37,15 @@
   .refund_item_list{
     overflow-y: auto;
   }
+  .blink_me {
+    animation: blinker 1.5s linear infinite;
+  }
+
+  @keyframes blinker {
+    80% {
+      opacity: 0;
+    }
+  }
 </style>
 
   
@@ -98,12 +107,12 @@
               <label>Total Quantity</label>
               <div class="summary_price" id="total_quantity">{{ $item_quantity }}</div>
             </div>
-
+{{-- 
             <div class="summary-detail">
               <label>Price</label>
               <div>RM</div>
               <div class="summary_price" id="price">{{ $subtotal }}</div>
-            </div>
+            </div> --}}
 
             <div class="summary-detail">
               <label style="max-width: calc(50% - 16px); height: 30px;"><label class="discount_name" id="discount_name">{{ $voucher_name ? $voucher_name : 'Discount'}}</label> <i style="display: {{ $have_discount == 0 ? 'none' : '' }}; float: right; margin-right: 10px;" class="fa fa-trash remove_voucher" id="remove_voucher"></i></label>
@@ -117,7 +126,7 @@
               <div class="summary_price" id="round_off">{{ $round_off }}</div>
             </div>
 
-            <div class="summary-detail bold">
+            <div class="summary-detail bold" style="color:#000000;font-size:45px;">
               <label>Total</label>
               <div>RM</div>
               <div class="summary_price" id="total">{{ $total }}</div>
@@ -588,7 +597,7 @@
             <i class="fas fa-check-circle"></i>
           </div>
           <h4 style="text-align: center;">Transaction completed.</h4>
-          <h5 style="text-align: center;" id="completed_balance">Balance : RM <span id="transaction_balance"></span></h5>
+          <h5 style="text-align: center;font-size:45px;color:red" class="blink_me" id="completed_balance">Balance : RM <span id="transaction_balance"></span></h5>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Okay</button>
