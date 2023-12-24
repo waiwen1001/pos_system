@@ -103,10 +103,10 @@
           <div class="items-summary">
             <input type="hidden" name="transaction_id" id="transaction_id" value="{{ $transaction_id }}" />
 
-            <div class="summary-detail" style="display: {{ $item_quantity == 0 ? 'none' : '' }};">
+            {{-- <div class="summary-detail" style="display: {{ $item_quantity == 0 ? 'none' : '' }};">
               <label>Total Quantity</label>
               <div class="summary_price" id="total_quantity">{{ $item_quantity }}</div>
-            </div>
+            </div> --}}
 {{-- 
             <div class="summary-detail">
               <label>Price</label>
