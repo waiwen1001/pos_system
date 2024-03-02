@@ -64,7 +64,7 @@
         {{-- <td>Maybank<br>QR code</td> --}}
         <td>Grab<br>Pay</td>
         <td>Cheque</td>
-        <td>Boost</td>
+        <td>Boost & Shopee & Other</td>
         <td>E-banking</td>
         <!-- <td>Cek /<br>Lain lain</td> -->
         <td>Panda Mart</td>

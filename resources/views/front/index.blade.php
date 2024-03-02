@@ -364,7 +364,7 @@
                       <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsCheque()"></span>
                     </button>
                     <button class="dropdown-item cardPayment" payment_type="boost" payment_type_text="Boost" href="#">
-                      Boost
+                      Boost & Shopee & Other
                       <span class="shortcut_func_key" style="display: none; left: -10px;" func_name="payAsBoost()"></span>
                     </button>
                     <button class="dropdown-item cardPayment" payment_type="ebanking" payment_type_text="E-banking" href="#">

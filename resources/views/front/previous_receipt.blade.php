@@ -223,7 +223,7 @@
                   <option value="tng">Touch & Go</option>
                   <option value="grab_pay">Grab Pay</option>
                   <option value="cheque">Cheque</option>
-                  <option value="boost">Boost</option>
+                  <option value="boost">Boost & Shopee & Other</option>
                   <option value="ebanking">E-banking</option>
                 </select>
               </div>
